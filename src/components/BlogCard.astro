@@ -1,0 +1,53 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+	post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, heroImage } = post.data;
+---
+
+<a href={`/blog/${post.id}/`} class="group block">
+	<article>
+		<div class="mb-4 w-full overflow-hidden rounded-2xl bg-app-accent xl:mb-6">
+			{
+				heroImage ? (
+					<img
+						src={heroImage}
+						alt=""
+						class="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-105"
+					/>
+				) : (
+					<div class="flex aspect-[4/3] w-full items-center justify-center text-2xl font-semibold tracking-tight text-app-text/40">
+						{title.slice(0, 1)}
+					</div>
+				)
+			}
+		</div>
+		<div class="mb-2 text-xs font-medium leading-none tracking-tight text-app-gray-400 xl:mb-4 xl:text-base">
+			<FormattedDate date={pubDate} />
+		</div>
+		<div class="mb-2.5 flex items-center gap-2 xl:mb-4">
+			<h3 class="text-sm font-medium leading-snug tracking-tight text-app-text xl:text-2xl">
+				{title}
+			</h3>
+			<span class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded bg-app-gray-100 xl:h-5 xl:w-5">
+				<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none">
+					<path
+						d="M7 17L17 7M17 7H9M17 7V15"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				</svg>
+			</span>
+		</div>
+		<p class="text-sm leading-snug tracking-tight text-app-gray-500 line-clamp-2 xl:text-xl">
+			{description}
+		</p>
+	</article>
+</a>

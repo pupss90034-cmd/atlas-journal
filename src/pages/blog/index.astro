@@ -2,110 +2,116 @@
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import BlogCard from '../../components/BlogCard.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { getCollection } from 'astro:content';
-import FormattedDate from '../../components/FormattedDate.astro';
 
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+const categories = [
+	...new Set(
+		posts
+			.map((post) => (post.id.includes('/') ? post.id.split('/')[0] : null))
+			.filter((c): c is string => Boolean(c)),
+	),
+];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
+		<BaseHead title={`文章 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 	</head>
-	<body>
+	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
-		<main>
-			<section>
-				<ul>
+		<main class="flex-1">
+			<section class="px-6 pb-8 pt-10 md:pb-10 md:pt-[72px] lg:pb-12">
+				<div class="container mx-auto max-w-5xl">
+					<div class="flex flex-col-reverse items-center gap-2.5 text-center md:gap-4">
+						<h1 class="text-2xl font-medium leading-none tracking-tight text-app-text md:text-3xl lg:text-[56px]">
+							所有文章
+						</h1>
+						<h2 class="text-sm leading-none tracking-tight text-app-gray-600 md:text-base lg:text-xl">
+							{SITE_DESCRIPTION}
+						</h2>
+					</div>
+				</div>
+			</section>
+
+			<section class="px-6 pb-16 md:pb-24">
+				<div class="container mx-auto max-w-5xl">
 					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt="" />
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
+						categories.length > 0 && (
+							<div class="mb-8 flex flex-wrap justify-center gap-2.5 lg:mb-12" id="category-filter">
+								<button
+									type="button"
+									data-category=""
+									class="filter-btn flex items-center justify-center rounded-full border border-app-text bg-app-text px-6 py-2.5 text-xs leading-none tracking-tight text-white transition-colors duration-300 md:text-base lg:px-6 lg:py-[14px] lg:text-xl"
+								>
+									全部
+								</button>
+								{categories.map((category) => (
+									<button
+										type="button"
+										data-category={category}
+										class="filter-btn flex items-center justify-center rounded-full border border-app-gray-300 px-6 py-2.5 text-xs leading-none tracking-tight text-app-text transition-colors duration-300 md:text-base lg:px-6 lg:py-[14px] lg:text-xl"
+									>
+										{category}
+									</button>
+								))}
+							</div>
+						)
 					}
-				</ul>
+
+					<h2 class="mb-7 text-lg font-medium leading-none tracking-tight text-app-text md:mb-10 lg:mb-12 lg:text-[32px]">
+						全部文章
+					</h2>
+
+					{
+						posts.length > 0 ? (
+							<div class="columns-1 gap-6 md:columns-2 lg:columns-3 xl:gap-10" id="post-grid">
+								{posts.map((post) => (
+									<div
+										class="post-item mb-6 break-inside-avoid xl:mb-10"
+										data-category={post.id.includes('/') ? post.id.split('/')[0] : ''}
+									>
+										<BlogCard post={post} />
+									</div>
+								))}
+							</div>
+						) : (
+							<p class="text-app-gray-500">還沒有發佈的文章。</p>
+						)
+					}
+				</div>
 			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<script>
+	const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
+
+	buttons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const category = button.dataset.category ?? '';
+
+			buttons.forEach((b) => {
+				const active = b === button;
+				b.classList.toggle('bg-app-text', active);
+				b.classList.toggle('text-white', active);
+				b.classList.toggle('border-app-text', active);
+				b.classList.toggle('border-app-gray-300', !active);
+			});
+
+			items.forEach((item) => {
+				const show = !category || item.dataset.category === category;
+				item.classList.toggle('hidden', !show);
+			});
+		});
+	});
+</script>

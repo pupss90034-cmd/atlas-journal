@@ -20,6 +20,8 @@
 		"typescript": "5.9.3"
 	},
 	"devDependencies": {
+		"@tailwindcss/vite": "^4.1.11",
+		"tailwindcss": "^4.1.11",
 		"wrangler": "4.88.0"
 	},
 	"engines": {
