@@ -3,9 +3,9 @@ import HeaderLink from './HeaderLink.astro';
 import { SITE_TITLE } from '../consts';
 
 const nav = [
-	{ label: '首頁', href: '/' },
-	{ label: '文章', href: '/blog' },
-	{ label: '關於', href: '/about' },
+	{ label: 'Home', href: '/' },
+	{ label: 'Blog', href: '/blog' },
+	{ label: 'About', href: '/about' },
 ];
 ---
 
@@ -28,19 +28,12 @@ const nav = [
 				type="button"
 				aria-label="開啟選單"
 				aria-expanded="false"
-				class="flex h-8 w-8 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
+				class="ml-auto flex h-8 w-8 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
 					<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
 				</svg>
 			</button>
-
-			<a
-				href="/rss.xml"
-				class="text-xs font-medium uppercase tracking-[0.15em] text-app-gray-500 transition-colors hover:text-app-text"
-			>
-				訂閱 RSS
-			</a>
 		</div>
 
 		<!-- site title -->
