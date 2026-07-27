@@ -18,6 +18,10 @@ const blog = defineCollection({
 			"!標題練習.md",
 			"!露營車系列指南/關於我看的第一台車.md",
 			"!露營車系列指南/紐西蘭購車眉角.md",
+			// 暫時排除：文中引用的 DSC_0249.jpg 已從 Pic/ 資料夾刪除，
+			// 導致 build 失敗。請在 Obsidian 補回照片，或刪除該張圖片的
+			// 引用行，修好後即可移除這行排除規則。
+			"!其他（未歸類）/Ｎ02. ＿＿＿＿＿大溪地的第一印象.md",
 		],
 	}),
 	// Type-check frontmatter using a schema.

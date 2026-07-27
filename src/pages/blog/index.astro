@@ -66,10 +66,10 @@ const categories = [
 
 					{
 						posts.length > 0 ? (
-							<div class="columns-1 gap-10 md:columns-2 lg:columns-3" id="post-grid">
+							<div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3" id="post-grid">
 								{posts.map((post) => (
 									<div
-										class="post-item mb-10 break-inside-avoid"
+										class="post-item"
 										data-category={post.id.includes('/') ? post.id.split('/')[0] : ''}
 									>
 										<BlogCard post={post} />
