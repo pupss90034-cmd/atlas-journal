@@ -11,8 +11,11 @@ const nav = [
 
 <header class="border-b border-app-gray-200">
 	<div class="container mx-auto max-w-5xl px-6">
-		<!-- utility row -->
-		<div class="flex items-center justify-between py-3">
+		<div class="flex items-center justify-between py-4">
+			<a href="/" class="font-serif text-lg font-semibold tracking-[0.03em] text-app-accent md:text-xl">
+				{SITE_TITLE}
+			</a>
+
 			<ul class="hidden items-center gap-6 md:flex">
 				{
 					nav.map((item) => (
@@ -26,25 +29,14 @@ const nav = [
 			<button
 				id="menu-toggle"
 				type="button"
-				aria-label="開啟選單"
+				aria-label="Open menu"
 				aria-expanded="false"
-				class="ml-auto flex h-8 w-8 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
+				class="flex h-8 w-8 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
 					<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
 				</svg>
 			</button>
-		</div>
-
-		<!-- site title -->
-		<div class="pb-6 text-center md:pb-8">
-			<a href="/" class="inline-block" aria-label="首頁">
-				<span
-					class="font-serif text-3xl font-semibold tracking-[0.06em] text-app-accent md:text-4xl lg:text-5xl"
-				>
-					{SITE_TITLE}
-				</span>
-			</a>
 		</div>
 	</div>
 

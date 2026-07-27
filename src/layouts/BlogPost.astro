@@ -19,44 +19,47 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
+			{
+				heroImage && (
+					<div class="relative h-[50vh] w-full overflow-hidden">
+						<Image src={heroImage} alt="" class="h-full w-full object-cover" />
+						<div class="absolute inset-0 flex items-center justify-center bg-app-text/55 px-6">
+							<div class="max-w-2xl text-center">
+								<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-body/85">
+									<FormattedDate date={pubDate} />
+									{updatedDate && (
+										<span> · Updated <FormattedDate date={updatedDate} /></span>
+									)}
+								</p>
+								<h1 class="mt-3 font-serif text-3xl font-semibold leading-tight tracking-tight text-app-body md:text-4xl lg:text-5xl">
+									{title}
+								</h1>
+							</div>
+						</div>
+					</div>
+				)
+			}
+
 			<article class="px-6 py-10 md:py-16">
 				<div class="container mx-auto max-w-5xl">
-					<div
-						class={heroImage
-							? 'grid items-center gap-8 md:grid-cols-2 md:gap-12 lg:gap-16'
-							: 'mx-auto max-w-2xl text-center'}
-					>
-						<div class={heroImage ? 'order-2' : ''}>
-							<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">
-								<FormattedDate date={pubDate} />
-								{
-									updatedDate && (
+					{
+						!heroImage && (
+							<div class="mx-auto max-w-2xl text-center">
+								<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">
+									<FormattedDate date={pubDate} />
+									{updatedDate && (
 										<span> · 最後更新 <FormattedDate date={updatedDate} /></span>
-									)
-								}
-							</p>
-							<h1
-								class={`mt-3 font-serif font-semibold leading-tight tracking-tight text-app-text ${
-									heroImage ? 'text-3xl md:text-4xl lg:text-5xl' : 'text-3xl md:text-4xl'
-								}`}
-							>
-								{title}
-							</h1>
-							{description && <p class="mt-4 text-base leading-relaxed text-app-gray-500 md:text-lg">{description}</p>}
-						</div>
-
-						{
-							heroImage && (
-								<div class="order-1 overflow-hidden">
-									<Image
-										src={heroImage}
-										alt=""
-										class="aspect-[4/3] w-full object-cover md:aspect-square lg:aspect-[4/3]"
-									/>
-								</div>
-							)
-						}
-					</div>
+									)}
+								</p>
+								<h1 class="mt-3 font-serif text-3xl font-semibold leading-tight tracking-tight text-app-text md:text-4xl">
+									{title}
+								</h1>
+								{description && (
+									<p class="mt-4 text-base leading-relaxed text-app-gray-500 md:text-lg">{description}</p>
+								)}
+							</div>
+						)
+					}
 
 					<div class="prose mx-auto mt-12 max-w-3xl md:mt-16">
 						<slot />
