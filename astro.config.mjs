@@ -8,7 +8,7 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://example.com",
+	site: "https://atlas-journal.pupss90034.workers.dev",
 	integrations: [mdx(), sitemap()],
 	vite: {
 		plugins: [tailwindcss()],
