@@ -1,22 +1,27 @@
 @import "tailwindcss";
 
 /*
-  Theme tokens ported from BCMS's Astro blog starter design
-  (https://github.com/bcms/starters/tree/main/astro/blog), adapted for
-  a locally-authored Markdown/Obsidian blog instead of the BCMS CMS backend.
+  Theme tokens: warm, editorial travel-journal look — cream background,
+  muted sage/teal accent, serif display headings paired with a clean
+  sans-serif body/UI font, generous letter-spacing on labels and nav.
 */
 @theme {
-	--color-app-accent: #d9faa1;
-	--color-app-body: #ffffff;
-	--color-app-text: #181a2c;
-	--color-app-gray-100: #e6e6e6;
-	--color-app-gray-200: #e0e0e0;
-	--color-app-gray-300: #d1d1d1;
-	--color-app-gray-400: #989898;
-	--color-app-gray-500: #696a6c;
-	--color-app-gray-600: #5b5b5e;
+	--color-app-accent: #6f8f88;
+	--color-app-accent-soft: #e2e9e6;
+	--color-app-body: #faf6f0;
+	--color-app-surface: #ffffff;
+	--color-app-text: #2f2b26;
+	--color-app-gray-100: #f1ece3;
+	--color-app-gray-200: #e6ddd0;
+	--color-app-gray-300: #d8cabb;
+	--color-app-gray-400: #a99d8b;
+	--color-app-gray-500: #7a7266;
+	--color-app-gray-600: #5c554b;
 
 	--font-inter: "Inter", sans-serif;
+	/* Playfair Display has no Chinese glyphs, so Traditional Chinese text
+	   falls back to Noto Serif TC to keep the same serif, editorial feel. */
+	--font-serif: "Playfair Display", "Noto Serif TC", serif;
 }
 
 @layer base {
@@ -46,7 +51,7 @@
 .prose {
 	color: var(--color-app-text);
 	font-size: 1.05rem;
-	line-height: 1.75;
+	line-height: 1.8;
 }
 .prose h1,
 .prose h2,
@@ -54,9 +59,10 @@
 .prose h4,
 .prose h5,
 .prose h6 {
+	font-family: var(--font-serif);
 	color: var(--color-app-text);
 	font-weight: 600;
-	letter-spacing: -0.02em;
+	letter-spacing: -0.01em;
 	line-height: 1.25;
 	margin: 1.6em 0 0.6em;
 }
@@ -79,8 +85,8 @@
 	color: var(--color-app-text);
 	text-decoration: underline;
 	text-decoration-color: var(--color-app-accent);
-	text-decoration-thickness: 2px;
-	text-underline-offset: 2px;
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 3px;
 }
 .prose ul,
 .prose ol {
@@ -91,10 +97,12 @@
 	margin: 0.3em 0;
 }
 .prose blockquote {
-	border-left: 4px solid var(--color-app-accent);
+	border-left: 2px solid var(--color-app-accent);
 	padding: 0.2em 0 0.2em 1.2em;
 	margin: 1.6em 0;
-	font-size: 1.1em;
+	font-family: var(--font-serif);
+	font-style: italic;
+	font-size: 1.2em;
 	color: var(--color-app-gray-600);
 }
 .prose hr {
@@ -103,7 +111,7 @@
 	margin: 2em 0;
 }
 .prose img {
-	border-radius: 12px;
+	border-radius: 4px;
 	margin: 1.6em 0;
 }
 .prose code {
@@ -114,7 +122,7 @@
 }
 .prose pre {
 	padding: 1.4em;
-	border-radius: 12px;
+	border-radius: 4px;
 	overflow-x: auto;
 }
 .prose pre code {
