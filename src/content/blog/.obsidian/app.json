@@ -2,5 +2,6 @@
   "alwaysUpdateLinks": true,
   "newFileLocation": "folder",
   "newFileFolderPath": "/",
-  "attachmentFolderPath": "Pic"
+  "attachmentFolderPath": "Pic",
+  "useMarkdownLinks": true
 }

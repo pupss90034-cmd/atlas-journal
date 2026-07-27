@@ -8,16 +8,11 @@ interface Props {
 
 const { post } = Astro.props;
 const { title, description, pubDate, heroImage } = post.data;
-
-// Derive a lightweight "category" label from the top-level folder the post
-// lives in (this mirrors how the content is already organized in Obsidian).
-const segments = post.id.split('/');
-const category = segments.length > 1 ? segments[0] : null;
 ---
 
 <a href={`/blog/${post.id}/`} class="group block">
-	<article class="flex h-full flex-col overflow-hidden rounded-2xl border border-app-gray-200 transition-shadow group-hover:shadow-lg">
-		<div class="aspect-[1.6] w-full overflow-hidden bg-app-accent">
+	<article>
+		<div class="mb-4 aspect-[1.48] w-full overflow-hidden rounded-2xl bg-app-accent xl:mb-6">
 			{
 				heroImage ? (
 					<img
@@ -32,21 +27,27 @@ const category = segments.length > 1 ? segments[0] : null;
 				)
 			}
 		</div>
-		<div class="flex flex-1 flex-col p-5">
-			{category && (
-				<span class="mb-2 inline-block w-fit rounded-full bg-app-gray-100 px-3 py-1 text-xs font-medium tracking-tight text-app-gray-600">
-					{category}
-				</span>
-			)}
-			<h3 class="text-lg font-semibold leading-snug tracking-tight text-app-text">
+		<div class="mb-2 text-xs font-medium leading-none tracking-tight text-app-gray-400 xl:mb-4 xl:text-base">
+			<FormattedDate date={pubDate} />
+		</div>
+		<div class="mb-2.5 flex items-center gap-2 xl:mb-4">
+			<h3 class="text-sm font-medium leading-snug tracking-tight text-app-text xl:text-2xl">
 				{title}
 			</h3>
-			<p class="mt-2 flex-1 text-sm leading-relaxed text-app-gray-500 line-clamp-2">
-				{description}
-			</p>
-			<p class="mt-4 text-xs font-medium text-app-gray-400">
-				<FormattedDate date={pubDate} />
-			</p>
+			<span class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded bg-app-gray-100 xl:h-5 xl:w-5">
+				<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none">
+					<path
+						d="M7 17L17 7M17 7H9M17 7V15"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				</svg>
+			</span>
 		</div>
+		<p class="text-sm leading-snug tracking-tight text-app-gray-500 line-clamp-2 xl:text-xl">
+			{description}
+		</p>
 	</article>
 </a>

@@ -27,17 +27,28 @@ const categories = [
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<section class="px-6 py-10 md:py-16">
+			<section class="px-6 pb-8 pt-10 md:pb-10 md:pt-[72px] lg:pb-12">
 				<div class="container mx-auto max-w-5xl">
-					<h1 class="mb-8 text-3xl font-semibold tracking-tight text-app-text md:text-4xl">所有文章</h1>
+					<div class="flex flex-col-reverse items-center gap-2.5 text-center md:gap-4">
+						<h1 class="text-2xl font-medium leading-none tracking-tight text-app-text md:text-3xl lg:text-[56px]">
+							所有文章
+						</h1>
+						<h2 class="text-sm leading-none tracking-tight text-app-gray-600 md:text-base lg:text-xl">
+							{SITE_DESCRIPTION}
+						</h2>
+					</div>
+				</div>
+			</section>
 
+			<section class="px-6 pb-16 md:pb-24">
+				<div class="container mx-auto max-w-5xl">
 					{
 						categories.length > 0 && (
-							<div class="mb-8 flex flex-wrap gap-2" id="category-filter">
+							<div class="mb-8 flex flex-wrap justify-center gap-2.5 lg:mb-12" id="category-filter">
 								<button
 									type="button"
 									data-category=""
-									class="filter-btn rounded-full border border-app-text bg-app-text px-5 py-2 text-sm font-medium text-white transition-colors"
+									class="filter-btn flex items-center justify-center rounded-full border border-app-text bg-app-text px-6 py-2.5 text-xs leading-none tracking-tight text-white transition-colors duration-300 md:text-base lg:px-6 lg:py-[14px] lg:text-xl"
 								>
 									全部
 								</button>
@@ -45,7 +56,7 @@ const categories = [
 									<button
 										type="button"
 										data-category={category}
-										class="filter-btn rounded-full border border-app-gray-300 px-5 py-2 text-sm font-medium text-app-text transition-colors"
+										class="filter-btn flex items-center justify-center rounded-full border border-app-gray-300 px-6 py-2.5 text-xs leading-none tracking-tight text-app-text transition-colors duration-300 md:text-base lg:px-6 lg:py-[14px] lg:text-xl"
 									>
 										{category}
 									</button>
@@ -54,9 +65,16 @@ const categories = [
 						)
 					}
 
+					<h2 class="mb-7 text-lg font-medium leading-none tracking-tight text-app-text md:mb-10 lg:mb-12 lg:text-[32px]">
+						全部文章
+					</h2>
+
 					{
 						posts.length > 0 ? (
-							<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" id="post-grid">
+							<div
+								class="grid grid-cols-1 gap-6 rounded-2xl border border-app-gray-300 p-4 md:grid-cols-2 lg:grid-cols-3 xl:gap-10 xl:p-8"
+								id="post-grid"
+							>
 								{posts.map((post) => (
 									<div
 										class="post-item"

@@ -20,29 +20,45 @@ const latestPosts = posts.slice(0, 6);
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<section class="px-6 pb-12 pt-16 md:pb-20 md:pt-24">
-				<div class="container mx-auto max-w-3xl text-center">
-					<h1 class="text-4xl font-semibold leading-tight tracking-tight text-app-text md:text-6xl">
-						{SITE_TITLE}
-					</h1>
-					<p class="mx-auto mt-4 max-w-xl text-base text-app-gray-500 md:text-lg">
-						{SITE_DESCRIPTION}
-					</p>
-					<a
-						href="/blog"
-						class="mt-8 inline-flex items-center justify-center rounded-full bg-app-text px-8 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
-					>
-						瀏覽所有文章
-					</a>
+			<section class="relative px-6 pb-8 pt-10 md:pb-10 md:pt-[72px] lg:pb-[100px]">
+				<div class="container mx-auto max-w-5xl">
+					<div class="mb-8 flex flex-col-reverse items-center gap-2.5 text-center md:mb-10 md:gap-4 lg:mb-12 lg:gap-5">
+						<h1 class="text-3xl font-medium leading-none tracking-tight text-app-text md:text-5xl lg:text-[56px]">
+							{SITE_TITLE}
+						</h1>
+						<h2 class="text-sm leading-none tracking-tight text-app-gray-600 md:text-base lg:text-xl">
+							{SITE_DESCRIPTION}
+						</h2>
+					</div>
 				</div>
 			</section>
 
 			<section class="px-6 pb-16 md:pb-24">
 				<div class="container mx-auto max-w-5xl">
-					<h2 class="mb-8 text-xl font-medium tracking-tight text-app-text md:text-2xl">最新文章</h2>
+					<div class="mb-6 flex items-center justify-between md:mb-8 lg:mb-10">
+						<h2 class="text-lg font-medium leading-none tracking-tight text-app-text lg:text-[32px]">
+							最新文章
+						</h2>
+						<a
+							href="/blog"
+							class="flex items-center gap-1.5 rounded-full bg-app-accent px-4 py-2.5 text-sm leading-none tracking-tight text-app-text md:text-base"
+						>
+							查看所有文章
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none">
+								<path
+									d="M5 12h14M13 6l6 6-6 6"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</a>
+					</div>
+
 					{
 						latestPosts.length > 0 ? (
-							<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+							<div class="grid grid-cols-1 gap-6 rounded-2xl border border-app-gray-300 p-4 md:grid-cols-2 lg:grid-cols-3 xl:gap-10 xl:p-8">
 								{latestPosts.map((post) => <BlogCard post={post} />)}
 							</div>
 						) : (

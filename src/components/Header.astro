@@ -9,27 +9,37 @@ const nav = [
 ];
 ---
 
-<header class="sticky top-0 z-50 border-b border-app-gray-200 bg-app-body/90 backdrop-blur">
-	<div class="container mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-		<a href="/" class="text-lg font-semibold tracking-tight text-app-text">
-			{SITE_TITLE}
-		</a>
+<header class="relative z-50">
+	<div class="container mx-auto max-w-5xl px-6">
+		<nav class="relative flex items-center justify-between pt-6 pb-6">
+			<a href="/" class="text-lg font-semibold tracking-tight text-app-text" aria-label="首頁">
+				{SITE_TITLE}
+			</a>
 
-		<nav class="hidden items-center gap-8 md:flex">
-			{nav.map((item) => <HeaderLink href={item.href}>{item.label}</HeaderLink>)}
+			<ul class="hidden items-center gap-8 md:flex lg:gap-10">
+				{
+					nav.map((item) => (
+						<li>
+							<HeaderLink href={item.href} class="text-base! font-medium! tracking-tight!">
+								{item.label}
+							</HeaderLink>
+						</li>
+					))
+				}
+			</ul>
+
+			<button
+				id="menu-toggle"
+				type="button"
+				aria-label="開啟選單"
+				aria-expanded="false"
+				class="flex h-9 w-9 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+					<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+				</svg>
+			</button>
 		</nav>
-
-		<button
-			id="menu-toggle"
-			type="button"
-			aria-label="開啟選單"
-			aria-expanded="false"
-			class="flex h-9 w-9 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
-		>
-			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-				<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-			</svg>
-		</button>
 	</div>
 
 	<nav id="mobile-menu" class="hidden flex-col gap-1 border-t border-app-gray-200 px-6 py-3 md:hidden">
