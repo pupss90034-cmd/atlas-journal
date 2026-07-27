@@ -3,6 +3,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import BlogCard from '../components/BlogCard.astro';
+import { Image } from 'astro:assets';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import { getCollection } from 'astro:content';
 
@@ -43,7 +44,7 @@ const categoryTiles = [...categoryMap.entries()].slice(0, 4);
 							>
 								{featuredPost.data.heroImage ? (
 									<div class="overflow-hidden">
-										<img
+										<Image
 											src={featuredPost.data.heroImage}
 											alt=""
 											class="aspect-[4/3] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 md:aspect-auto"
@@ -86,7 +87,7 @@ const categoryTiles = [...categoryMap.entries()].slice(0, 4);
 									<a href="/blog" class="group block text-center">
 										<div class="mb-3 aspect-square w-full overflow-hidden bg-app-accent-soft">
 											{post.data.heroImage ? (
-												<img
+												<Image
 													src={post.data.heroImage}
 													alt=""
 													class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

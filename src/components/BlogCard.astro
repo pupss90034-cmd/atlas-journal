@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 import FormattedDate from './FormattedDate.astro';
 
 interface Props {
@@ -15,7 +16,7 @@ const { title, description, pubDate, heroImage } = post.data;
 		<div class="mb-4 w-full overflow-hidden bg-app-accent-soft">
 			{
 				heroImage ? (
-					<img
+					<Image
 						src={heroImage}
 						alt=""
 						class="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-105"
