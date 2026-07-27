@@ -2,110 +2,101 @@
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import BlogCard from '../../components/BlogCard.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { getCollection } from 'astro:content';
-import FormattedDate from '../../components/FormattedDate.astro';
 
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+const categories = [
+	...new Set(
+		posts
+			.map((post) => (post.id.includes('/') ? post.id.split('/')[0] : null))
+			.filter((c): c is string => Boolean(c)),
+	),
+];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
+		<BaseHead title={`文章 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 	</head>
-	<body>
+	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
-		<main>
-			<section>
-				<ul>
+		<main class="flex-1">
+			<section class="px-6 py-10 md:py-16">
+				<div class="container mx-auto max-w-5xl">
+					<h1 class="mb-8 text-3xl font-semibold tracking-tight text-app-text md:text-4xl">所有文章</h1>
+
 					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									<img width={720} height={360} src={post.data.heroImage} alt="" />
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
+						categories.length > 0 && (
+							<div class="mb-8 flex flex-wrap gap-2" id="category-filter">
+								<button
+									type="button"
+									data-category=""
+									class="filter-btn rounded-full border border-app-text bg-app-text px-5 py-2 text-sm font-medium text-white transition-colors"
+								>
+									全部
+								</button>
+								{categories.map((category) => (
+									<button
+										type="button"
+										data-category={category}
+										class="filter-btn rounded-full border border-app-gray-300 px-5 py-2 text-sm font-medium text-app-text transition-colors"
+									>
+										{category}
+									</button>
+								))}
+							</div>
+						)
 					}
-				</ul>
+
+					{
+						posts.length > 0 ? (
+							<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" id="post-grid">
+								{posts.map((post) => (
+									<div
+										class="post-item"
+										data-category={post.id.includes('/') ? post.id.split('/')[0] : ''}
+									>
+										<BlogCard post={post} />
+									</div>
+								))}
+							</div>
+						) : (
+							<p class="text-app-gray-500">還沒有發佈的文章。</p>
+						)
+					}
+				</div>
 			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<script>
+	const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
+
+	buttons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const category = button.dataset.category ?? '';
+
+			buttons.forEach((b) => {
+				const active = b === button;
+				b.classList.toggle('bg-app-text', active);
+				b.classList.toggle('text-white', active);
+				b.classList.toggle('border-app-text', active);
+				b.classList.toggle('border-app-gray-300', !active);
+			});
+
+			items.forEach((item) => {
+				const show = !category || item.dataset.category === category;
+				item.classList.toggle('hidden', !show);
+			});
+		});
+	});
+</script>

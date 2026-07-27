@@ -1,0 +1,52 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+	post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, heroImage } = post.data;
+
+// Derive a lightweight "category" label from the top-level folder the post
+// lives in (this mirrors how the content is already organized in Obsidian).
+const segments = post.id.split('/');
+const category = segments.length > 1 ? segments[0] : null;
+---
+
+<a href={`/blog/${post.id}/`} class="group block">
+	<article class="flex h-full flex-col overflow-hidden rounded-2xl border border-app-gray-200 transition-shadow group-hover:shadow-lg">
+		<div class="aspect-[1.6] w-full overflow-hidden bg-app-accent">
+			{
+				heroImage ? (
+					<img
+						src={heroImage}
+						alt=""
+						class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+					/>
+				) : (
+					<div class="flex h-full w-full items-center justify-center text-2xl font-semibold tracking-tight text-app-text/40">
+						{title.slice(0, 1)}
+					</div>
+				)
+			}
+		</div>
+		<div class="flex flex-1 flex-col p-5">
+			{category && (
+				<span class="mb-2 inline-block w-fit rounded-full bg-app-gray-100 px-3 py-1 text-xs font-medium tracking-tight text-app-gray-600">
+					{category}
+				</span>
+			)}
+			<h3 class="text-lg font-semibold leading-snug tracking-tight text-app-text">
+				{title}
+			</h3>
+			<p class="mt-2 flex-1 text-sm leading-relaxed text-app-gray-500 line-clamp-2">
+				{description}
+			</p>
+			<p class="mt-4 text-xs font-medium text-app-gray-400">
+				<FormattedDate date={pubDate} />
+			</p>
+		</div>
+	</article>
+</a>
