@@ -1,0 +1,54 @@
+---
+import { Image } from 'astro:assets';
+import heroCove from '../../assets/home/hero-cove.jpg';
+import { SITE_TITLE } from '../../consts';
+---
+
+<section class="relative flex h-[100svh] min-h-[560px] w-full items-end overflow-hidden bg-app-ink">
+	<Image
+		src={heroCove}
+		alt="從高處俯瞰的地中海海岸線與松林海灣"
+		class="absolute inset-0 h-full w-full object-cover"
+		widths={[640, 1024, 1600, 2200]}
+		sizes="100vw"
+		loading="eager"
+		fetchpriority="high"
+	/>
+	<div class="absolute inset-0 bg-gradient-to-t from-app-ink/85 via-app-ink/20 to-app-ink/45" aria-hidden="true"></div>
+
+	<div class="relative z-10 mx-auto w-full max-w-6xl px-6 pb-20 pt-40 md:px-10 md:pb-28">
+		<p class="mb-5 text-xs font-medium uppercase tracking-[0.35em] text-app-body/80">
+			Coastlines · Roads · Everyday Notes
+		</p>
+		<h1 class="max-w-3xl font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-app-body sm:text-5xl md:text-6xl lg:text-7xl">
+			{SITE_TITLE}
+		</h1>
+		<p class="mt-6 max-w-xl text-sm leading-relaxed text-app-body/85 md:text-base">
+			用鏡頭記錄露營車生活、公路旅行與日常裡值得停留的片刻——一本持續在寫的旅遊誌。
+		</p>
+
+		<div class="mt-10 flex flex-wrap items-center gap-4">
+			<a
+				href="#latest"
+				class="inline-flex items-center gap-2 bg-app-accent px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-app-body transition-colors duration-300 hover:bg-app-accent-dark"
+			>
+				閱讀最新文章
+			</a>
+			<a
+				href="#gallery"
+				class="inline-flex items-center gap-2 border border-app-body/50 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-app-body transition-colors duration-300 hover:border-app-body hover:bg-app-body/10"
+			>
+				瀏覽攝影集
+			</a>
+		</div>
+	</div>
+
+	<a
+		href="#about"
+		aria-label="向下捲動"
+		class="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 text-app-body/70 transition-colors hover:text-app-body md:flex"
+	>
+		<span class="text-[10px] font-medium uppercase tracking-[0.3em]">Scroll</span>
+		<span class="h-10 w-px animate-pulse bg-app-body/60"></span>
+	</a>
+</section>

@@ -1,0 +1,58 @@
+---
+import { Image } from 'astro:assets';
+import aboutPortrait from '../../assets/home/about-portrait.jpg';
+
+const stats = [
+	{ value: '22+', label: '走過的國家' },
+	{ value: '180K', label: '公里的公路里程' },
+	{ value: '4', label: '年的露營車生活' },
+];
+---
+
+<section id="about" class="px-6 py-20 md:py-28">
+	<div class="mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-16">
+		<div class="mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden md:mx-0">
+			<Image
+				src={aboutPortrait}
+				alt="夕陽下的城堡剪影，旅途中的一個瞬間"
+				class="h-full w-full object-cover"
+				widths={[400, 640, 900]}
+				sizes="(min-width: 768px) 420px, 90vw"
+			/>
+		</div>
+
+		<div>
+			<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">About Me</p>
+			<h2 class="mt-4 font-serif text-3xl font-semibold leading-tight tracking-tight text-app-ink md:text-4xl">
+				關於我
+			</h2>
+			<p class="mt-6 text-base leading-relaxed text-app-gray-600 md:text-lg">
+				我是一個帶著相機生活在路上的人。把露營車當作家，把每一段公路、每一次靠港、每一頓路邊的餐桌時光都寫進這本雜誌式的網誌裡。這裡沒有精心包裝的完美旅程，只有值得慢慢閱讀的真實片刻。
+			</p>
+			<p class="mt-4 text-base leading-relaxed text-app-gray-600 md:text-lg">
+				如果你也喜歡把日子過成一場緩慢的旅行，歡迎留下來，讀完一篇文章，看完一組照片。
+			</p>
+
+			<div class="mt-10 grid grid-cols-3 gap-6 border-t border-app-gray-200 pt-8">
+				{stats.map((stat) => (
+					<div>
+						<p class="font-serif text-2xl font-semibold text-app-accent md:text-3xl">{stat.value}</p>
+						<p class="mt-1.5 text-[11px] uppercase leading-snug tracking-[0.12em] text-app-gray-500 md:text-xs">
+							{stat.label}
+						</p>
+					</div>
+				))}
+			</div>
+
+			<a
+				href="/about"
+				class="group mt-10 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-app-ink"
+			>
+				<span class="border-b border-app-ink pb-1 transition-colors group-hover:border-app-accent group-hover:text-app-accent">
+					深入了解我的故事
+				</span>
+				<span class="transition-transform group-hover:translate-x-1">⭢</span>
+			</a>
+		</div>
+	</div>
+</section>

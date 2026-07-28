@@ -1,0 +1,95 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import FormattedDate from '../FormattedDate.astro';
+import defaultCover from '../../assets/site/default-cover.jpg';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const [featured, ...rest] = posts;
+const sideArticles = rest.slice(0, 3);
+---
+
+{
+	featured && (
+		<section id="latest" class="px-6 py-20 md:py-28">
+			<div class="mx-auto max-w-6xl">
+				<div class="mb-10 flex items-end justify-between border-b border-app-gray-200 pb-6 md:mb-14">
+					<div>
+						<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">Journal</p>
+						<h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-app-ink md:text-4xl">
+							最新文章
+						</h2>
+					</div>
+					<a
+						href="/blog"
+						class="hidden shrink-0 text-xs font-medium uppercase tracking-[0.15em] text-app-gray-500 transition-colors hover:text-app-ink md:block"
+					>
+						查看全部文章 ⭢
+					</a>
+				</div>
+
+				<div class="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-14">
+					<a href={`/blog/${featured.id}/`} class="group block">
+						<div class="mb-5 aspect-[4/3] w-full overflow-hidden bg-app-gray-100">
+							<Image
+								src={featured.data.heroImage ?? defaultCover}
+								alt=""
+								class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+								widths={[500, 800, 1100]}
+								sizes="(min-width: 768px) 45vw, 90vw"
+							/>
+						</div>
+						<p class="text-[11px] font-medium uppercase tracking-[0.15em] text-app-gray-400">
+							<FormattedDate date={featured.data.pubDate} />
+						</p>
+						<h3 class="mt-3 font-serif text-2xl font-semibold leading-snug tracking-tight text-app-ink transition-colors group-hover:text-app-accent md:text-3xl">
+							{featured.data.title}
+						</h3>
+						<p class="mt-3 text-sm leading-relaxed text-app-gray-500 md:text-base">
+							{featured.data.description}
+						</p>
+						<span class="mt-4 inline-block border-b border-app-ink pb-0.5 text-xs font-medium uppercase tracking-[0.15em] text-app-ink transition-colors group-hover:border-app-accent group-hover:text-app-accent">
+							閱讀全文
+						</span>
+					</a>
+
+					<div class="flex flex-col gap-10 divide-y divide-app-gray-200 md:gap-0">
+						{sideArticles.map((post) => (
+							<a href={`/blog/${post.id}/`} class="group grid grid-cols-[100px_1fr] gap-5 pt-0 first:pt-0 md:grid-cols-[120px_1fr] md:gap-6 md:py-7 md:first:pt-0">
+								<div class="aspect-square w-full overflow-hidden bg-app-gray-100">
+									<Image
+										src={post.data.heroImage ?? defaultCover}
+										alt=""
+										class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+										widths={[120, 240]}
+										sizes="120px"
+									/>
+								</div>
+								<div>
+									<p class="text-[11px] font-medium uppercase tracking-[0.15em] text-app-gray-400">
+										<FormattedDate date={post.data.pubDate} />
+									</p>
+									<h3 class="mt-2 font-serif text-base font-semibold leading-snug tracking-tight text-app-ink transition-colors group-hover:text-app-accent md:text-lg">
+										{post.data.title}
+									</h3>
+									<p class="mt-1.5 line-clamp-2 text-xs leading-relaxed text-app-gray-500 md:text-sm">
+										{post.data.description}
+									</p>
+								</div>
+							</a>
+						))}
+					</div>
+				</div>
+
+				<a
+					href="/blog"
+					class="mt-10 block text-center text-xs font-medium uppercase tracking-[0.15em] text-app-gray-500 transition-colors hover:text-app-ink md:hidden"
+				>
+					查看全部文章 ⭢
+				</a>
+			</div>
+		</section>
+	)
+}

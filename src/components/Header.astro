@@ -1,64 +1,277 @@
 ---
-import HeaderLink from './HeaderLink.astro';
 import { SITE_TITLE } from '../consts';
+
+interface Props {
+	// Home renders its own full-bleed Hero directly beneath the header, so the
+	// header starts see-through with light text and only turns solid once the
+	// person scrolls past the hero. Every other page has no image behind the
+	// header, so it should just be solid from the start.
+	transparent?: boolean;
+}
+
+const { transparent = false } = Astro.props;
 
 const nav = [
 	{ label: '首頁', href: '/' },
 	{ label: '文章', href: '/blog' },
-	{ label: '關於', href: '/about' },
+	{ label: '關於我', href: '/about' },
 ];
+
+const socialLinks = [
+	{ name: 'Instagram', href: '#', path: 'M12 2c2.72 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.21.6 1.76 1.15.5.5.9 1.1 1.15 1.76.25.64.42 1.37.47 2.43C21.99 8.94 22 9.28 22 12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.76 4.9 4.9 0 0 1-1.76 1.15c-.64.25-1.37.42-2.43.47C15.06 21.99 14.72 22 12 22s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.76-1.15 4.9 4.9 0 0 1-1.15-1.76c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.72 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.21 1.15-1.76A4.9 4.9 0 0 1 5.44.54C6.08.29 6.81.12 7.87.07 8.94.01 9.28 0 12 0zm0 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm7.25-3.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z' },
+	{ name: 'Facebook', href: '#', path: 'M13.5 22v-8.5h2.85l.43-3.31H13.5V8.05c0-.96.27-1.61 1.64-1.61h1.75V3.5c-.3-.04-1.34-.13-2.55-.13-2.52 0-4.24 1.54-4.24 4.36v2.44H7.24v3.31h2.86V22h3.4z' },
+	{ name: 'YouTube', href: '#', path: 'M23.5 6.5a3 3 0 0 0-2.1-2.1C19.6 4 12 4 12 4s-7.6 0-9.4.4A3 3 0 0 0 .5 6.5 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.5 3 3 0 0 0 2.1 2.1C4.4 20 12 20 12 20s7.6 0 9.4-.4a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.5zM9.6 15.5v-7l6.3 3.5-6.3 3.5z' },
+	{ name: 'Pinterest', href: '#', path: 'M12 0a12 12 0 0 0-4.37 23.17c-.06-.94-.11-2.38.02-3.4.12-.93.8-5.9.8-5.9s-.2-.41-.2-1.01c0-.94.55-1.65 1.23-1.65.58 0 .86.44.86.96 0 .58-.37 1.46-.56 2.27-.16.68.34 1.23 1 1.23 1.2 0 2.13-1.27 2.13-3.1 0-1.62-1.16-2.75-2.83-2.75-1.93 0-3.06 1.44-3.06 2.94 0 .58.22 1.2.5 1.54a.2.2 0 0 1 .05.19c-.05.22-.17.68-.2.78-.03.13-.1.16-.24.1-.9-.42-1.46-1.73-1.46-2.79 0-2.27 1.65-4.36 4.76-4.36 2.5 0 4.44 1.78 4.44 4.16 0 2.48-1.56 4.48-3.74 4.48-.73 0-1.42-.38-1.65-.83l-.45 1.72c-.16.63-.6 1.42-.9 1.9A12 12 0 1 0 12 0z' },
+];
+
+const popularSearches = ['露營車生活', '紐西蘭', '大溪地', '飯店日常', '攝影集'];
 ---
 
-<header class="relative z-50">
-	<div class="container mx-auto max-w-5xl px-6">
-		<nav class="relative flex items-center justify-between pt-6 pb-6">
-			<a href="/" class="text-lg font-semibold tracking-tight text-app-text" aria-label="首頁">
-				{SITE_TITLE}
-			</a>
+<header id="site-header" data-transparent={transparent ? 'true' : 'false'} class="fixed inset-x-0 top-0 z-50">
+	<div class="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6 py-5 md:px-10">
+		<nav class="hidden items-center gap-7 md:flex">
+			{nav.map((item) => (
+				<a href={item.href} class="header-link text-xs font-medium uppercase tracking-[0.18em] transition-colors duration-300">
+					{item.label}
+				</a>
+			))}
+		</nav>
 
-			<ul class="hidden items-center gap-8 md:flex lg:gap-10">
-				{
-					nav.map((item) => (
-						<li>
-							<HeaderLink href={item.href} class="text-base! font-medium! tracking-tight!">
-								{item.label}
-							</HeaderLink>
-						</li>
-					))
-				}
-			</ul>
+		<a href="/" class="header-logo justify-self-center font-serif text-lg font-semibold uppercase tracking-[0.25em] transition-colors duration-300 md:text-xl">
+			{SITE_TITLE}
+		</a>
+
+		<div class="flex items-center justify-self-end gap-2">
+			<button
+				id="search-open"
+				type="button"
+				aria-label="開啟搜尋"
+				class="header-icon-btn hidden h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 md:flex"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+					<circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5" />
+					<path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				</svg>
+			</button>
+
+			<a
+				href="#newsletter"
+				class="header-link hidden text-xs font-medium uppercase tracking-[0.18em] transition-colors duration-300 md:block"
+			>
+				訂閱
+			</a>
 
 			<button
 				id="menu-toggle"
 				type="button"
 				aria-label="開啟選單"
 				aria-expanded="false"
-				class="flex h-9 w-9 items-center justify-center rounded-full border border-app-gray-200 md:hidden"
+				class="header-icon-btn flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 md:hidden"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-					<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+				<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none">
+					<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
 				</svg>
 			</button>
-		</nav>
+		</div>
 	</div>
-
-	<nav id="mobile-menu" class="hidden flex-col gap-1 border-t border-app-gray-200 px-6 py-3 md:hidden">
-		{
-			nav.map((item) => (
-				<HeaderLink href={item.href} class="block! py-2">
-					{item.label}
-				</HeaderLink>
-			))
-		}
-	</nav>
 </header>
 
+<!-- Mobile full-screen drawer -->
+<div id="mobile-drawer" class="fixed inset-0 z-50 hidden flex-col bg-app-body">
+	<div class="flex items-center justify-between px-6 py-5">
+		<span class="font-serif text-lg font-semibold uppercase tracking-[0.25em] text-app-ink">{SITE_TITLE}</span>
+		<button id="drawer-close" type="button" aria-label="關閉選單" class="flex h-9 w-9 items-center justify-center rounded-full text-app-ink">
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+				<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+			</svg>
+		</button>
+	</div>
+
+	<nav class="flex flex-1 flex-col items-center justify-center gap-8">
+		{nav.map((item) => (
+			<a href={item.href} class="font-serif text-3xl font-semibold tracking-tight text-app-ink transition-colors hover:text-app-accent">
+				{item.label}
+			</a>
+		))}
+		<button id="drawer-search-open" type="button" class="mt-2 text-xs font-medium uppercase tracking-[0.2em] text-app-gray-500">
+			搜尋文章
+		</button>
+	</nav>
+
+	<div class="flex items-center justify-center gap-4 border-t border-app-gray-200 px-6 py-8">
+		{socialLinks.map((social) => (
+			<a
+				href={social.href}
+				aria-label={social.name}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="flex h-10 w-10 items-center justify-center rounded-full border border-app-gray-300/60 text-app-gray-600 transition-colors duration-300 hover:border-app-accent hover:bg-app-accent hover:text-app-body"
+			>
+				<svg viewBox="0 0 24 24" class="h-4 w-4 fill-current"><path d={social.path} /></svg>
+			</a>
+		))}
+	</div>
+</div>
+
+<!-- Search modal -->
+<div id="search-modal" class="fixed inset-0 z-[60] hidden items-start justify-center bg-app-ink/70 px-6 pt-24 backdrop-blur-sm md:pt-32">
+	<div class="w-full max-w-xl rounded-sm bg-app-surface p-6 shadow-2xl md:p-8">
+		<div class="flex items-center justify-between">
+			<p class="text-xs font-medium uppercase tracking-[0.2em] text-app-gray-400">搜尋文章</p>
+			<button id="search-close" type="button" aria-label="關閉搜尋" class="flex h-8 w-8 items-center justify-center rounded-full text-app-gray-500 hover:text-app-ink">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+					<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				</svg>
+			</button>
+		</div>
+
+		<form id="search-form" action="/blog" method="get" class="mt-4 flex items-center gap-3 border-b border-app-gray-300 pb-3">
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 text-app-gray-400">
+				<circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5" />
+				<path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+			</svg>
+			<input
+				id="search-input"
+				name="q"
+				type="text"
+				autocomplete="off"
+				placeholder="輸入關鍵字，Enter 搜尋…"
+				class="w-full bg-transparent font-serif text-lg text-app-ink placeholder:text-app-gray-400 focus:outline-none"
+			/>
+		</form>
+
+		<div class="mt-5">
+			<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">熱門搜尋</p>
+			<div class="mt-3 flex flex-wrap gap-2">
+				{popularSearches.map((tag) => (
+					<button
+						type="button"
+						data-tag={tag}
+						class="search-tag rounded-full border border-app-gray-300 px-3.5 py-1.5 text-xs text-app-gray-600 transition-colors duration-300 hover:border-app-accent hover:text-app-accent"
+					>
+						{tag}
+					</button>
+				))}
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	/* Transparent-over-hero header: light text on a see-through bar. */
+	#site-header[data-transparent='true'] {
+		background: transparent;
+		border-bottom: 1px solid transparent;
+	}
+	#site-header[data-transparent='true'] .header-link,
+	#site-header[data-transparent='true'] .header-logo {
+		color: var(--color-app-body);
+	}
+	#site-header[data-transparent='true'] .header-icon-btn {
+		color: var(--color-app-body);
+	}
+
+	/* Solid state: either a non-transparent page from the start, or a
+	   transparent header once the person has scrolled past the hero. */
+	#site-header[data-transparent='false'],
+	#site-header.is-scrolled {
+		background: color-mix(in srgb, var(--color-app-surface) 92%, transparent);
+		backdrop-filter: blur(8px);
+		border-bottom: 1px solid var(--color-app-gray-200);
+	}
+	#site-header[data-transparent='false'] .header-link,
+	#site-header.is-scrolled .header-link {
+		color: var(--color-app-gray-500);
+	}
+	#site-header[data-transparent='false'] .header-link:hover,
+	#site-header.is-scrolled .header-link:hover {
+		color: var(--color-app-ink);
+	}
+	#site-header[data-transparent='false'] .header-logo,
+	#site-header.is-scrolled .header-logo {
+		color: var(--color-app-accent);
+	}
+	#site-header[data-transparent='false'] .header-icon-btn,
+	#site-header.is-scrolled .header-icon-btn {
+		color: var(--color-app-ink);
+	}
+
+	#mobile-drawer.flex {
+		display: flex;
+	}
+	#search-modal.flex {
+		display: flex;
+	}
+</style>
+
 <script>
-	const toggle = document.getElementById('menu-toggle');
-	const menu = document.getElementById('mobile-menu');
-	toggle?.addEventListener('click', () => {
-		const isOpen = menu?.classList.toggle('flex');
-		menu?.classList.toggle('hidden');
-		toggle.setAttribute('aria-expanded', String(!!isOpen));
+	const header = document.getElementById('site-header');
+
+	function updateHeaderOnScroll() {
+		if (!header) return;
+		const scrolled = window.scrollY > 40;
+		header.classList.toggle('is-scrolled', scrolled);
+	}
+	updateHeaderOnScroll();
+	window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
+
+	// Mobile drawer
+	const menuToggle = document.getElementById('menu-toggle');
+	const drawer = document.getElementById('mobile-drawer');
+	const drawerClose = document.getElementById('drawer-close');
+
+	function openDrawer() {
+		drawer?.classList.remove('hidden');
+		drawer?.classList.add('flex');
+		document.body.style.overflow = 'hidden';
+		menuToggle?.setAttribute('aria-expanded', 'true');
+	}
+	function closeDrawer() {
+		drawer?.classList.add('hidden');
+		drawer?.classList.remove('flex');
+		document.body.style.overflow = '';
+		menuToggle?.setAttribute('aria-expanded', 'false');
+	}
+	menuToggle?.addEventListener('click', openDrawer);
+	drawerClose?.addEventListener('click', closeDrawer);
+
+	// Search modal
+	const searchModal = document.getElementById('search-modal');
+	const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+	const searchOpenButtons = [
+		document.getElementById('search-open'),
+		document.getElementById('drawer-search-open'),
+	];
+	const searchClose = document.getElementById('search-close');
+
+	function openSearch() {
+		closeDrawer();
+		searchModal?.classList.remove('hidden');
+		searchModal?.classList.add('flex');
+		document.body.style.overflow = 'hidden';
+		searchInput?.focus();
+	}
+	function closeSearch() {
+		searchModal?.classList.add('hidden');
+		searchModal?.classList.remove('flex');
+		document.body.style.overflow = '';
+	}
+	searchOpenButtons.forEach((btn) => btn?.addEventListener('click', openSearch));
+	searchClose?.addEventListener('click', closeSearch);
+	searchModal?.addEventListener('click', (e) => {
+		if (e.target === searchModal) closeSearch();
+	});
+
+	document.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape') return;
+		if (searchModal && !searchModal.classList.contains('hidden')) closeSearch();
+		else if (drawer && !drawer.classList.contains('hidden')) closeDrawer();
+	});
+
+	document.querySelectorAll<HTMLButtonElement>('.search-tag').forEach((tag) => {
+		tag.addEventListener('click', () => {
+			const term = tag.dataset.tag ?? '';
+			window.location.href = `/blog?q=${encodeURIComponent(term)}`;
+		});
 	});
 </script>

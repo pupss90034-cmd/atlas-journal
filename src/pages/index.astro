@@ -2,16 +2,13 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import BlogCard from '../components/BlogCard.astro';
-import FormattedDate from '../components/FormattedDate.astro';
+import Hero from '../components/home/Hero.astro';
+import About from '../components/home/About.astro';
+import LatestArticles from '../components/home/LatestArticles.astro';
+import PhotoGallery from '../components/home/PhotoGallery.astro';
+import Consulting from '../components/home/Consulting.astro';
+import Newsletter from '../components/home/Newsletter.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
-import { getCollection } from 'astro:content';
-
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
-const [featuredPost, ...rest] = posts;
-const otherPosts = rest.slice(0, 5);
 ---
 
 <!doctype html>
@@ -20,102 +17,14 @@ const otherPosts = rest.slice(0, 5);
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
-		<Header />
+		<Header transparent />
 		<main class="flex-1">
-			<section class="relative px-6 pb-8 pt-10 md:pb-10 md:pt-[72px] lg:pb-[100px]">
-				<div class="container mx-auto max-w-5xl">
-					<div class="mb-8 flex flex-col-reverse items-center gap-2.5 text-center md:mb-10 md:gap-4 lg:mb-12 lg:gap-5">
-						<h1 class="text-3xl font-medium leading-none tracking-tight text-app-text md:text-5xl lg:text-[56px]">
-							{SITE_TITLE}
-						</h1>
-						<h2 class="text-sm leading-none tracking-tight text-app-gray-600 md:text-base lg:text-xl">
-							{SITE_DESCRIPTION}
-						</h2>
-					</div>
-				</div>
-			</section>
-
-			{
-				featuredPost && (
-					<section class="px-6 pb-16 md:pb-20 lg:pb-24">
-						<div class="container mx-auto max-w-5xl">
-							<a
-								href={`/blog/${featuredPost.id}/`}
-								class={`group grid items-center gap-6 md:gap-10 lg:gap-16 ${
-									featuredPost.data.heroImage ? 'md:grid-cols-2' : ''
-								}`}
-							>
-								{featuredPost.data.heroImage ? (
-									<div class="order-1 overflow-hidden rounded-2xl">
-										<img
-											src={featuredPost.data.heroImage}
-											alt=""
-											class="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105 md:aspect-square lg:aspect-[4/3]"
-										/>
-									</div>
-								) : (
-									<div class="order-1 flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-app-accent text-4xl font-semibold text-app-text/40 md:aspect-square lg:aspect-[4/3]">
-										{featuredPost.data.title.slice(0, 1)}
-									</div>
-								)}
-								<div class="order-2">
-									<span class="mb-4 inline-flex items-center rounded-full bg-app-accent px-4 py-1.5 text-xs font-medium tracking-tight text-app-text md:text-sm">
-										最新文章
-									</span>
-									<h2 class="text-2xl font-medium leading-tight tracking-tight text-app-text group-hover:underline md:text-3xl lg:text-4xl">
-										{featuredPost.data.title}
-									</h2>
-									<p class="mt-4 text-base leading-relaxed text-app-gray-500 md:text-lg">
-										{featuredPost.data.description}
-									</p>
-									<p class="mt-6 text-xs font-medium tracking-tight text-app-gray-400 md:text-sm">
-										<FormattedDate date={featuredPost.data.pubDate} />
-									</p>
-								</div>
-							</a>
-						</div>
-					</section>
-				)
-			}
-
-			<section class="px-6 pb-16 md:pb-24">
-				<div class="container mx-auto max-w-5xl">
-					<div class="mb-6 flex items-center justify-between md:mb-8 lg:mb-10">
-						<h2 class="text-lg font-medium leading-none tracking-tight text-app-text lg:text-[32px]">
-							更多文章
-						</h2>
-						<a
-							href="/blog"
-							class="flex items-center gap-1.5 rounded-full bg-app-accent px-4 py-2.5 text-sm leading-none tracking-tight text-app-text md:text-base"
-						>
-							查看所有文章
-							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none">
-								<path
-									d="M5 12h14M13 6l6 6-6 6"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								/>
-							</svg>
-						</a>
-					</div>
-
-					{
-						otherPosts.length > 0 ? (
-							<div class="columns-1 gap-6 md:columns-2 lg:columns-3 xl:gap-10">
-								{otherPosts.map((post) => (
-									<div class="mb-6 break-inside-avoid xl:mb-10">
-										<BlogCard post={post} />
-									</div>
-								))}
-							</div>
-						) : (
-							<p class="text-app-gray-500">還沒有更多文章。</p>
-						)
-					}
-				</div>
-			</section>
+			<Hero />
+			<About />
+			<LatestArticles />
+			<PhotoGallery />
+			<Consulting />
+			<Newsletter />
 		</main>
 		<Footer />
 	</body>

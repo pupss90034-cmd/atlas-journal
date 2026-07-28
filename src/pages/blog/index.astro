@@ -27,16 +27,16 @@ const categories = [
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<section class="px-6 pb-8 pt-10 md:pb-10 md:pt-[72px] lg:pb-12">
-				<div class="container mx-auto max-w-5xl">
-					<div class="flex flex-col-reverse items-center gap-2.5 text-center md:gap-4">
-						<h1 class="text-2xl font-medium leading-none tracking-tight text-app-text md:text-3xl lg:text-[56px]">
-							所有文章
-						</h1>
-						<h2 class="text-sm leading-none tracking-tight text-app-gray-600 md:text-base lg:text-xl">
-							{SITE_DESCRIPTION}
-						</h2>
-					</div>
+			<section class="px-6 pb-10 pt-32 md:pb-14 md:pt-40">
+				<div class="container mx-auto max-w-5xl text-center">
+					<p class="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-app-gray-500">Journal</p>
+					<h1 class="font-serif text-3xl font-semibold tracking-tight text-app-text md:text-4xl">
+						所有文章
+					</h1>
+					<p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-app-gray-600 md:text-base">
+						{SITE_DESCRIPTION}
+					</p>
+					<p id="search-status" class="mx-auto mt-4 hidden max-w-md text-xs uppercase tracking-[0.15em] text-app-accent"></p>
 				</div>
 			</section>
 
@@ -44,11 +44,11 @@ const categories = [
 				<div class="container mx-auto max-w-5xl">
 					{
 						categories.length > 0 && (
-							<div class="mb-8 flex flex-wrap justify-center gap-2.5 lg:mb-12" id="category-filter">
+							<div class="mb-10 flex flex-wrap justify-center gap-x-6 gap-y-2 border-y border-app-gray-200 py-4 md:mb-14" id="category-filter">
 								<button
 									type="button"
 									data-category=""
-									class="filter-btn flex items-center justify-center rounded-full border border-app-text bg-app-text px-6 py-2.5 text-xs leading-none tracking-tight text-white transition-colors duration-300 md:text-base lg:px-6 lg:py-[14px] lg:text-xl"
+									class="filter-btn text-xs font-medium uppercase tracking-[0.15em] text-app-text transition-colors duration-300"
 								>
 									全部
 								</button>
@@ -56,7 +56,7 @@ const categories = [
 									<button
 										type="button"
 										data-category={category}
-										class="filter-btn flex items-center justify-center rounded-full border border-app-gray-300 px-6 py-2.5 text-xs leading-none tracking-tight text-app-text transition-colors duration-300 md:text-base lg:px-6 lg:py-[14px] lg:text-xl"
+										class="filter-btn text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400 transition-colors duration-300 hover:text-app-text"
 									>
 										{category}
 									</button>
@@ -65,17 +65,15 @@ const categories = [
 						)
 					}
 
-					<h2 class="mb-7 text-lg font-medium leading-none tracking-tight text-app-text md:mb-10 lg:mb-12 lg:text-[32px]">
-						全部文章
-					</h2>
-
 					{
 						posts.length > 0 ? (
-							<div class="columns-1 gap-6 md:columns-2 lg:columns-3 xl:gap-10" id="post-grid">
+							<div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3" id="post-grid">
 								{posts.map((post) => (
 									<div
-										class="post-item mb-6 break-inside-avoid xl:mb-10"
+										class="post-item"
 										data-category={post.id.includes('/') ? post.id.split('/')[0] : ''}
+										data-title={post.data.title.toLowerCase()}
+										data-description={post.data.description.toLowerCase()}
 									>
 										<BlogCard post={post} />
 									</div>
@@ -85,6 +83,9 @@ const categories = [
 							<p class="text-app-gray-500">還沒有發佈的文章。</p>
 						)
 					}
+					<p id="empty-state" class="hidden py-16 text-center text-sm text-app-gray-500">
+						沒有符合的文章，換個關鍵字試試。
+					</p>
 				</div>
 			</section>
 		</main>
@@ -95,23 +96,47 @@ const categories = [
 <script>
 	const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
 	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
+	const emptyState = document.getElementById('empty-state');
+	const searchStatus = document.getElementById('search-status');
+
+	let activeCategory = '';
+	let activeQuery = new URLSearchParams(window.location.search).get('q')?.trim().toLowerCase() ?? '';
+
+	function applyFilters() {
+		let visibleCount = 0;
+		items.forEach((item) => {
+			const matchesCategory = !activeCategory || item.dataset.category === activeCategory;
+			const matchesQuery =
+				!activeQuery ||
+				item.dataset.title?.includes(activeQuery) ||
+				item.dataset.description?.includes(activeQuery);
+			const show = matchesCategory && matchesQuery;
+			item.classList.toggle('hidden', !show);
+			if (show) visibleCount += 1;
+		});
+		emptyState?.classList.toggle('hidden', visibleCount > 0);
+
+		if (activeQuery && searchStatus) {
+			searchStatus.textContent = `搜尋「${activeQuery}」的結果`;
+			searchStatus.classList.remove('hidden');
+		} else if (searchStatus) {
+			searchStatus.classList.add('hidden');
+		}
+	}
 
 	buttons.forEach((button) => {
 		button.addEventListener('click', () => {
-			const category = button.dataset.category ?? '';
+			activeCategory = button.dataset.category ?? '';
 
 			buttons.forEach((b) => {
 				const active = b === button;
-				b.classList.toggle('bg-app-text', active);
-				b.classList.toggle('text-white', active);
-				b.classList.toggle('border-app-text', active);
-				b.classList.toggle('border-app-gray-300', !active);
+				b.classList.toggle('text-app-text', active);
+				b.classList.toggle('text-app-gray-400', !active);
 			});
 
-			items.forEach((item) => {
-				const show = !category || item.dataset.category === category;
-				item.classList.toggle('hidden', !show);
-			});
+			applyFilters();
 		});
 	});
+
+	applyFilters();
 </script>

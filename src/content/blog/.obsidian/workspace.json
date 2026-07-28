@@ -4,16 +4,16 @@
     "type": "split",
     "children": [
       {
-        "id": "703ef8badee438da",
+        "id": "47a445c1b86bd980",
         "type": "tabs",
         "children": [
           {
-            "id": "7c4c9e6360b3292e",
+            "id": "ef2f8ed0a4028c4f",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "其他（未歸類）/Ｎ02. ＿＿＿＿＿大溪地的第一印象.md",
+                "file": "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
                 "mode": "source",
                 "source": false,
                 "backlinks": true,
@@ -28,69 +28,7 @@
                 }
               },
               "icon": "lucide-file",
-              "title": "Ｎ02. ＿＿＿＿＿大溪地的第一印象"
-            }
-          },
-          {
-            "id": "ea1c8a4d3c2d7b92",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "露營車系列指南/01 - 如何在紐西蘭開始你的第一台露營車？.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "01 - 如何在紐西蘭開始你的第一台露營車？"
-            }
-          },
-          {
-            "id": "50a16b572f6b2173",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "人生中珍貴的第一次.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "人生中珍貴的第一次"
-            }
-          },
-          {
-            "id": "523baff854f37846",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "標題練習.md",
-                "mode": "source",
-                "source": false,
-                "backlinks": true,
-                "backlinkOpts": {
-                  "collapseAll": false,
-                  "extraContext": false,
-                  "sortOrder": "alphabetical",
-                  "showSearch": false,
-                  "searchQuery": "",
-                  "backlinkCollapsed": false,
-                  "unlinkedCollapsed": true
-                }
-              },
-              "icon": "lucide-file",
-              "title": "標題練習"
+              "title": "Ｎ01. ＿＿＿＿＿"
             }
           }
         ]
@@ -180,7 +118,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "其他（未歸類）/Ｎ02. ＿＿＿＿＿大溪地的第一印象.md",
+                "file": "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -190,7 +128,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Ｎ02. ＿＿＿＿＿大溪地的第一印象 的反向連結"
+              "title": "Ｎ01. ＿＿＿＿＿ 的反向連結"
             }
           },
           {
@@ -268,19 +206,25 @@
       "bases:建立新的 base": false
     }
   },
-  "active": "7c4c9e6360b3292e",
+  "active": "ef2f8ed0a4028c4f",
   "lastOpenFiles": [
     "其他（未歸類）/Ｎ03. ＿＿＿＿＿papa的備餐.md",
-    "模板/New.md",
+    "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
+    "露營車系列指南/01 - 如何在紐西蘭開始你的第一台露營車？.md",
+    "(隱藏發佈)/using-mdx.mdx",
     "其他（未歸類）/Ｎ02. ＿＿＿＿＿大溪地的第一印象.md",
-    "標題練習.md",
+    "2026-07-27.md",
+    "模板/New.md",
+    "(隱藏發佈)",
+    "其他（未歸類）/Pic/DSC_0271.JPG",
+    "其他（未歸類）/Pic",
+    "(隱藏發佈)/標題練習.md",
     "Pic/DSC_0249.jpg",
-    "人生中珍貴的第一次.md",
+    "其他（未歸類）/人生中珍貴的第一次.md",
     "Pic/DSC_0312.jpg",
     "Pic/DSC_0300.jpg",
     "Pic/DSC_0247.jpg",
-    "markdown-style-guide.md",
-    "露營車系列指南/01 - 如何在紐西蘭開始你的第一台露營車？.md",
+    "(隱藏發佈)/markdown-style-guide.md",
     "其他（未歸類）",
     "飯店抓馬/夏季同事 - 路易.md",
     "飯店抓馬/冬季主管 - 莎菈.md",
@@ -290,7 +234,6 @@
     "露營車系列指南/紐西蘭購車眉角.md",
     "Pic",
     "模板",
-    "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
     "露營車系列指南/關於我看的第一台車.md",
     "露營車系列指南",
     "DSC_0271.jpg"

@@ -1,22 +1,38 @@
 @import "tailwindcss";
 
 /*
-  Theme tokens ported from BCMS's Astro blog starter design
-  (https://github.com/bcms/starters/tree/main/astro/blog), adapted for
-  a locally-authored Markdown/Obsidian blog instead of the BCMS CMS backend.
+  Theme tokens — AtLAS TeRRA: photography-led travel-magazine look.
+  Warm cream paper base, deep ink-black type, a vintage brick-red accent
+  for CTAs/highlights, and a muted moss green as the secondary accent.
+  Fraunces (serif, display) pairs with Inter (sans, UI/body).
 */
 @theme {
-	--color-app-accent: #d9faa1;
-	--color-app-body: #ffffff;
-	--color-app-text: #181a2c;
-	--color-app-gray-100: #e6e6e6;
-	--color-app-gray-200: #e0e0e0;
-	--color-app-gray-300: #d1d1d1;
-	--color-app-gray-400: #989898;
-	--color-app-gray-500: #696a6c;
-	--color-app-gray-600: #5b5b5e;
+	/* Primary accent = brick red (CTAs, active states, underline accents) */
+	--color-app-accent: #a8432e;
+	--color-app-accent-soft: #f1ddd2;
+	--color-app-accent-dark: #8a3624;
+
+	/* Secondary accent = moss green (footer, tags, quiet highlights) */
+	--color-app-moss: #5c6b4d;
+	--color-app-moss-soft: #e3e6d8;
+	--color-app-moss-dark: #47543c;
+
+	--color-app-body: #f7f1e6;
+	--color-app-surface: #fffdf8;
+	--color-app-ink: #201c18;
+	--color-app-text: #201c18;
+
+	--color-app-gray-100: #efe7d8;
+	--color-app-gray-200: #e3d8c4;
+	--color-app-gray-300: #d2c2a6;
+	--color-app-gray-400: #a3937c;
+	--color-app-gray-500: #766a5a;
+	--color-app-gray-600: #55493c;
 
 	--font-inter: "Inter", sans-serif;
+	/* Fraunces has no Chinese glyphs, so Traditional Chinese text falls
+	   back to Noto Serif TC to keep the same serif, editorial feel. */
+	--font-serif: "Fraunces", "Noto Serif TC", serif;
 }
 
 @layer base {
@@ -46,7 +62,7 @@
 .prose {
 	color: var(--color-app-text);
 	font-size: 1.05rem;
-	line-height: 1.75;
+	line-height: 1.8;
 }
 .prose h1,
 .prose h2,
@@ -54,9 +70,10 @@
 .prose h4,
 .prose h5,
 .prose h6 {
+	font-family: var(--font-serif);
 	color: var(--color-app-text);
 	font-weight: 600;
-	letter-spacing: -0.02em;
+	letter-spacing: -0.01em;
 	line-height: 1.25;
 	margin: 1.6em 0 0.6em;
 }
@@ -79,8 +96,8 @@
 	color: var(--color-app-text);
 	text-decoration: underline;
 	text-decoration-color: var(--color-app-accent);
-	text-decoration-thickness: 2px;
-	text-underline-offset: 2px;
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 3px;
 }
 .prose ul,
 .prose ol {
@@ -91,10 +108,12 @@
 	margin: 0.3em 0;
 }
 .prose blockquote {
-	border-left: 4px solid var(--color-app-accent);
+	border-left: 2px solid var(--color-app-accent);
 	padding: 0.2em 0 0.2em 1.2em;
 	margin: 1.6em 0;
-	font-size: 1.1em;
+	font-family: var(--font-serif);
+	font-style: italic;
+	font-size: 1.2em;
 	color: var(--color-app-gray-600);
 }
 .prose hr {
@@ -103,7 +122,7 @@
 	margin: 2em 0;
 }
 .prose img {
-	border-radius: 12px;
+	border-radius: 4px;
 	margin: 1.6em 0;
 }
 .prose code {
@@ -114,7 +133,7 @@
 }
 .prose pre {
 	padding: 1.4em;
-	border-radius: 12px;
+	border-radius: 4px;
 	overflow-x: auto;
 }
 .prose pre code {
