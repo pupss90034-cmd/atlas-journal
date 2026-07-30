@@ -1,5 +1,9 @@
 ---
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from 'astro:content';
+
+const [siteSettings] = await getCollection('siteSettings');
+const SITE_TITLE = siteSettings?.data.title ?? '';
+const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 const year = new Date().getFullYear();
 
 // Placeholder social links — swap the href="#" values for your real profile

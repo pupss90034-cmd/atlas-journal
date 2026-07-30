@@ -1,13 +1,21 @@
 ---
 import { Image } from 'astro:assets';
-import heroCove from '../../assets/home/hero-cove.jpg';
-import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+
+const [heroEntry] = await getCollection('homeHero');
+const [siteSettings] = await getCollection('siteSettings');
+if (!heroEntry || !siteSettings) {
+	throw new Error('找不到「首頁-Hero.md」或「網站設定.md」，請確認 src/content/編輯 資料夾裡有這兩個檔案。');
+}
+const { eyebrow, subtitle, primaryButtonLabel, secondaryButtonLabel, backgroundImage, backgroundImageAlt } =
+	heroEntry.data;
+const siteTitle = siteSettings.data.title;
 ---
 
 <section class="relative flex h-[100svh] min-h-[560px] w-full items-end overflow-hidden bg-app-ink">
 	<Image
-		src={heroCove}
-		alt="從高處俯瞰的地中海海岸線與松林海灣"
+		src={backgroundImage}
+		alt={backgroundImageAlt}
 		class="absolute inset-0 h-full w-full object-cover"
 		widths={[640, 1024, 1600, 2200]}
 		sizes="100vw"
@@ -18,13 +26,13 @@ import { SITE_TITLE } from '../../consts';
 
 	<div class="relative z-10 mx-auto w-full max-w-6xl px-6 pb-20 pt-40 md:px-10 md:pb-28">
 		<p class="mb-5 text-xs font-medium uppercase tracking-[0.35em] text-app-body/80">
-			Coastlines · Roads · Everyday Notes
+			{eyebrow}
 		</p>
 		<h1 class="max-w-3xl font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-app-body sm:text-5xl md:text-6xl lg:text-7xl">
-			{SITE_TITLE}
+			{siteTitle}
 		</h1>
 		<p class="mt-6 max-w-xl text-sm leading-relaxed text-app-body/85 md:text-base">
-			用鏡頭記錄露營車生活、公路旅行與日常裡值得停留的片刻——一本持續在寫的旅遊誌。
+			{subtitle}
 		</p>
 
 		<div class="mt-10 flex flex-wrap items-center gap-4">
@@ -32,13 +40,13 @@ import { SITE_TITLE } from '../../consts';
 				href="#latest"
 				class="inline-flex items-center gap-2 bg-app-accent px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-app-body transition-colors duration-300 hover:bg-app-accent-dark"
 			>
-				閱讀最新文章
+				{primaryButtonLabel}
 			</a>
 			<a
 				href="#gallery"
 				class="inline-flex items-center gap-2 border border-app-body/50 px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-app-body transition-colors duration-300 hover:border-app-body hover:bg-app-body/10"
 			>
-				瀏覽攝影集
+				{secondaryButtonLabel}
 			</a>
 		</div>
 	</div>

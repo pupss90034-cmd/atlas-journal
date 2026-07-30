@@ -8,7 +8,11 @@ import LatestArticles from '../components/home/LatestArticles.astro';
 import PhotoGallery from '../components/home/PhotoGallery.astro';
 import Consulting from '../components/home/Consulting.astro';
 import Newsletter from '../components/home/Newsletter.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { getCollection } from 'astro:content';
+
+const [siteSettings] = await getCollection('siteSettings');
+const SITE_TITLE = siteSettings?.data.title ?? '';
+const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 ---
 
 <!doctype html>

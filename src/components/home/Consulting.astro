@@ -1,29 +1,22 @@
 ---
-const services = [
-	{
-		title: '露營車生活諮詢',
-		description: '從選車、改裝到長途生活的日常安排，一對一整理你適合的路線與清單。',
-	},
-	{
-		title: '旅拍與攝影指導',
-		description: '構圖、器材與後製流程分享，把旅途中的片刻拍成你自己的雜誌感照片。',
-	},
-	{
-		title: '路線規劃與陪伴',
-		description: '依照天數與預算客製公路路線，附上實際踩點過的停留地點清單。',
-	},
-];
+import { getCollection } from 'astro:content';
+
+const [consultingEntry] = await getCollection('homeConsulting');
+if (!consultingEntry) {
+	throw new Error('找不到「首頁-顧問服務.md」，請確認 src/content/編輯 資料夾裡有這個檔案。');
+}
+const { eyebrow, heading, description, ctaText, ctaButtonLabel, services } = consultingEntry.data;
 ---
 
 <section class="px-6 py-20 md:py-28">
 	<div class="mx-auto max-w-5xl">
 		<div class="mb-10 text-center md:mb-14">
-			<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">Coming Soon</p>
+			<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">{eyebrow}</p>
 			<h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-app-ink md:text-4xl">
-				顧問諮詢服務
+				{heading}
 			</h2>
 			<p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-app-gray-600 md:text-base">
-				這是接下來即將推出的服務方向，內容仍在整理中——先讓你看看雛形，也歡迎先加入候補名單。
+				{description}
 			</p>
 		</div>
 
@@ -37,12 +30,12 @@ const services = [
 		</div>
 
 		<div class="mt-12 flex flex-col items-center gap-4 text-center">
-			<p class="text-sm text-app-gray-600">想在服務上線時第一時間收到通知？</p>
+			<p class="text-sm text-app-gray-600">{ctaText}</p>
 			<a
 				href="#newsletter"
 				class="inline-flex items-center gap-2 bg-app-ink px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-app-body transition-colors duration-300 hover:bg-app-accent"
 			>
-				加入候補名單
+				{ctaButtonLabel}
 			</a>
 		</div>
 	</div>

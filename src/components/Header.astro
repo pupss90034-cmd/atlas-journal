@@ -1,5 +1,8 @@
 ---
-import { SITE_TITLE } from '../consts';
+import { getCollection } from 'astro:content';
+
+const [siteSettings] = await getCollection('siteSettings');
+const SITE_TITLE = siteSettings?.data.title ?? '';
 
 interface Props {
 	// Home renders its own full-bleed Hero directly beneath the header, so the

@@ -1,94 +1,8 @@
 ---
 import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
 
-import parisA from '../../assets/gallery/paris-01.jpg';
-import parisB from '../../assets/gallery/paris-02.jpg';
-import parisC from '../../assets/gallery/paris-03.jpg';
-import parisD from '../../assets/gallery/paris-04.jpg';
-
-import archA from '../../assets/gallery/architecture-01.jpg';
-import archB from '../../assets/gallery/architecture-02.jpg';
-import archC from '../../assets/gallery/architecture-03.jpg';
-import archD from '../../assets/gallery/architecture-04.jpg';
-
-import coastA from '../../assets/gallery/coast-01.jpg';
-import coastB from '../../assets/gallery/coast-02.jpg';
-import coastC from '../../assets/gallery/coast-03.jpg';
-import coastD from '../../assets/gallery/coast-04.jpg';
-
-import streetA from '../../assets/gallery/streets-01.jpg';
-import streetB from '../../assets/gallery/streets-02.jpg';
-import streetC from '../../assets/gallery/streets-03.jpg';
-import streetD from '../../assets/gallery/streets-04.jpg';
-import streetE from '../../assets/gallery/streets-05.jpg';
-
-import tableA from '../../assets/gallery/table-01.jpg';
-import tableB from '../../assets/gallery/table-02.jpg';
-
-import detailA from '../../assets/gallery/details-01.jpg';
-import detailB from '../../assets/gallery/details-02.jpg';
-import detailC from '../../assets/gallery/details-03.jpg';
-
-const albums = [
-	{
-		id: 'paris',
-		label: '巴黎地標',
-		images: [
-			{ src: parisD, alt: '艾菲爾鐵塔全景，晴朗午後' },
-			{ src: parisA, alt: '迪士尼樂園城堡，白日遊人如織' },
-			{ src: parisB, alt: '夕陽下的城堡剪影' },
-			{ src: parisC, alt: '仰望艾菲爾鐵塔的鋼鐵結構' },
-		],
-	},
-	{
-		id: 'architecture',
-		label: '建築光影',
-		images: [
-			{ src: archA, alt: '巴黎國家圖書館的圓頂閱覽室' },
-			{ src: archB, alt: '馬賽公寓的現代主義建築立面' },
-			{ src: archD, alt: '凡爾賽宮花園的林蔭步道' },
-			{ src: archC, alt: '建築細部的色彩窗景' },
-		],
-	},
-	{
-		id: 'coast',
-		label: '海岸線',
-		images: [
-			{ src: coastD, alt: '安提布城牆邊眺望地中海' },
-			{ src: coastA, alt: '海灣峭壁與停泊的白色小船' },
-			{ src: coastB, alt: '松林環繞的土耳其藍海灣' },
-			{ src: coastC, alt: '海面波光的近距特寫' },
-		],
-	},
-	{
-		id: 'streets',
-		label: '南法巷弄',
-		images: [
-			{ src: streetA, alt: '馬賽舊港的城市天際線' },
-			{ src: streetB, alt: '巷弄裡的圓頂建築一隅' },
-			{ src: streetC, alt: '石牆窗台上的花箱' },
-			{ src: streetD, alt: '南法小鎮的狹窄巷弄' },
-			{ src: streetE, alt: '橘色牆面與木門的入口' },
-		],
-	},
-	{
-		id: 'table',
-		label: '餐桌時光',
-		images: [
-			{ src: tableB, alt: '桌上的窯烤披薩與紅酒' },
-			{ src: tableA, alt: '紅白條紋桌布的露天咖啡座' },
-		],
-	},
-	{
-		id: 'details',
-		label: '細節與自然',
-		images: [
-			{ src: detailC, alt: '綠色百葉窗的建築細節' },
-			{ src: detailA, alt: '紫藤花棚下的老屋' },
-			{ src: detailB, alt: '岩石縫間綻放的野花' },
-		],
-	},
-];
+const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <section id="gallery" class="bg-app-gray-100 px-6 py-20 md:py-28">
@@ -110,7 +24,7 @@ const albums = [
 						i === 0 ? 'text-app-ink' : 'text-app-gray-400 hover:text-app-ink',
 					]}
 				>
-					{album.label}
+					{album.data.label}
 				</button>
 			))}
 		</div>
@@ -118,7 +32,7 @@ const albums = [
 		{
 			albums.map((album, albumIndex) => (
 				<div class="album-panel grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4" data-album={album.id} hidden={albumIndex !== 0}>
-					{album.images.map((photo, photoIndex) => (
+					{album.data.images.map((photo, photoIndex) => (
 						<div
 							class:list={[
 								'group overflow-hidden bg-app-gray-200',

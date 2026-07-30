@@ -151,6 +151,17 @@
 	text-align: left;
 }
 
+/* Obsidian [[筆記名稱]] 連結如果連不到對應文章（筆記還沒寫、還在草稿
+   資料夾、或缺必填欄位），會被 src/remark-plugins/obsidian-wikilinks.mjs
+   標成這個樣式，讓你在網站上能一眼看出「這裡連結還沒接好」。 */
+.prose .wikilink-broken {
+	text-decoration: underline dotted;
+	text-decoration-color: var(--color-app-gray-400, #999);
+	text-underline-offset: 3px;
+	color: inherit;
+	cursor: help;
+}
+
 .sr-only {
 	border: 0;
 	padding: 0;

@@ -1,0 +1,242 @@
+{
+  "main": {
+    "id": "f28fbe47f4f55805",
+    "type": "split",
+    "children": [
+      {
+        "id": "47a445c1b86bd980",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ef2f8ed0a4028c4f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
+                "mode": "source",
+                "source": false,
+                "backlinks": true,
+                "backlinkOpts": {
+                  "collapseAll": false,
+                  "extraContext": false,
+                  "sortOrder": "alphabetical",
+                  "showSearch": false,
+                  "searchQuery": "",
+                  "backlinkCollapsed": false,
+                  "unlinkedCollapsed": true
+                }
+              },
+              "icon": "lucide-file",
+              "title": "Ｎ01. ＿＿＿＿＿"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "9a0c324007d630a2",
+    "type": "split",
+    "children": [
+      {
+        "id": "060168ff3fd9f78c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "80006d369ecf992c",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "檔案瀏覽器"
+            }
+          },
+          {
+            "id": "261a40188713253c",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜尋"
+            }
+          },
+          {
+            "id": "0d7b064d1ee883d9",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "e2768cc4b08c2139",
+    "type": "split",
+    "children": [
+      {
+        "id": "42046e3b52266299",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2fb138b3c10587c4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "露營車系列指南/關於我看的第一台車.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "關於我看的第一台車"
+            }
+          },
+          {
+            "id": "f7407c42e3eb4e2c",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Ｎ01. ＿＿＿＿＿ 的反向連結"
+            }
+          },
+          {
+            "id": "ad2450f3565ac3ac",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "c73f0dd92c902c18",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "3bb984284bc8479a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "7026b4b469b9fe82",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Untitled.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Untitled"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:開啟快速切換": false,
+      "graph:查看關聯圖": false,
+      "canvas:建立新畫布": false,
+      "daily-notes:開啟今天的每日筆記": false,
+      "templates:插入模板": false,
+      "command-palette:開啟命令面板": false,
+      "bases:建立新的 base": false
+    }
+  },
+  "active": "80006d369ecf992c",
+  "lastOpenFiles": [
+    "其他（未歸類）/Pic/default-cover.jpg",
+    "其他（未歸類）/Ｎ03. ＿＿＿＿＿papa的備餐.md",
+    "其他（未歸類）/Ｎ01. ＿＿＿＿＿.md",
+    "露營車系列指南/01 - 如何在紐西蘭開始你的第一台露營車？.md",
+    "(隱藏發佈)/using-mdx.mdx",
+    "其他（未歸類）/Ｎ02. ＿＿＿＿＿大溪地的第一印象.md",
+    "2026-07-27.md",
+    "模板/New.md",
+    "(隱藏發佈)",
+    "其他（未歸類）/Pic/DSC_0271.JPG",
+    "其他（未歸類）/Pic",
+    "(隱藏發佈)/標題練習.md",
+    "Pic/DSC_0249.jpg",
+    "其他（未歸類）/人生中珍貴的第一次.md",
+    "Pic/DSC_0312.jpg",
+    "Pic/DSC_0300.jpg",
+    "Pic/DSC_0247.jpg",
+    "(隱藏發佈)/markdown-style-guide.md",
+    "其他（未歸類）",
+    "飯店抓馬/夏季同事 - 路易.md",
+    "飯店抓馬/冬季主管 - 莎菈.md",
+    "飯店抓馬/飯店經理  - 亞歷山卓.md",
+    "飯店抓馬",
+    "香氛（氣味）",
+    "露營車系列指南/紐西蘭購車眉角.md",
+    "Pic",
+    "模板",
+    "露營車系列指南/關於我看的第一台車.md",
+    "露營車系列指南",
+    "DSC_0271.jpg"
+  ]
+}
