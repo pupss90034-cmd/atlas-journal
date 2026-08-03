@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
+const posts = await getCollection('blog');
 
 interface Props {
 	// Home renders its own full-bleed Hero directly beneath the header, so the
@@ -14,10 +15,13 @@ interface Props {
 
 const { transparent = false } = Astro.props;
 
+// 左上角導覽列固定顯示英文（Home / Articles / Portfolio / About）。
+// 其餘頁面內文仍是中文，這裡刻意不跟著網站語言切換。
 const nav = [
-	{ label: '首頁', href: '/' },
-	{ label: '文章', href: '/blog' },
-	{ label: '關於我', href: '/about' },
+	{ label: 'Home', href: '/' },
+	{ label: 'Articles', href: '/blog' },
+	{ label: 'Portfolio', href: '/portfolio' },
+	{ label: 'About', href: '/about' },
 ];
 
 const socialLinks = [
@@ -27,7 +31,20 @@ const socialLinks = [
 	{ name: 'Pinterest', href: '#', path: 'M12 0a12 12 0 0 0-4.37 23.17c-.06-.94-.11-2.38.02-3.4.12-.93.8-5.9.8-5.9s-.2-.41-.2-1.01c0-.94.55-1.65 1.23-1.65.58 0 .86.44.86.96 0 .58-.37 1.46-.56 2.27-.16.68.34 1.23 1 1.23 1.2 0 2.13-1.27 2.13-3.1 0-1.62-1.16-2.75-2.83-2.75-1.93 0-3.06 1.44-3.06 2.94 0 .58.22 1.2.5 1.54a.2.2 0 0 1 .05.19c-.05.22-.17.68-.2.78-.03.13-.1.16-.24.1-.9-.42-1.46-1.73-1.46-2.79 0-2.27 1.65-4.36 4.76-4.36 2.5 0 4.44 1.78 4.44 4.16 0 2.48-1.56 4.48-3.74 4.48-.73 0-1.42-.38-1.65-.83l-.45 1.72c-.16.63-.6 1.42-.9 1.9A12 12 0 1 0 12 0z' },
 ];
 
-const popularSearches = ['露營車生活', '紐西蘭', '大溪地', '飯店日常', '攝影集'];
+// 熱門搜尋標籤：從所有文章實際使用的 tags 動態算出出現次數最高的前 5 個，
+// 不再寫死關鍵字。之後在 Obsidian 改標籤，這裡會自動跟著變。
+// 如果目前完全沒有文章下標籤，就先用預設的關鍵字頂著，避免搜尋框空空的。
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags ?? []) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+const fallbackSearches = ['露營車生活', '紐西蘭', '大溪地', '飯店日常', '攝影集'];
+const popularSearches =
+	tagCounts.size > 0
+		? [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag)
+		: fallbackSearches;
 ---
 
 <header id="site-header" data-transparent={transparent ? 'true' : 'false'} class="fixed inset-x-0 top-0 z-50">
@@ -274,7 +291,7 @@ const popularSearches = ['露營車生活', '紐西蘭', '大溪地', '飯店日
 	document.querySelectorAll<HTMLButtonElement>('.search-tag').forEach((tag) => {
 		tag.addEventListener('click', () => {
 			const term = tag.dataset.tag ?? '';
-			window.location.href = `/blog?q=${encodeURIComponent(term)}`;
+			window.location.href = `/blog?tag=${encodeURIComponent(term)}`;
 		});
 	});
 </script>

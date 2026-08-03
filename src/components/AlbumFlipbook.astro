@@ -1,0 +1,234 @@
+---
+// 攝影集「雜誌翻頁」元件：一次只顯示一個主題（相簿），
+// 用左右箭頭（或滑動 / 鍵盤左右鍵）切換到上一個/下一個主題，
+// 不再用可點擊的主題標籤／分類頁籤。
+//
+// 首頁「精選攝影集」區塊與 /portfolio 攝影集頁共用這個元件，
+// 資料來源都是 src/content/編輯/攝影集/ 底下的相簿檔案，
+// 兩個地方顯示的主題與順序永遠一致，Obsidian 只要改一份就好。
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	albums: CollectionEntry<'albums'>[];
+}
+
+const { albums } = Astro.props;
+const total = albums.length;
+---
+
+<div class="flipbook" data-total={total}>
+	<div class="mb-6 flex items-center justify-between gap-4 md:mb-8">
+		<div class="min-w-0">
+			<p class="flipbook-counter text-xs font-medium uppercase tracking-[0.25em] text-app-gray-400">
+				<span class="flipbook-counter-current">01</span> / {String(total).padStart(2, '0')}
+			</p>
+			<h3 class="flipbook-label mt-1 truncate font-serif text-2xl font-semibold tracking-tight text-app-ink md:text-3xl">
+				{albums[0]?.data.label}
+			</h3>
+		</div>
+
+		<div class="flex shrink-0 items-center gap-2">
+			<button type="button" class="flipbook-prev flipbook-arrow" aria-label="上一組主題">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+					<path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</button>
+			<button type="button" class="flipbook-next flipbook-arrow" aria-label="下一組主題">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+					<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</button>
+		</div>
+	</div>
+
+	<div class="flipbook-stage relative">
+		<button type="button" class="flipbook-prev flipbook-edge flipbook-edge-left" aria-label="上一組主題">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+				<path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</button>
+
+		{
+			albums.map((album, albumIndex) => (
+				<div
+					class="flipbook-page grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4"
+					data-index={albumIndex}
+					data-label={album.data.label}
+					hidden={albumIndex !== 0}
+				>
+					{album.data.images.map((photo, photoIndex) => (
+						<div
+							class:list={[
+								'group overflow-hidden bg-app-gray-200',
+								photoIndex === 0 ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square',
+							]}
+						>
+							<Image
+								src={photo.src}
+								alt={photo.alt}
+								class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+								widths={photoIndex === 0 ? [500, 800, 1100] : [300, 500]}
+								sizes={photoIndex === 0 ? '(min-width: 768px) 50vw, 100vw' : '(min-width: 768px) 25vw, 50vw'}
+							/>
+						</div>
+					))}
+				</div>
+			))
+		}
+
+		<button type="button" class="flipbook-next flipbook-edge flipbook-edge-right" aria-label="下一組主題">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+				<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</button>
+	</div>
+</div>
+
+<style>
+	.flipbook-arrow,
+	.flipbook-edge {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 9999px;
+		color: var(--color-app-ink);
+		transition: color 0.3s, background-color 0.3s, opacity 0.3s;
+	}
+	.flipbook-arrow {
+		height: 2.25rem;
+		width: 2.25rem;
+		border: 1px solid var(--color-app-gray-300);
+	}
+	.flipbook-arrow:hover {
+		border-color: var(--color-app-accent);
+		color: var(--color-app-accent);
+	}
+
+	/* Edge arrows sit over the photo "page" itself, book-style, and only
+	   reveal themselves on hover/focus so they don't compete with the photos. */
+	.flipbook-edge {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		height: 3rem;
+		width: 3rem;
+		background: color-mix(in srgb, var(--color-app-surface) 88%, transparent);
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+		opacity: 0;
+		z-index: 10;
+	}
+	.flipbook-stage:hover .flipbook-edge,
+	.flipbook-edge:focus-visible {
+		opacity: 1;
+	}
+	.flipbook-edge-left {
+		left: -0.75rem;
+	}
+	.flipbook-edge-right {
+		right: -0.75rem;
+	}
+	@media (max-width: 767px) {
+		.flipbook-edge {
+			opacity: 1;
+			height: 2.5rem;
+			width: 2.5rem;
+		}
+		.flipbook-edge-left {
+			left: 0.25rem;
+		}
+		.flipbook-edge-right {
+			right: 0.25rem;
+		}
+	}
+
+	.flipbook-page {
+		animation: flipbook-fade-in 0.45s ease both;
+	}
+	@keyframes flipbook-fade-in {
+		from {
+			opacity: 0;
+			transform: translateX(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+	.flipbook-page[data-leaving='true'] {
+		animation: flipbook-fade-out 0.2s ease both;
+	}
+	@keyframes flipbook-fade-out {
+		from {
+			opacity: 1;
+		}
+		to {
+			opacity: 0;
+		}
+	}
+</style>
+
+<script>
+	document.querySelectorAll<HTMLDivElement>('.flipbook').forEach((flipbook) => {
+		const pages = Array.from(flipbook.querySelectorAll<HTMLDivElement>('.flipbook-page'));
+		const total = pages.length;
+		if (total === 0) return;
+
+		const counter = flipbook.querySelector<HTMLSpanElement>('.flipbook-counter-current');
+		const label = flipbook.querySelector<HTMLHeadingElement>('.flipbook-label');
+		const prevButtons = flipbook.querySelectorAll<HTMLButtonElement>('.flipbook-prev');
+		const nextButtons = flipbook.querySelectorAll<HTMLButtonElement>('.flipbook-next');
+
+		let current = 0;
+
+		function render(nextIndex: number) {
+			const outgoing = pages[current];
+			outgoing.dataset.leaving = 'true';
+			window.setTimeout(() => {
+				pages.forEach((page, i) => {
+					page.hidden = i !== nextIndex;
+					delete page.dataset.leaving;
+				});
+			}, 180);
+
+			current = nextIndex;
+			const page = pages[current];
+			if (counter) counter.textContent = String(current + 1).padStart(2, '0');
+			if (label) label.textContent = page.dataset.label ?? '';
+		}
+
+		function goTo(delta: number) {
+			const next = (current + delta + total) % total;
+			render(next);
+		}
+
+		prevButtons.forEach((btn) => btn.addEventListener('click', () => goTo(-1)));
+		nextButtons.forEach((btn) => btn.addEventListener('click', () => goTo(1)));
+
+		// 鍵盤左右鍵：只有當這個攝影集區塊在畫面上時才會反應，
+		// 避免跟其他頁面元件（例如表單輸入）互相干擾。
+		function inViewport() {
+			const rect = flipbook.getBoundingClientRect();
+			return rect.top < window.innerHeight && rect.bottom > 0;
+		}
+		document.addEventListener('keydown', (e) => {
+			if (!inViewport()) return;
+			const target = e.target as HTMLElement | null;
+			if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+			if (e.key === 'ArrowLeft') goTo(-1);
+			if (e.key === 'ArrowRight') goTo(1);
+		});
+
+		// 手機滑動翻頁
+		let touchStartX = 0;
+		const stage = flipbook.querySelector<HTMLDivElement>('.flipbook-stage');
+		stage?.addEventListener('touchstart', (e) => {
+			touchStartX = e.touches[0].clientX;
+		}, { passive: true });
+		stage?.addEventListener('touchend', (e) => {
+			const delta = e.changedTouches[0].clientX - touchStartX;
+			if (Math.abs(delta) < 40) return;
+			goTo(delta < 0 ? 1 : -1);
+		}, { passive: true });
+	});
+</script>

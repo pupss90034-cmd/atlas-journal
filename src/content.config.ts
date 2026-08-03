@@ -28,6 +28,10 @@ const blog = defineCollection({
 			// 原本這裡打的檔名對不上，導致這行規則其實沒有真的排除到它，
 			// 網站建置目前仍會因為這篇筆記而失敗。）
 			"!其他（未歸類）/Ｎ02.大溪地.md",
+			// 2026-08-03：這篇是還沒寫完的草稿（title/description 留空，
+			// 內文還留著操作說明沒刪掉），先排除掉避免建置失敗。等你在
+			// Obsidian 補上標題、簡介跟正文之後，把這行刪掉就會正常建置。
+			"!其他（未歸類）/傳奇殞落.md",
 		],
 	}),
 	// Type-check frontmatter using a schema.
@@ -49,6 +53,21 @@ const blog = defineCollection({
 				(val) => (val === null || val === "" ? undefined : val),
 				image().optional(),
 			),
+			// Obsidian 的 tags 欄位如果留空，YAML 會讀成 null 而不是完全省略，
+			// 這裡跟 heroImage 一樣把 null／未填都轉成空陣列，才不會建置失敗。
+			// 標籤是自由格式的字串陣列，之後要新增、改名、砍掉標籤都直接在
+			// Obsidian 檔案的 tags 清單裡改就好，不用動這裡的程式碼——網站上
+			// 的標籤列表、篩選、快速搜尋都是從文章實際的 tags 動態算出來的。
+			// 同一個邏輯也套用在清單裡的每一項：Obsidian 打了「- 」卻沒接文字
+			// 的空白標籤項目，YAML 會讀成清單裡的一個 null，同樣先濾掉，
+			// 不然會建置失敗。
+			tags: z.preprocess((val) => {
+				if (val === null || val === undefined) return [];
+				if (Array.isArray(val)) {
+					return val.filter((item) => typeof item === "string" && item.trim() !== "");
+				}
+				return val;
+			}, z.array(z.string()).default([])),
 		}),
 });
 

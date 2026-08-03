@@ -1,94 +1,36 @@
 ---
-import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
+import AlbumFlipbook from '../AlbumFlipbook.astro';
 
 const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
+
+// 排序邏輯備註（2026-08-03）：
+// 目前依 Obsidian 相簿檔案裡的 `order` 欄位手動排序。
+// 未來規劃：等網站對 Google 開放搜尋（src/consts.ts 的
+// SITE_IS_PUBLISHED 改成 true）之後，這裡要改成依「點擊率／
+// 停留時間」等瀏覽數據自動排序精選攝影集，讓表現好的主題排在前面。
+// 這需要先接上分析工具（例如 Cloudflare Web Analytics 或 GA4）
+// 收集數據，屬於之後才會做的功能，先在這裡留紀錄，跟 Google
+// 搜尋開放時一起上線。相關備註也寫在 src/consts.ts 和使用說明.md。
 ---
 
 <section id="gallery" class="bg-app-gray-100 px-6 py-20 md:py-28">
 	<div class="mx-auto max-w-6xl">
-		<div class="mb-10 text-center md:mb-14">
-			<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">Photography</p>
-			<h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-app-ink md:text-4xl">
-				精選攝影集
-			</h2>
+		<div class="mb-10 flex flex-wrap items-end justify-between gap-6 md:mb-14">
+			<div>
+				<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">Photography</p>
+				<h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-app-ink md:text-4xl">
+					精選攝影集
+				</h2>
+			</div>
+			<a
+				href="/portfolio"
+				class="text-xs font-medium uppercase tracking-[0.2em] text-app-gray-500 transition-colors duration-300 hover:text-app-accent"
+			>
+				瀏覽完整攝影集 →
+			</a>
 		</div>
 
-		<div class="mb-10 flex flex-wrap justify-center gap-x-2 gap-y-2 md:mb-14" id="album-tabs">
-			{albums.map((album, i) => (
-				<button
-					type="button"
-					data-album={album.id}
-					class:list={[
-						'album-tab px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] transition-colors duration-300',
-						i === 0 ? 'text-app-ink' : 'text-app-gray-400 hover:text-app-ink',
-					]}
-				>
-					{album.data.label}
-				</button>
-			))}
-		</div>
-
-		{
-			albums.map((album, albumIndex) => (
-				<div class="album-panel grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4" data-album={album.id} hidden={albumIndex !== 0}>
-					{album.data.images.map((photo, photoIndex) => (
-						<div
-							class:list={[
-								'group overflow-hidden bg-app-gray-200',
-								photoIndex === 0 ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square',
-							]}
-						>
-							<Image
-								src={photo.src}
-								alt={photo.alt}
-								class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-								widths={photoIndex === 0 ? [500, 800, 1100] : [300, 500]}
-								sizes={photoIndex === 0 ? '(min-width: 768px) 50vw, 100vw' : '(min-width: 768px) 25vw, 50vw'}
-							/>
-						</div>
-					))}
-				</div>
-			))
-		}
+		<AlbumFlipbook albums={albums} />
 	</div>
 </section>
-
-<style>
-	.album-tab[data-active='true'] {
-		color: var(--color-app-ink);
-	}
-	.album-tab {
-		position: relative;
-	}
-	.album-tab[data-active='true']::after {
-		content: '';
-		position: absolute;
-		left: 0.5rem;
-		right: 0.5rem;
-		bottom: -2px;
-		height: 2px;
-		background: var(--color-app-accent);
-	}
-</style>
-
-<script>
-	const tabs = document.querySelectorAll<HTMLButtonElement>('.album-tab');
-	const panels = document.querySelectorAll<HTMLDivElement>('.album-panel');
-
-	tabs.forEach((tab, i) => {
-		if (i === 0) tab.dataset.active = 'true';
-		tab.addEventListener('click', () => {
-			const album = tab.dataset.album;
-			tabs.forEach((t) => {
-				const active = t === tab;
-				t.dataset.active = active ? 'true' : 'false';
-				t.classList.toggle('text-app-ink', active);
-				t.classList.toggle('text-app-gray-400', !active);
-			});
-			panels.forEach((panel) => {
-				panel.hidden = panel.dataset.album !== album;
-			});
-		});
-	});
-</script>

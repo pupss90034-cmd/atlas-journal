@@ -10,7 +10,7 @@ import defaultCover from '../assets/site/default-cover.jpg';
 
 type Props = CollectionEntry<'blog'>['data'] & { slug: string };
 
-const { title, description, pubDate, updatedDate, heroImage, slug } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags, slug } = Astro.props;
 const displayHero = heroImage ?? defaultCover;
 
 // Find the previous/next post (by publish date) so readers can keep browsing.
@@ -52,6 +52,21 @@ const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 					<div class="prose mx-auto mt-12 max-w-3xl md:mt-16">
 						<slot />
 					</div>
+
+					{
+						tags && tags.length > 0 && (
+							<div class="mx-auto mt-10 flex max-w-3xl flex-wrap gap-2 md:mt-12">
+								{tags.map((tag) => (
+									<a
+										href={`/blog?tag=${encodeURIComponent(tag)}`}
+										class="rounded-full bg-app-moss-soft px-3.5 py-1.5 text-xs font-medium text-app-moss-dark transition-colors duration-300 hover:bg-app-moss hover:text-app-body"
+									>
+										#{tag}
+									</a>
+								))}
+							</div>
+						)
+					}
 
 					{
 						(olderPost || newerPost) && (

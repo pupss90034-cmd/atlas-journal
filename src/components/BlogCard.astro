@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { title, description, pubDate, heroImage } = post.data;
+const { title, description, pubDate, heroImage, tags } = post.data;
 ---
 
 <a href={`/blog/${post.id}/`} class="group block">
@@ -30,5 +30,14 @@ const { title, description, pubDate, heroImage } = post.data;
 		<p class="mt-2 text-sm leading-relaxed text-app-gray-500 line-clamp-2">
 			{description}
 		</p>
+		{
+			tags && tags.length > 0 && (
+				<p class="mt-2.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] font-medium text-app-moss-dark">
+					{tags.slice(0, 3).map((tag) => (
+						<span>#{tag}</span>
+					))}
+				</p>
+			)
+		}
 	</article>
 </a>

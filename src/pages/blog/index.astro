@@ -13,6 +13,8 @@ const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
+// 分類＝文章所在的資料夾（Obsidian 裡怎麼分資料夾，這裡就自動長出對應分類，
+// 不用寫死名稱）。之後改資料夾名稱或搬動文章，分類清單會自動跟著變。
 const categories = [
 	...new Set(
 		posts
@@ -20,6 +22,12 @@ const categories = [
 			.filter((c): c is string => Boolean(c)),
 	),
 ];
+
+// 標籤＝每篇文章 frontmatter 裡的 tags 清單，同樣是動態算出來的。
+// 之後在 Obsidian 裡新增、改名、刪除標籤，這裡的清單跟篩選都會自動更新。
+const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a, b) =>
+	a.localeCompare(b, 'zh-Hant'),
+);
 ---
 
 <!doctype html>
@@ -47,13 +55,13 @@ const categories = [
 				<div class="container mx-auto max-w-5xl">
 					{
 						categories.length > 0 && (
-							<div class="mb-10 flex flex-wrap justify-center gap-x-6 gap-y-2 border-y border-app-gray-200 py-4 md:mb-14" id="category-filter">
+							<div class="mb-6 flex flex-wrap justify-center gap-x-6 gap-y-2 border-y border-app-gray-200 py-4" id="category-filter">
 								<button
 									type="button"
 									data-category=""
 									class="filter-btn text-xs font-medium uppercase tracking-[0.15em] text-app-text transition-colors duration-300"
 								>
-									全部
+									全部分類
 								</button>
 								{categories.map((category) => (
 									<button
@@ -69,12 +77,30 @@ const categories = [
 					}
 
 					{
+						tags.length > 0 && (
+							<div class="mb-10 flex flex-wrap items-center justify-center gap-2 md:mb-14" id="tag-filter">
+								<span class="mr-1 text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">標籤</span>
+								{tags.map((tag) => (
+									<button
+										type="button"
+										data-tag={tag}
+										class="tag-btn rounded-full border border-app-gray-300 px-3.5 py-1.5 text-xs text-app-gray-600 transition-colors duration-300 hover:border-app-moss hover:text-app-moss-dark"
+									>
+										#{tag}
+									</button>
+								))}
+							</div>
+						)
+					}
+
+					{
 						posts.length > 0 ? (
 							<div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3" id="post-grid">
 								{posts.map((post) => (
 									<div
 										class="post-item"
 										data-category={post.id.includes('/') ? post.id.split('/')[0] : ''}
+										data-tags={(post.data.tags ?? []).join('|').toLowerCase()}
 										data-title={post.data.title.toLowerCase()}
 										data-description={post.data.description.toLowerCase()}
 									>
@@ -96,24 +122,38 @@ const categories = [
 	</body>
 </html>
 
+<style>
+	.tag-btn[data-active='true'] {
+		border-color: var(--color-app-moss);
+		background: var(--color-app-moss-soft);
+		color: var(--color-app-moss-dark);
+	}
+</style>
+
 <script>
-	const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+	const categoryButtons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+	const tagButtons = document.querySelectorAll<HTMLButtonElement>('.tag-btn');
 	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
 	const emptyState = document.getElementById('empty-state');
 	const searchStatus = document.getElementById('search-status');
 
+	const params = new URLSearchParams(window.location.search);
 	let activeCategory = '';
-	let activeQuery = new URLSearchParams(window.location.search).get('q')?.trim().toLowerCase() ?? '';
+	let activeTag = params.get('tag')?.trim().toLowerCase() ?? '';
+	let activeQuery = params.get('q')?.trim().toLowerCase() ?? '';
 
 	function applyFilters() {
 		let visibleCount = 0;
 		items.forEach((item) => {
+			const itemTags = item.dataset.tags?.split('|') ?? [];
 			const matchesCategory = !activeCategory || item.dataset.category === activeCategory;
+			const matchesTag = !activeTag || itemTags.includes(activeTag);
 			const matchesQuery =
 				!activeQuery ||
 				item.dataset.title?.includes(activeQuery) ||
-				item.dataset.description?.includes(activeQuery);
-			const show = matchesCategory && matchesQuery;
+				item.dataset.description?.includes(activeQuery) ||
+				itemTags.some((tag) => tag.includes(activeQuery));
+			const show = matchesCategory && matchesTag && matchesQuery;
 			item.classList.toggle('hidden', !show);
 			if (show) visibleCount += 1;
 		});
@@ -122,16 +162,19 @@ const categories = [
 		if (activeQuery && searchStatus) {
 			searchStatus.textContent = `搜尋「${activeQuery}」的結果`;
 			searchStatus.classList.remove('hidden');
+		} else if (activeTag && searchStatus) {
+			searchStatus.textContent = `標籤「${activeTag}」的文章`;
+			searchStatus.classList.remove('hidden');
 		} else if (searchStatus) {
 			searchStatus.classList.add('hidden');
 		}
 	}
 
-	buttons.forEach((button) => {
+	categoryButtons.forEach((button) => {
 		button.addEventListener('click', () => {
 			activeCategory = button.dataset.category ?? '';
 
-			buttons.forEach((b) => {
+			categoryButtons.forEach((b) => {
 				const active = b === button;
 				b.classList.toggle('text-app-text', active);
 				b.classList.toggle('text-app-gray-400', !active);
@@ -140,6 +183,27 @@ const categories = [
 			applyFilters();
 		});
 	});
+
+	tagButtons.forEach((button) => {
+		button.addEventListener('click', () => {
+			const tag = (button.dataset.tag ?? '').toLowerCase();
+			const turningOff = activeTag === tag;
+			activeTag = turningOff ? '' : tag;
+
+			tagButtons.forEach((b) => {
+				b.dataset.active = !turningOff && b === button ? 'true' : 'false';
+			});
+
+			applyFilters();
+		});
+	});
+
+	// 如果是從文章頁的標籤連結進來（/blog?tag=xxx），先把對應的標籤按鈕標成選取狀態。
+	if (activeTag) {
+		tagButtons.forEach((b) => {
+			b.dataset.active = (b.dataset.tag ?? '').toLowerCase() === activeTag ? 'true' : 'false';
+		});
+	}
 
 	applyFilters();
 </script>
