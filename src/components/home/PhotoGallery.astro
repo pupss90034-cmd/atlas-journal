@@ -4,6 +4,10 @@ import AlbumFlipbook from '../AlbumFlipbook.astro';
 
 const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
 
+// 版面：窄邊。前面的 About 與文章區都是寬邊（鬆），
+// 這裡收成窄邊讓照片盡量放大（緊），做出第二組鬆緊對比。
+// 底色也從灰色塊改回白紙——白底才不會偷走照片的層次。
+
 // 排序邏輯備註（2026-08-03）：
 // 目前依 Obsidian 相簿檔案裡的 `order` 欄位手動排序。
 // 未來規劃：等網站對 Google 開放搜尋（src/consts.ts 的
@@ -14,23 +18,11 @@ const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.d
 // 搜尋開放時一起上線。相關備註也寫在 src/consts.ts 和使用說明.md。
 ---
 
-<section id="gallery" class="bg-app-gray-100 px-6 py-20 md:py-28">
-	<div class="mx-auto max-w-6xl">
-		<div class="mb-10 flex flex-wrap items-end justify-between gap-6 md:mb-14">
-			<div>
-				<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-gray-500">Photography</p>
-				<h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-app-ink md:text-4xl">
-					精選攝影集
-				</h2>
-			</div>
-			<a
-				href="/portfolio"
-				class="text-xs font-medium uppercase tracking-[0.2em] text-app-gray-500 transition-colors duration-300 hover:text-app-accent"
-			>
-				瀏覽完整攝影集 →
-			</a>
-		</div>
-
-		<AlbumFlipbook albums={albums} />
+<section id="gallery" class="page-narrow band border-t border-app-gray-200">
+	<div class="mb-12 flex items-baseline justify-between md:mb-16">
+		<p class="label">Photography</p>
+		<a href="/portfolio" class="label link-underline">Full Portfolio</a>
 	</div>
+
+	<AlbumFlipbook albums={albums} />
 </section>

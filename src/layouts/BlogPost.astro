@@ -7,11 +7,12 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import defaultCover from '../assets/site/default-cover.jpg';
+import { resolveHeroImage } from '../utils/heroImage';
 
 type Props = CollectionEntry<'blog'>['data'] & { slug: string };
 
 const { title, description, pubDate, updatedDate, heroImage, tags, slug } = Astro.props;
-const displayHero = heroImage ?? defaultCover;
+const displayHero = resolveHeroImage(heroImage) ?? defaultCover;
 
 // Find the previous/next post (by publish date) so readers can keep browsing.
 const allPosts = (await getCollection('blog')).sort(
@@ -20,6 +21,11 @@ const allPosts = (await getCollection('blog')).sort(
 const currentIndex = allPosts.findIndex((p) => p.id === slug);
 const olderPost = currentIndex > -1 && currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
 const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+
+// 改版重點（2026-08-04）：
+// 標題不再壓在照片上。壓字必須加深色遮罩，遮罩會毀掉照片；
+// 改成「滿版照片 →（翻頁）→ 白紙上的中軸標題頁 → 內文」，
+// 這是攝影集書冊的標準順序，照片與文字各自完整。
 ---
 
 <html lang="zh-Hant">
@@ -30,38 +36,44 @@ const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header transparent />
 		<main class="flex-1">
-			<div class="relative h-[50vh] w-full overflow-hidden">
+			<!-- 滿版：照片單獨佔一屏，不加任何文字與遮罩 -->
+			<figure class="m-0 h-[78svh] min-h-[420px] w-full overflow-hidden bg-app-gray-100">
 				<Image src={displayHero} alt="" class="h-full w-full object-cover" />
-				<div class="absolute inset-0 flex items-center justify-center bg-app-ink/55 px-6">
-					<div class="max-w-2xl text-center">
-						<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-body/85">
-							<FormattedDate date={pubDate} />
-							{updatedDate && (
-								<span> · Updated <FormattedDate date={updatedDate} /></span>
-							)}
-						</p>
-						<h1 class="mt-3 font-serif text-3xl font-semibold leading-tight tracking-tight text-app-body md:text-4xl lg:text-5xl">
-							{title}
-						</h1>
-					</div>
-				</div>
-			</div>
+			</figure>
 
-			<article class="px-6 py-10 md:py-16">
-				<div class="container mx-auto max-w-5xl">
-					<div class="prose mx-auto mt-12 max-w-3xl md:mt-16">
+			<!-- 標題頁：寬邊＋中軸 -->
+			<header class="page-wide pb-16 pt-20 md:pb-24 md:pt-28">
+				<div class="axis">
+					<p class="label">
+						<FormattedDate date={pubDate} />
+						{updatedDate && (
+							<span> · Updated <FormattedDate date={updatedDate} /></span>
+						)}
+					</p>
+					<h1 class="title-lg mx-auto mt-9 max-w-[24ch] text-app-ink">
+						{title}
+					</h1>
+					{description && (
+						<p class="body-small mx-auto mt-8 max-w-[40ch]">{description}</p>
+					)}
+				</div>
+			</header>
+
+			<!-- 內文：寬邊，行長鎖在 measure，段落樣式全站統一 -->
+			<article class="page-wide pb-24 md:pb-32">
+				<div class="mx-auto max-w-[38rem]">
+					<hr class="rule mb-16 md:mb-20" />
+
+					<div class="prose">
 						<slot />
 					</div>
 
 					{
 						tags && tags.length > 0 && (
-							<div class="mx-auto mt-10 flex max-w-3xl flex-wrap gap-2 md:mt-12">
+							<div class="mt-16 flex flex-wrap gap-x-6 gap-y-2 border-t border-app-gray-200 pt-8">
 								{tags.map((tag) => (
-									<a
-										href={`/blog?tag=${encodeURIComponent(tag)}`}
-										class="rounded-full bg-app-moss-soft px-3.5 py-1.5 text-xs font-medium text-app-moss-dark transition-colors duration-300 hover:bg-app-moss hover:text-app-body"
-									>
-										#{tag}
+									<a href={`/blog?tag=${encodeURIComponent(tag)}`} class="label link-underline">
+										{tag}
 									</a>
 								))}
 							</div>
@@ -70,23 +82,19 @@ const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 
 					{
 						(olderPost || newerPost) && (
-							<nav class="mx-auto mt-16 grid max-w-3xl grid-cols-1 gap-6 border-t border-app-gray-200 pt-10 md:mt-20 md:grid-cols-2 md:gap-10">
+							<nav class="mt-20 grid grid-cols-1 gap-10 border-t border-app-gray-200 pt-12 md:mt-28 md:grid-cols-2 md:gap-16">
 								{olderPost ? (
-									<a href={`/blog/${olderPost.id}/`} class="group block">
-										<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">← 上一篇</p>
-										<p class="mt-2 font-serif text-lg font-semibold leading-snug tracking-tight text-app-text group-hover:text-app-accent">
-											{olderPost.data.title}
-										</p>
+									<a href={`/blog/${olderPost.id}/`} class="group block transition-opacity duration-500 hover:opacity-55">
+										<p class="label">Previous</p>
+										<p class="title-sm mt-4 text-app-ink">{olderPost.data.title}</p>
 									</a>
 								) : (
 									<div />
 								)}
 								{newerPost ? (
-									<a href={`/blog/${newerPost.id}/`} class="group block md:text-right">
-										<p class="text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">下一篇 →</p>
-										<p class="mt-2 font-serif text-lg font-semibold leading-snug tracking-tight text-app-text group-hover:text-app-accent">
-											{newerPost.data.title}
-										</p>
+									<a href={`/blog/${newerPost.id}/`} class="group block transition-opacity duration-500 hover:opacity-55 md:text-right">
+										<p class="label">Next</p>
+										<p class="title-sm mt-4 text-app-ink">{newerPost.data.title}</p>
 									</a>
 								) : (
 									<div />

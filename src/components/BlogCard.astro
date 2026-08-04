@@ -3,41 +3,45 @@ import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import FormattedDate from './FormattedDate.astro';
 import defaultCover from '../assets/site/default-cover.jpg';
+import { resolveHeroImage } from '../utils/heroImage';
 
 interface Props {
 	post: CollectionEntry<'blog'>;
 }
 
 const { post } = Astro.props;
-const { title, description, pubDate, heroImage, tags } = post.data;
+const { title, description, pubDate, heroImage } = post.data;
+const cover = resolveHeroImage(heroImage) ?? defaultCover;
+
+// 改版重點：不再是「卡片」。沒有外框、沒有底色、沒有標籤藥丸，
+// 就是一張圖版加下方的圖說（日期 / 標題 / 一句話），
+// 排版邏輯與攝影集圖說完全一致。
+// 比例改為 4:5 直幅——直幅在格線裡看起來像貼在頁面上的照片，
+// 橫幅 4:3 則會讀成部落格縮圖。
 ---
 
 <a href={`/blog/${post.id}/`} class="group block">
 	<article>
-		<div class="mb-4 aspect-[4/3] w-full overflow-hidden bg-app-accent-soft">
+		<div class="aspect-[4/5] w-full overflow-hidden bg-app-gray-100">
 			<Image
-				src={heroImage ?? defaultCover}
+				src={cover}
 				alt=""
-				class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+				class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
+				widths={[400, 700, 1000]}
+				sizes="(min-width: 768px) 30rem, 92vw"
 			/>
 		</div>
-		<p class="mb-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-app-gray-400">
-			<FormattedDate date={pubDate} />
-		</p>
-		<h3 class="font-serif text-lg font-semibold leading-snug tracking-tight text-app-text group-hover:text-app-accent">
-			{title}
-		</h3>
-		<p class="mt-2 text-sm leading-relaxed text-app-gray-500 line-clamp-2">
-			{description}
-		</p>
-		{
-			tags && tags.length > 0 && (
-				<p class="mt-2.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] font-medium text-app-moss-dark">
-					{tags.slice(0, 3).map((tag) => (
-						<span>#{tag}</span>
-					))}
-				</p>
-			)
-		}
+
+		<div class="mt-6 transition-opacity duration-500 group-hover:opacity-60">
+			<p class="label">
+				<FormattedDate date={pubDate} />
+			</p>
+			<h3 class="title-sm mt-4 max-w-[26ch] text-app-ink">
+				{title}
+			</h3>
+			<p class="body-small mt-3 line-clamp-2 max-w-[38ch]">
+				{description}
+			</p>
+		</div>
 	</article>
 </a>

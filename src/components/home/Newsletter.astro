@@ -1,17 +1,18 @@
 ---
+// 版面：寬邊＋中軸，白底。
+// 原本是整塊深色底＋實心按鈕，那個對比會把視線從照片上搶走。
+// 改成白紙上的一條輸入線——欄位只有底線，送出鍵是純文字。
 ---
 
-<section id="newsletter" class="bg-app-ink px-6 py-20 md:py-28">
-	<div class="mx-auto max-w-xl text-center">
-		<p class="text-xs font-medium uppercase tracking-[0.3em] text-app-body/60">Newsletter</p>
-		<h2 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-app-body md:text-4xl">
-			訂閱電子報
-		</h2>
-		<p class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-app-body/70 md:text-base">
+<section id="newsletter" class="page-wide band border-t border-app-gray-200">
+	<div class="axis">
+		<p class="label">Newsletter</p>
+		<h2 class="title-lg mt-8 text-app-ink">訂閱電子報</h2>
+		<p class="body-small mx-auto mt-7 max-w-[42ch]">
 			每次發佈新文章或新攝影集，第一時間寄到你的信箱，不定期分享路上的私房清單。
 		</p>
 
-		<form id="newsletter-form" class="mt-9 flex flex-col gap-3 sm:flex-row sm:gap-0" novalidate>
+		<form id="newsletter-form" class="mx-auto mt-14 flex max-w-md items-baseline gap-6 border-b border-app-gray-300 pb-4" novalidate>
 			<!-- Honeypot field: hidden from real visitors, catches simple bots. -->
 			<div class="absolute -left-[9999px]" aria-hidden="true">
 				<label for="company">請勿填寫</label>
@@ -24,20 +25,20 @@
 				id="newsletter-email"
 				required
 				placeholder="你的電子信箱"
-				class="w-full flex-1 border border-app-body/25 bg-transparent px-5 py-3.5 text-sm text-app-body placeholder:text-app-body/50 focus:border-app-body/60 focus:outline-none sm:border-r-0"
+				class="w-full flex-1 bg-transparent text-left text-lg text-app-ink placeholder:text-app-gray-300 focus:outline-none"
 			/>
 			<button
 				type="submit"
 				id="newsletter-submit"
-				class="shrink-0 whitespace-nowrap bg-app-accent px-7 py-3.5 text-xs font-medium uppercase tracking-[0.2em] text-app-body transition-colors duration-300 hover:bg-app-accent-dark disabled:opacity-60"
+				class="label link-underline shrink-0 whitespace-nowrap text-app-ink disabled:opacity-40"
 			>
-				訂閱
+				Subscribe
 			</button>
 		</form>
 
-		<p id="newsletter-message" class="mt-4 min-h-[1.25rem] text-xs" role="status" aria-live="polite"></p>
+		<p id="newsletter-message" class="body-small mt-6 min-h-[1.25rem] text-xs" role="status" aria-live="polite"></p>
 
-		<p class="mt-6 text-[11px] leading-relaxed text-app-body/40">
+		<p class="mx-auto mt-8 max-w-[44ch] text-[11px] leading-relaxed text-app-gray-400">
 			訂閱即表示你同意收到本站的電子報通知，我們不會分享你的信箱給第三方，取消訂閱請直接回信告知。
 		</p>
 	</div>
@@ -51,13 +52,13 @@
 
 	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+	// 單色系統裡不用綠／紅來區分狀態，改用「深墨（有結果）／淡灰（無事）」
 	function setMessage(text: string, tone: 'success' | 'error' | 'muted') {
 		if (!message) return;
 		message.textContent = text;
-		message.classList.remove('text-app-moss', 'text-red-400', 'text-app-body/60');
-		if (tone === 'success') message.classList.add('text-app-moss');
-		else if (tone === 'error') message.classList.add('text-red-400');
-		else message.classList.add('text-app-body/60');
+		message.classList.remove('text-app-ink', 'text-app-gray-400');
+		if (tone === 'muted') message.classList.add('text-app-gray-400');
+		else message.classList.add('text-app-ink');
 	}
 
 	form?.addEventListener('submit', async (e) => {

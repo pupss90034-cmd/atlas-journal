@@ -1,38 +1,67 @@
 @import "tailwindcss";
 
 /*
-  Theme tokens — AtLAS TeRRA: photography-led travel-magazine look.
-  Warm cream paper base, deep ink-black type, a vintage brick-red accent
-  for CTAs/highlights, and a muted moss green as the secondary accent.
-  Fraunces (serif, display) pairs with Inter (sans, UI/body).
+  ─────────────────────────────────────────────────────────────
+  AtLAS TeRRA — 攝影集式設計系統（2026 改版）
+  ─────────────────────────────────────────────────────────────
+  設計原則（對應攝影集模板規則）：
+
+  1. 留邊：頁面同時存在「寬邊」與「窄邊」兩種節奏。
+     文字段落走寬邊（留白多、視覺鬆），照片走窄邊或滿版
+     （視覺緊），靠鬆緊交替製造閱讀呼吸。
+  2. 邊等距 / 中軸 / 滿版：三種版式在站上都會出現，
+     但同一個區塊只用一種，不混用。
+  3. 一字體到底：全站只有 EB Garamond（英文）＋
+     Noto Serif TC（＝Source Han Serif 思源／源雲明體，
+     Google Fonts 上的名稱）。沒有第二套字體。
+  4. 同字體／同段落樣式：層級只靠「級數、字距、留白」
+     區分，不靠字重或顏色。粗體與彩色一律不用。
+
+  配色：純單色。白紙、墨字、灰階層次。
+  照片是版面上唯一的顏色來源。
 */
 @theme {
-	/* Primary accent = brick red (CTAs, active states, underline accents) */
-	--color-app-accent: #a8432e;
-	--color-app-accent-soft: #f1ddd2;
-	--color-app-accent-dark: #8a3624;
+	/* ── 單色系統 ──────────────────────────────
+	   沿用原本的 token 名稱，但全部重新對映成墨階，
+	   確保任何尚未改寫的元件也不會再出現彩色。 */
 
-	/* Secondary accent = moss green (footer, tags, quiet highlights) */
-	--color-app-moss: #5c6b4d;
-	--color-app-moss-soft: #e3e6d8;
-	--color-app-moss-dark: #47543c;
+	/* 紙 */
+	--color-app-body: #ffffff;
+	--color-app-surface: #ffffff;
 
-	--color-app-body: #f7f1e6;
-	--color-app-surface: #fffdf8;
-	--color-app-ink: #201c18;
-	--color-app-text: #201c18;
+	/* 墨 */
+	--color-app-ink: #14110f;
+	--color-app-text: #1c1917;
 
-	--color-app-gray-100: #efe7d8;
-	--color-app-gray-200: #e3d8c4;
-	--color-app-gray-300: #d2c2a6;
-	--color-app-gray-400: #a3937c;
-	--color-app-gray-500: #766a5a;
-	--color-app-gray-600: #55493c;
+	/* 灰階層次（100 最淡 → 600 最深） */
+	--color-app-gray-100: #f4f3f1;
+	--color-app-gray-200: #e6e4e0;
+	--color-app-gray-300: #cfccc6;
+	--color-app-gray-400: #a09b93;
+	--color-app-gray-500: #6f6a63;
+	--color-app-gray-600: #43403b;
 
-	--font-inter: "Inter", sans-serif;
-	/* Fraunces has no Chinese glyphs, so Traditional Chinese text falls
-	   back to Noto Serif TC to keep the same serif, editorial feel. */
-	--font-serif: "Fraunces", "Noto Serif TC", serif;
+	/* 舊的強調色一律導回墨階，避免殘留磚紅／苔綠 */
+	--color-app-accent: #14110f;
+	--color-app-accent-soft: #f4f3f1;
+	--color-app-accent-dark: #000000;
+	--color-app-moss: #14110f;
+	--color-app-moss-soft: #f4f3f1;
+	--color-app-moss-dark: #43403b;
+
+	/* ── 字體：一套到底 ──────────────────────────
+	   EB Garamond 沒有中文字符，中文自動落到
+	   Noto Serif TC（即 Source Han Serif 明體）。
+	   兩者同為舊風格襯線，接在一起不會斷層。 */
+	--font-serif: "EB Garamond", "Noto Serif TC", "Source Han Serif TC", serif;
+	/* 舊 token 指向同一套字體，確保沒有第二種字體漏出來 */
+	--font-inter: "EB Garamond", "Noto Serif TC", "Source Han Serif TC", serif;
+
+	/* ── 版面留邊 ────────────────────────────── */
+	--page-margin-wide: clamp(1.5rem, 8vw, 8rem); /* 寬邊：文字區 */
+	--page-margin-narrow: clamp(1rem, 3vw, 2.5rem); /* 窄邊：影像區 */
+	--band-space: clamp(5rem, 11vw, 9.5rem); /* 區塊之間的呼吸 */
+	--measure: 34rem; /* 內文行長上限 */
 }
 
 @layer base {
@@ -42,10 +71,16 @@
 		box-sizing: border-box;
 	}
 
+	html {
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
 	body {
 		margin: 0;
 		padding: 0;
-		font-family: var(--font-inter);
+		font-family: var(--font-serif);
+		font-weight: 400;
 		color: var(--color-app-text);
 		background: var(--color-app-body);
 		word-wrap: break-word;
@@ -56,13 +91,134 @@
 		max-width: 100%;
 		height: auto;
 	}
+
+	/* 一字體到底：標題不另外加粗，層級靠級數與字距處理 */
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--font-serif);
+		font-weight: 400;
+	}
+
+	::selection {
+		background: var(--color-app-ink);
+		color: var(--color-app-body);
+	}
 }
 
-/* Prose styling for rendered Markdown/MDX post bodies */
+/* ─────────────────────────────────────────────
+   版面工具類
+
+   注意：以下全部放在 @layer components。
+   Tailwind v4 的層級順序是 theme → base → components → utilities，
+   放進 components 層之後，個別元素上的 Tailwind 工具類
+   （例如 text-app-ink、text-white/70）才蓋得過這裡的預設值。
+   如果寫在 layer 外面，未分層的 CSS 反而會贏過 utilities，
+   造成「明明加了 text-app-ink 卻還是灰色」的狀況。
+   ───────────────────────────────────────────── */
+@layer components {
+
+/* 寬邊：文字型區塊，左右留白大 */
+.page-wide {
+	padding-inline: var(--page-margin-wide);
+}
+
+/* 窄邊：影像型區塊，左右留白小，讓照片更接近滿版 */
+.page-narrow {
+	padding-inline: var(--page-margin-narrow);
+}
+
+/* 邊等距：上下左右留白相同，像貼在紙上的一張圖 */
+.page-even {
+	padding: var(--page-margin-narrow);
+}
+
+/* 中軸：置中欄，用於書名頁式的段落 */
+.axis {
+	margin-inline: auto;
+	max-width: var(--measure);
+	text-align: center;
+}
+
+/* 區塊上下節奏 */
+.band {
+	padding-block: var(--band-space);
+}
+.band-tight {
+	padding-block: calc(var(--band-space) * 0.55);
+}
+
+/* ─────────────────────────────────────────────
+   排版樣式（同字體、同段落樣式）
+   ───────────────────────────────────────────── */
+
+/* 小標籤：全站唯一的「小級數大字距」樣式 */
+.label {
+	font-size: 0.6875rem;
+	letter-spacing: 0.32em;
+	text-transform: uppercase;
+	color: var(--color-app-gray-400);
+	line-height: 1;
+}
+
+/* 標題級距：只有三級，避免版面出現太多層 */
+.title-display {
+	font-size: clamp(2.75rem, 7vw, 5.5rem);
+	line-height: 1.02;
+	letter-spacing: 0.005em;
+}
+.title-lg {
+	font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+	line-height: 1.14;
+	letter-spacing: 0.01em;
+}
+.title-sm {
+	font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+	line-height: 1.28;
+	letter-spacing: 0.01em;
+}
+
+/* 內文：全站段落只有這一種樣式 */
+.body-text {
+	font-size: 1.0625rem;
+	line-height: 1.85;
+	color: var(--color-app-gray-600);
+}
+.body-small {
+	font-size: 0.9375rem;
+	line-height: 1.75;
+	color: var(--color-app-gray-500);
+}
+
+/* 細線：分隔一律用 1px 灰線，不用色塊 */
+.rule {
+	border: 0;
+	border-top: 1px solid var(--color-app-gray-200);
+}
+
+/* 連結底線：hover 只變濃淡，不變色 */
+.link-underline {
+	position: relative;
+	padding-bottom: 0.15em;
+	border-bottom: 1px solid var(--color-app-gray-300);
+	transition: border-color 0.4s ease, color 0.4s ease;
+}
+.link-underline:hover {
+	border-color: var(--color-app-ink);
+	color: var(--color-app-ink);
+}
+
+/* ─────────────────────────────────────────────
+   文章內文（Markdown / MDX）
+   同字體、同段落樣式：不使用粗體與彩色強調
+   ───────────────────────────────────────────── */
 .prose {
 	color: var(--color-app-text);
-	font-size: 1.05rem;
-	line-height: 1.8;
+	font-size: 1.0625rem;
+	line-height: 1.85;
 }
 .prose h1,
 .prose h2,
@@ -71,70 +227,100 @@
 .prose h5,
 .prose h6 {
 	font-family: var(--font-serif);
-	color: var(--color-app-text);
-	font-weight: 600;
-	letter-spacing: -0.01em;
-	line-height: 1.25;
-	margin: 1.6em 0 0.6em;
+	font-weight: 400;
+	color: var(--color-app-ink);
+	letter-spacing: 0.01em;
+	line-height: 1.2;
+	margin: 2.6em 0 0.9em;
 }
 .prose h1 {
-	font-size: 2.2em;
+	font-size: 1.9em;
 }
 .prose h2 {
-	font-size: 1.7em;
+	font-size: 1.5em;
 }
 .prose h3 {
-	font-size: 1.35em;
+	font-size: 1.22em;
+}
+.prose h4,
+.prose h5,
+.prose h6 {
+	font-size: 1.05em;
+	letter-spacing: 0.08em;
 }
 .prose p {
-	margin: 0 0 1.4em;
+	margin: 0 0 1.5em;
 }
+/* 粗體在單一字體的版面裡會破壞灰度，改為極淡底線強調 */
 .prose strong {
-	font-weight: 700;
+	font-weight: 400;
+	border-bottom: 1px solid var(--color-app-gray-300);
+}
+.prose em {
+	font-style: italic;
 }
 .prose a {
-	color: var(--color-app-text);
+	color: var(--color-app-ink);
 	text-decoration: underline;
-	text-decoration-color: var(--color-app-accent);
-	text-decoration-thickness: 1.5px;
-	text-underline-offset: 3px;
+	text-decoration-color: var(--color-app-gray-300);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 4px;
+	transition: text-decoration-color 0.3s ease;
+}
+.prose a:hover {
+	text-decoration-color: var(--color-app-ink);
 }
 .prose ul,
 .prose ol {
-	margin: 0 0 1.4em;
-	padding-left: 1.4em;
+	margin: 0 0 1.5em;
+	padding-left: 1.3em;
 }
 .prose li {
-	margin: 0.3em 0;
+	margin: 0.35em 0;
+}
+.prose li::marker {
+	color: var(--color-app-gray-400);
 }
 .prose blockquote {
-	border-left: 2px solid var(--color-app-accent);
-	padding: 0.2em 0 0.2em 1.2em;
-	margin: 1.6em 0;
-	font-family: var(--font-serif);
+	border: 0;
+	padding: 0;
+	margin: 2.4em 0 2.4em;
+	padding-left: 0;
 	font-style: italic;
-	font-size: 1.2em;
+	font-size: 1.28em;
+	line-height: 1.6;
 	color: var(--color-app-gray-600);
+	text-indent: -0.4em;
 }
 .prose hr {
-	border: none;
+	border: 0;
 	border-top: 1px solid var(--color-app-gray-200);
-	margin: 2em 0;
+	margin: 3.5em auto;
+	width: 4rem;
 }
+/* 文章內的圖片打破行長限制，做成滿版感的展開圖 */
 .prose img {
-	border-radius: 4px;
-	margin: 1.6em 0;
+	border-radius: 0;
+	margin: 2.6em 0;
+	width: 100%;
+}
+.prose figcaption {
+	margin-top: 0.9em;
+	font-size: 0.8125rem;
+	letter-spacing: 0.06em;
+	color: var(--color-app-gray-400);
 }
 .prose code {
 	padding: 2px 6px;
 	background-color: var(--color-app-gray-100);
-	border-radius: 4px;
+	border-radius: 0;
 	font-size: 0.9em;
 }
 .prose pre {
-	padding: 1.4em;
-	border-radius: 4px;
+	padding: 1.5em;
+	border-radius: 0;
 	overflow-x: auto;
+	background: var(--color-app-gray-100);
 }
 .prose pre code {
 	all: unset;
@@ -142,13 +328,22 @@
 .prose table {
 	width: 100%;
 	border-collapse: collapse;
-	margin: 1.6em 0;
+	margin: 2em 0;
+	font-size: 0.9375rem;
 }
 .prose th,
 .prose td {
-	border: 1px solid var(--color-app-gray-200);
-	padding: 0.5em 0.75em;
+	border: 0;
+	border-bottom: 1px solid var(--color-app-gray-200);
+	padding: 0.75em 0.5em;
 	text-align: left;
+	font-weight: 400;
+}
+.prose th {
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-size: 0.75em;
+	color: var(--color-app-gray-400);
 }
 
 /* Obsidian [[筆記名稱]] 連結如果連不到對應文章（筆記還沒寫、還在草稿
@@ -161,6 +356,8 @@
 	color: inherit;
 	cursor: help;
 }
+
+} /* ← end @layer components */
 
 .sr-only {
 	border: 0;

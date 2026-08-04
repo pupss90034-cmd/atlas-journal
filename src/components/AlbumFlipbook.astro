@@ -1,11 +1,17 @@
 ---
 // 攝影集「雜誌翻頁」元件：一次只顯示一個主題（相簿），
-// 用左右箭頭（或滑動 / 鍵盤左右鍵）切換到上一個/下一個主題，
-// 不再用可點擊的主題標籤／分類頁籤。
+// 用左右箭頭（或滑動 / 鍵盤左右鍵）切換到上一個/下一個主題。
 //
 // 首頁「精選攝影集」區塊與 /portfolio 攝影集頁共用這個元件，
 // 資料來源都是 src/content/編輯/攝影集/ 底下的相簿檔案，
 // 兩個地方顯示的主題與順序永遠一致，Obsidian 只要改一份就好。
+//
+// 改版重點（2026-08-04）：
+// 1. 圖片格線的間距（gutter）統一成一個值 --gutter，所有圖片之間
+//    等距，不再有 gap-3 / gap-4 兩種尺寸——這是「邊等距」的做法。
+// 2. 圓形箭頭鈕改成純文字 Prev / Next，並移到與標題同一條基線上。
+//    圓形按鈕＋陰影是網頁介面的語彙，書冊版面不用它。
+// 3. 移除圖片底下的灰色佔位色塊與所有圓角。
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 
@@ -18,141 +24,144 @@ const total = albums.length;
 ---
 
 <div class="flipbook" data-total={total}>
-	<div class="mb-6 flex items-center justify-between gap-4 md:mb-8">
-		<div class="min-w-0">
-			<p class="flipbook-counter text-xs font-medium uppercase tracking-[0.25em] text-app-gray-400">
-				<span class="flipbook-counter-current">01</span> / {String(total).padStart(2, '0')}
-			</p>
-			<h3 class="flipbook-label mt-1 truncate font-serif text-2xl font-semibold tracking-tight text-app-ink md:text-3xl">
-				{albums[0]?.data.label}
-			</h3>
-		</div>
+	<!-- 標題列：左為主題名稱，右為編號與翻頁，共用同一條基線 -->
+	<div class="mb-8 flex items-baseline justify-between gap-8 border-b border-app-gray-200 pb-6 md:mb-10">
+		<h3 class="flipbook-label title-lg min-w-0 truncate text-app-ink">
+			{albums[0]?.data.label}
+		</h3>
 
-		<div class="flex shrink-0 items-center gap-2">
-			<button type="button" class="flipbook-prev flipbook-arrow" aria-label="上一組主題">
-				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-					<path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-				</svg>
-			</button>
-			<button type="button" class="flipbook-next flipbook-arrow" aria-label="下一組主題">
-				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-					<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-				</svg>
-			</button>
+		<div class="flex shrink-0 items-baseline gap-6">
+			<p class="label">
+				<span class="flipbook-counter-current">01</span>&nbsp;/&nbsp;{String(total).padStart(2, '0')}
+			</p>
+			<div class="flex items-baseline gap-4">
+				<button type="button" class="flipbook-prev label flipbook-arrow" aria-label="上一組主題">Prev</button>
+				<button type="button" class="flipbook-next label flipbook-arrow" aria-label="下一組主題">Next</button>
+			</div>
 		</div>
 	</div>
 
 	<div class="flipbook-stage relative">
 		<button type="button" class="flipbook-prev flipbook-edge flipbook-edge-left" aria-label="上一組主題">
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-				<path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+				<path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
 			</svg>
 		</button>
 
 		{
 			albums.map((album, albumIndex) => (
 				<div
-					class="flipbook-page grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4"
+					class="flipbook-page flipbook-grid"
 					data-index={albumIndex}
 					data-label={album.data.label}
 					hidden={albumIndex !== 0}
 				>
 					{album.data.images.map((photo, photoIndex) => (
-						<div
+						<figure
 							class:list={[
-								'group overflow-hidden bg-app-gray-200',
-								photoIndex === 0 ? 'col-span-2 row-span-2 aspect-square md:aspect-auto' : 'aspect-square',
+								'flipbook-cell group m-0 overflow-hidden',
+								photoIndex === 0 ? 'flipbook-cell-lead' : '',
 							]}
 						>
 							<Image
 								src={photo.src}
 								alt={photo.alt}
-								class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+								class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
 								widths={photoIndex === 0 ? [500, 800, 1100] : [300, 500]}
 								sizes={photoIndex === 0 ? '(min-width: 768px) 50vw, 100vw' : '(min-width: 768px) 25vw, 50vw'}
 							/>
-						</div>
+						</figure>
 					))}
 				</div>
 			))
 		}
 
 		<button type="button" class="flipbook-next flipbook-edge flipbook-edge-right" aria-label="下一組主題">
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
-				<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+				<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
 			</svg>
 		</button>
 	</div>
 </div>
 
 <style>
-	.flipbook-arrow,
-	.flipbook-edge {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 9999px;
-		color: var(--color-app-ink);
-		transition: color 0.3s, background-color 0.3s, opacity 0.3s;
-	}
-	.flipbook-arrow {
-		height: 2.25rem;
-		width: 2.25rem;
-		border: 1px solid var(--color-app-gray-300);
-	}
-	.flipbook-arrow:hover {
-		border-color: var(--color-app-accent);
-		color: var(--color-app-accent);
+	/* 邊等距：整組照片只有一個間距值，橫向與縱向相同 */
+	.flipbook {
+		--gutter: clamp(0.5rem, 1.2vw, 1rem);
 	}
 
-	/* Edge arrows sit over the photo "page" itself, book-style, and only
-	   reveal themselves on hover/focus so they don't compete with the photos. */
+	.flipbook-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--gutter);
+	}
+	@media (min-width: 768px) {
+		.flipbook-grid {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+
+	.flipbook-cell {
+		aspect-ratio: 1 / 1;
+	}
+	/* 主圖：佔 2×2，成為每一頁的視覺重心 */
+	.flipbook-cell-lead {
+		grid-column: span 2;
+		grid-row: span 2;
+	}
+
+	/* 翻頁鍵：純文字，hover 只變濃淡 */
+	.flipbook-arrow {
+		color: var(--color-app-gray-400);
+		transition: color 0.4s ease;
+	}
+	.flipbook-arrow:hover {
+		color: var(--color-app-ink);
+	}
+
+	/* 邊緣熱區：只是一個很淡的箭頭，沒有底色與陰影，
+	   滑到照片上才浮現，不跟照片搶注意力。 */
 	.flipbook-edge {
 		position: absolute;
 		top: 50%;
 		transform: translateY(-50%);
-		height: 3rem;
-		width: 3rem;
-		background: color-mix(in srgb, var(--color-app-surface) 88%, transparent);
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 4rem;
+		width: 2.5rem;
+		color: #ffffff;
+		mix-blend-mode: difference;
 		opacity: 0;
+		transition: opacity 0.5s ease;
 		z-index: 10;
 	}
 	.flipbook-stage:hover .flipbook-edge,
 	.flipbook-edge:focus-visible {
-		opacity: 1;
+		opacity: 0.9;
 	}
 	.flipbook-edge-left {
-		left: -0.75rem;
+		left: 0;
 	}
 	.flipbook-edge-right {
-		right: -0.75rem;
+		right: 0;
 	}
 	@media (max-width: 767px) {
 		.flipbook-edge {
-			opacity: 1;
-			height: 2.5rem;
-			width: 2.5rem;
-		}
-		.flipbook-edge-left {
-			left: 0.25rem;
-		}
-		.flipbook-edge-right {
-			right: 0.25rem;
+			opacity: 0.9;
 		}
 	}
 
+	/* 翻頁：淡入淡出，不做位移，維持書頁翻開的安靜感 */
 	.flipbook-page {
-		animation: flipbook-fade-in 0.45s ease both;
+		animation: flipbook-fade-in 0.6s ease both;
 	}
 	@keyframes flipbook-fade-in {
 		from {
 			opacity: 0;
-			transform: translateX(8px);
 		}
 		to {
 			opacity: 1;
-			transform: translateX(0);
 		}
 	}
 	.flipbook-page[data-leaving='true'] {
@@ -164,6 +173,13 @@ const total = albums.length;
 		}
 		to {
 			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.flipbook-page,
+		.flipbook-page[data-leaving='true'] {
+			animation: none;
 		}
 	}
 </style>

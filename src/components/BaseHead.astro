@@ -22,11 +22,16 @@ const { title, description, image = '/images/default-cover.jpg' } = Astro.props;
 <meta name="generator" content={Astro.generator} />
 {!SITE_IS_PUBLISHED && <meta name="robots" content="noindex, nofollow" />}
 
-<!-- Font -->
+<!--
+	Font — 一字體到底。
+	EB Garamond 負責所有英文與數字；中文自動落到 Noto Serif TC
+	（Google Fonts 上的 Source Han Serif／思源明體）。
+	只載入 400 / 400 italic / 500，避免版面出現粗體。
+-->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
-	href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Noto+Serif+TC:wght@500;600;700&display=swap"
+	href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Serif+TC:wght@300;400;500&display=swap"
 	rel="stylesheet"
 />
 

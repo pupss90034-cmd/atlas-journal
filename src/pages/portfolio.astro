@@ -10,38 +10,40 @@ const SITE_TITLE = siteSettings?.data.title ?? '';
 
 const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
 const description = '完整攝影集，用左右箭頭或滑動切換每個主題。';
+
+// 版面：書名頁（中軸）＋窄邊圖版。
+// 標題頁刻意留很大的上下留白，讓讀者先「停一拍」再進入照片。
 ---
 
 <!doctype html>
 <html lang="zh-Hant">
 	<head>
-		<BaseHead title={`Portfolio - ${SITE_TITLE}`} description={description} />
+		<BaseHead title={`Portfolio — ${SITE_TITLE}`} description={description} />
 	</head>
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<section class="px-6 pb-10 pt-32 md:pb-14 md:pt-40">
-				<div class="container mx-auto max-w-5xl text-center">
-					<p class="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-app-gray-500">Portfolio</p>
-					<h1 class="font-serif text-3xl font-semibold tracking-tight text-app-text md:text-4xl">
-						攝影集
-					</h1>
-					<p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-app-gray-600 md:text-base">
+			<!-- 書名頁：中軸置中 -->
+			<section class="page-wide pb-16 pt-40 md:pb-24 md:pt-52">
+				<div class="axis">
+					<!-- 眉標放「共幾組主題」而不是重複標題本身，避免同一個字出現兩次 -->
+					<p class="label">{String(albums.length).padStart(2, '0')} Series</p>
+					<h1 class="title-display mt-9 text-app-ink">Portfolio</h1>
+					<p class="body-small mx-auto mt-8 max-w-[38ch]">
 						{description}
 					</p>
 				</div>
 			</section>
 
-			<section class="px-6 pb-20 md:pb-28">
-				<div class="mx-auto max-w-6xl">
-					{
-						albums.length > 0 ? (
-							<AlbumFlipbook albums={albums} />
-						) : (
-							<p class="text-center text-app-gray-500">還沒有相簿。</p>
-						)
-					}
-				</div>
+			<!-- 圖版：窄邊 -->
+			<section class="page-narrow pb-24 md:pb-32">
+				{
+					albums.length > 0 ? (
+						<AlbumFlipbook albums={albums} />
+					) : (
+						<p class="body-small text-center">還沒有相簿。</p>
+					)
+				}
 			</section>
 		</main>
 		<Footer />

@@ -28,47 +28,44 @@ const categories = [
 const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a, b) =>
 	a.localeCompare(b, 'zh-Hant'),
 );
+
+// 版面：書名頁（中軸）＋兩欄圖版。
+// 原本是三欄卡片格線，三欄會把圖壓得太小、讀起來像列表頁；
+// 改成兩欄大圖，並把分類／標籤篩選改成純文字列，去掉所有藥丸按鈕。
 ---
 
 <!doctype html>
 <html lang="zh-Hant">
 	<head>
-		<BaseHead title={`文章 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<BaseHead title={`Journal — ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 	</head>
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<section class="px-6 pb-10 pt-32 md:pb-14 md:pt-40">
-				<div class="container mx-auto max-w-5xl text-center">
-					<p class="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-app-gray-500">Journal</p>
-					<h1 class="font-serif text-3xl font-semibold tracking-tight text-app-text md:text-4xl">
-						所有文章
-					</h1>
-					<p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-app-gray-600 md:text-base">
+			<!-- 書名頁：中軸 -->
+			<section class="page-wide pb-14 pt-40 md:pb-20 md:pt-52">
+				<div class="axis">
+					<!-- 眉標放「共幾篇」而不是重複標題本身，避免同一個字出現兩次 -->
+					<p class="label">{String(posts.length).padStart(2, '0')} Entries</p>
+					<h1 class="title-display mt-9 text-app-ink">Journal</h1>
+					<p class="body-small mx-auto mt-8 max-w-[38ch]">
 						{SITE_DESCRIPTION}
 					</p>
-					<p id="search-status" class="mx-auto mt-4 hidden max-w-md text-xs uppercase tracking-[0.15em] text-app-accent"></p>
+					<p id="search-status" class="label mx-auto mt-8 hidden text-app-ink"></p>
 				</div>
 			</section>
 
-			<section class="px-6 pb-16 md:pb-24">
-				<div class="container mx-auto max-w-5xl">
+			<!-- 篩選：純文字，兩列，用細線與上方標題頁分開 -->
+			<section class="page-wide">
+				<div class="mx-auto max-w-6xl">
 					{
 						categories.length > 0 && (
-							<div class="mb-6 flex flex-wrap justify-center gap-x-6 gap-y-2 border-y border-app-gray-200 py-4" id="category-filter">
-								<button
-									type="button"
-									data-category=""
-									class="filter-btn text-xs font-medium uppercase tracking-[0.15em] text-app-text transition-colors duration-300"
-								>
-									全部分類
+							<div class="flex flex-wrap justify-center gap-x-8 gap-y-3 border-t border-app-gray-200 py-5" id="category-filter">
+								<button type="button" data-category="" class="filter-btn label" data-active="true">
+									All
 								</button>
 								{categories.map((category) => (
-									<button
-										type="button"
-										data-category={category}
-										class="filter-btn text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400 transition-colors duration-300 hover:text-app-text"
-									>
+									<button type="button" data-category={category} class="filter-btn label">
 										{category}
 									</button>
 								))}
@@ -78,24 +75,24 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 
 					{
 						tags.length > 0 && (
-							<div class="mb-10 flex flex-wrap items-center justify-center gap-2 md:mb-14" id="tag-filter">
-								<span class="mr-1 text-xs font-medium uppercase tracking-[0.15em] text-app-gray-400">標籤</span>
+							<div class="flex flex-wrap items-baseline justify-center gap-x-7 gap-y-3 border-y border-app-gray-200 py-5" id="tag-filter">
 								{tags.map((tag) => (
-									<button
-										type="button"
-										data-tag={tag}
-										class="tag-btn rounded-full border border-app-gray-300 px-3.5 py-1.5 text-xs text-app-gray-600 transition-colors duration-300 hover:border-app-moss hover:text-app-moss-dark"
-									>
-										#{tag}
+									<button type="button" data-tag={tag} class="tag-btn label">
+										{tag}
 									</button>
 								))}
 							</div>
 						)
 					}
+				</div>
+			</section>
 
+			<!-- 圖版：兩欄，間距與攝影集同一組節奏 -->
+			<section class="page-wide pb-28 pt-16 md:pb-36 md:pt-24">
+				<div class="mx-auto max-w-6xl">
 					{
 						posts.length > 0 ? (
-							<div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3" id="post-grid">
+							<div class="grid grid-cols-1 gap-x-12 gap-y-20 sm:grid-cols-2 md:gap-x-16 md:gap-y-28" id="post-grid">
 								{posts.map((post) => (
 									<div
 										class="post-item"
@@ -109,10 +106,10 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 								))}
 							</div>
 						) : (
-							<p class="text-app-gray-500">還沒有發佈的文章。</p>
+							<p class="body-small text-center">還沒有發佈的文章。</p>
 						)
 					}
-					<p id="empty-state" class="hidden py-16 text-center text-sm text-app-gray-500">
+					<p id="empty-state" class="body-small hidden py-20 text-center">
 						沒有符合的文章，換個關鍵字試試。
 					</p>
 				</div>
@@ -123,10 +120,21 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 </html>
 
 <style>
+	/* 選取狀態：不換顏色，只加一條底線並轉深 —— 單色系統的層級做法 */
+	.filter-btn,
+	.tag-btn {
+		border-bottom: 1px solid transparent;
+		padding-bottom: 0.3em;
+		transition: color 0.4s ease, border-color 0.4s ease;
+	}
+	.filter-btn:hover,
+	.tag-btn:hover {
+		color: var(--color-app-ink);
+	}
+	.filter-btn[data-active='true'],
 	.tag-btn[data-active='true'] {
-		border-color: var(--color-app-moss);
-		background: var(--color-app-moss-soft);
-		color: var(--color-app-moss-dark);
+		color: var(--color-app-ink);
+		border-bottom-color: var(--color-app-ink);
 	}
 </style>
 
@@ -160,10 +168,10 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 		emptyState?.classList.toggle('hidden', visibleCount > 0);
 
 		if (activeQuery && searchStatus) {
-			searchStatus.textContent = `搜尋「${activeQuery}」的結果`;
+			searchStatus.textContent = `搜尋「${activeQuery}」`;
 			searchStatus.classList.remove('hidden');
 		} else if (activeTag && searchStatus) {
-			searchStatus.textContent = `標籤「${activeTag}」的文章`;
+			searchStatus.textContent = `標籤「${activeTag}」`;
 			searchStatus.classList.remove('hidden');
 		} else if (searchStatus) {
 			searchStatus.classList.add('hidden');
@@ -173,13 +181,9 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 	categoryButtons.forEach((button) => {
 		button.addEventListener('click', () => {
 			activeCategory = button.dataset.category ?? '';
-
 			categoryButtons.forEach((b) => {
-				const active = b === button;
-				b.classList.toggle('text-app-text', active);
-				b.classList.toggle('text-app-gray-400', !active);
+				b.dataset.active = b === button ? 'true' : 'false';
 			});
-
 			applyFilters();
 		});
 	});
@@ -189,16 +193,14 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 			const tag = (button.dataset.tag ?? '').toLowerCase();
 			const turningOff = activeTag === tag;
 			activeTag = turningOff ? '' : tag;
-
 			tagButtons.forEach((b) => {
 				b.dataset.active = !turningOff && b === button ? 'true' : 'false';
 			});
-
 			applyFilters();
 		});
 	});
 
-	// 如果是從文章頁的標籤連結進來（/blog?tag=xxx），先把對應的標籤按鈕標成選取狀態。
+	// 如果是從文章頁的標籤連結進來（/blog?tag=xxx），先把對應的標籤標成選取狀態。
 	if (activeTag) {
 		tagButtons.forEach((b) => {
 			b.dataset.active = (b.dataset.tag ?? '').toLowerCase() === activeTag ? 'true' : 'false';
