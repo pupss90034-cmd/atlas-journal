@@ -35,23 +35,25 @@ const blog = defineCollection({
 		],
 	}),
 	// Type-check frontmatter using a schema.
-	// heroImage uses the `image()` helper so the cover photo works exactly
-	// like any other photo dragged into Obsidian: a relative path (e.g.
-	// "Pic/my-photo.jpg") next to the note, not a separate public/ upload.
-	schema: ({ image }) =>
+	// 2026-08-04：封面圖改成「集中管理」——所有封面統一放在
+	// src/content/heroImage/ 資料夾（桌面上的 heroImage 捷徑就是指到那裡），
+	// frontmatter 只要寫檔名，例如 heroImage: P1090208.JPG，
+	// 不用寫路徑、也不用管文章放在第幾層資料夾。
+	// 檔名 → 實際圖檔的對應在 src/utils/heroImage.ts，圖片仍然由 Astro
+	// 自動壓縮、產生 webp 與多種解析度，所以直接放相機原始檔也沒問題。
+	schema: () =>
 		z.object({
 			title: z.string(),
 			description: z.string(),
 			// Transform string to Date object
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
-			// 2026-07-30：使用說明裡教的「留空即可」在 YAML 裡其實會被讀成
-			// null，而不是完全省略這個欄位，原本的 image().optional() 只接受
-			// undefined，遇到 null 會建置失敗。這裡先把 null／空字串都轉成
-			// undefined，才會真的如使用說明所說的「留空不會壞掉」。
+			// 封面圖：只寫檔名，例如 heroImage: P1090208.JPG
+			// 留空、沒填、打錯字都不會讓建置失敗，只會退回預設封面
+			// （打錯字的話建置時會在終端機印出提醒）。
 			heroImage: z.preprocess(
 				(val) => (val === null || val === "" ? undefined : val),
-				image().optional(),
+				z.string().optional(),
 			),
 			// Obsidian 的 tags 欄位如果留空，YAML 會讀成 null 而不是完全省略，
 			// 這裡跟 heroImage 一樣把 null／未填都轉成空陣列，才不會建置失敗。
