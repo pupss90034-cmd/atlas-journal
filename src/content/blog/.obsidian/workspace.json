@@ -55,16 +55,44 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "其他（未歸類）/傳奇殞落.md",
+                "file": "其他（未歸類）/工作以外的同事人格.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "傳奇殞落"
+              "title": "工作以外的同事人格"
+            }
+          },
+          {
+            "id": "7f8e7b6b084d1298",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "其他（未歸類）/一夜好眠.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "一夜好眠"
+            }
+          },
+          {
+            "id": "2663421048c5dc0c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "其他（未歸類）/法國阿爾卑斯山｜.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "法國阿爾卑斯山｜"
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -87,7 +115,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "檔案瀏覽器"
+              "title": "Files"
             }
           },
           {
@@ -217,21 +245,27 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:開啟快速切換": false,
-      "graph:查看關聯圖": false,
-      "canvas:建立新畫布": false,
-      "daily-notes:開啟今天的每日筆記": false,
-      "templates:插入模板": false,
-      "command-palette:開啟命令面板": false,
-      "bases:建立新的 base": false
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
     }
   },
   "active": "53242b4bc6e961db",
   "lastOpenFiles": [
-    "飯店抓馬/未命名.md",
+    "專欄系列｜那些美感從何而來",
+    "TMB系列",
+    "(隱藏發佈)/標題練習.md",
+    "其他（未歸類）/法國阿爾卑斯山｜.md",
+    "其他（未歸類）/一夜好眠.md",
+    "(隱藏發佈)/markdown-style-guide.md",
+    "其他（未歸類）/工作以外的同事人格.md",
     "其他（未歸類）/傳奇殞落.md",
+    "飯店抓馬/未命名.md",
     "其他（未歸類）/Ｎ33. 越野跑.md",
-    "其他（未歸類）/未命名.md",
     "其他（未歸類）/Ｎ22. 14peaks觀後感.md",
     "露營車系列指南/關於我看的第一台車.md",
     "露營車系列指南/紐西蘭購車眉角.md",
@@ -245,15 +279,10 @@
     "其他（未歸類）/Ｎ03. papa的備餐.md",
     "其他（未歸類）/Ｎ02.大溪地.md",
     "其他（未歸類）/Ｎ01. 人生選擇.md",
-    "模板/New.md",
+    "模板/部落格文章.md",
     "其他（未歸類）/Ｎ17. ＿＿＿＿＿天氣溫度影響食慾？夏天的法國隨時都在餓。.md",
     "其他（未歸類）/Ｎ14. ＿＿＿＿＿在Strasbourg的聖誕市集，那些代表性小吃.md",
     "其他（未歸類）/Ｎ10. ＿＿＿＿＿台灣人內建的潮濕雷達，在法國內心尖叫無數次的那個瞬間。.md",
-    "創造理想生活系列/00 - 創造理想生活系列：什麼是理想生活？.md",
-    "創造理想生活系列",
-    "其他（未歸類）/Ｎ31. ＿＿＿＿＿受結構格局所限制的室內設計.md",
-    "其他（未歸類）/Ｎ30. ＿＿＿＿＿來自法國的老錢家族.md",
-    "其他（未歸類）/Ｎ29. ＿＿＿＿＿聖家堂.md",
-    "其他（未歸類）/Ｎ28. ＿＿＿＿＿生活的可能.md"
+    "創造理想生活系列"
   ]
 }

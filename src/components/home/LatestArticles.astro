@@ -1,13 +1,11 @@
 ---
 import { Image } from 'astro:assets';
-import { getCollection } from 'astro:content';
 import FormattedDate from '../FormattedDate.astro';
 import defaultCover from '../../assets/site/default-cover.jpg';
 import { resolveHeroImage } from '../../utils/heroImage';
+import { getSortedPosts } from '../../utils/posts';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = await getSortedPosts();
 const [featured, ...rest] = posts;
 const indexArticles = rest.slice(0, 4);
 
@@ -21,15 +19,14 @@ const indexArticles = rest.slice(0, 4);
 	featured && (
 		<section id="latest" class="page-wide band">
 			<div class="mx-auto max-w-5xl">
-				<div class="flex items-baseline justify-between border-b border-app-gray-200 pb-6">
-					<p class="label">Journal</p>
-					<a href="/blog" class="label link-underline">
-						All Entries
-					</a>
+				<div class="text-center">
+					<p class="label">Latest</p>
+					<h2 class="title-spaced mt-6 text-app-ink">From the Journal</h2>
 				</div>
+				<hr class="rule mt-12 md:mt-16" />
 
 				{/* 篇章扉頁：一張橫幅大圖，標題壓在圖下方，維持圖文左緣切齊 */}
-				<a href={`/blog/${featured.id}/`} class="group mt-14 block md:mt-20">
+				<a href={`/blog/${featured.id}/`} class="group mt-14 block md:mt-16">
 					<div class="aspect-[16/9] w-full overflow-hidden bg-app-gray-100">
 						<Image
 							src={resolveHeroImage(featured.data.heroImage) ?? defaultCover}
@@ -55,7 +52,7 @@ const indexArticles = rest.slice(0, 4);
 
 				{/* 目次清單：只有編號、標題、日期，靠 1px 細線分隔 */}
 				{indexArticles.length > 0 && (
-					<ol class="mt-20 border-t border-app-gray-200 md:mt-24">
+					<ol class="mt-20 border-t border-app-gray-200 md:mt-28">
 						{indexArticles.map((post, i) => (
 							<li class="border-b border-app-gray-200">
 								<a
@@ -72,6 +69,10 @@ const indexArticles = rest.slice(0, 4);
 						))}
 					</ol>
 				)}
+
+				<div class="mt-16 text-center md:mt-20">
+					<a href="/blog" class="label link-underline text-app-ink">All Entries</a>
+				</div>
 			</div>
 		</section>
 	)

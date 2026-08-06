@@ -16,22 +16,16 @@ const blog = defineCollection({
 			// the build without editing this file each time.
 			"!\\(隱藏發佈\\)/**",
 			"!標題練習.md",
-			// 這兩篇目前還是空檔案（被「露營車系列指南/01」那篇用 [[筆記名稱]]
-			// 連結引用）。等你在 Obsidian 補上內文和 title/description/pubDate
-			// 之後，記得把下面這兩行刪掉，文章才會真的被建置進網站、連結才會生效。
-			"!露營車系列指南/關於我看的第一台車.md",
-			"!露營車系列指南/紐西蘭購車眉角.md",
 			// 暫時排除：文中引用的 DSC_0249.jpg 已從 Pic/ 資料夾刪除，
 			// 導致 build 失敗。請在 Obsidian 補回照片，或刪除該張圖片的
 			// 引用行，修好後即可移除這行排除規則。
-			// （2026-07-30 修正：這篇筆記的實際檔名是「Ｎ02.大溪地.md」，
-			// 原本這裡打的檔名對不上，導致這行規則其實沒有真的排除到它，
-			// 網站建置目前仍會因為這篇筆記而失敗。）
+			// （這一篇是「圖片不存在」而不是「沒填標題」，不屬於草稿機制
+			// 能處理的範圍，所以還是留在這裡。）
 			"!其他（未歸類）/Ｎ02.大溪地.md",
-			// 2026-08-03：這篇是還沒寫完的草稿（title/description 留空，
-			// 內文還留著操作說明沒刪掉），先排除掉避免建置失敗。等你在
-			// Obsidian 補上標題、簡介跟正文之後，把這行刪掉就會正常建置。
-			"!其他（未歸類）/傳奇殞落.md",
+			// 2026-08-06：原本這裡還手動排除了「關於我看的第一台車」、
+			// 「紐西蘭購車眉角」、「傳奇殞落」三篇沒寫完的草稿。
+			// 現在改成「沒填 title 就自動當草稿略過」（見 src/utils/posts.ts），
+			// 不用再每寫一篇未完成的筆記就回來加一行，所以那三行移除了。
 		],
 	}),
 	// Type-check frontmatter using a schema.
@@ -41,12 +35,25 @@ const blog = defineCollection({
 	// 不用寫路徑、也不用管文章放在第幾層資料夾。
 	// 檔名 → 實際圖檔的對應在 src/utils/heroImage.ts，圖片仍然由 Astro
 	// 自動壓縮、產生 webp 與多種解析度，所以直接放相機原始檔也沒問題。
+	// 2026-08-06：title／description 改為容許留空。
+	// 原本留空會直接讓「整個網站」建置失敗——在 Obsidian 邊寫邊存的
+	// 過程中一定會出現只有內文、還沒下標題的檔案，不該因此炸掉全站。
+	// 現在留空的筆記會被當成草稿自動略過（邏輯在 src/utils/posts.ts），
+	// 建置時終端機會列出被略過的篇名，補上標題就會自動上線。
 	schema: () =>
 		z.object({
-			title: z.string(),
-			description: z.string(),
-			// Transform string to Date object
-			pubDate: z.coerce.date(),
+			title: z.preprocess((val) => (val === null || val === undefined ? "" : val), z.string()),
+			description: z.preprocess(
+				(val) => (val === null || val === undefined ? "" : val),
+				z.string(),
+			),
+			// Transform string to Date object.
+			// 跟 title 一樣容許留空：日期沒填的筆記先當成今天，
+			// 反正沒有標題的話它本來就不會被發佈出去。
+			pubDate: z.preprocess(
+				(val) => (val === null || val === undefined || val === "" ? new Date() : val),
+				z.coerce.date(),
+			),
 			updatedDate: z.coerce.date().optional(),
 			// 封面圖：只寫檔名，例如 heroImage: P1090208.JPG
 			// 留空、沒填、打錯字都不會讓建置失敗，只會退回預設封面

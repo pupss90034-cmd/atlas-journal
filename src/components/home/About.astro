@@ -17,16 +17,20 @@ const { Content } = await render(aboutEntry);
 	<div class="mx-auto max-w-5xl">
 		<p class="label">{eyebrow}</p>
 
-		<div class="mt-12 grid grid-cols-1 gap-x-16 gap-y-12 md:mt-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-			<!-- 直幅人像，固定 3:4，上緣與右欄標題切齊 -->
-			<div class="aspect-[3/4] w-full overflow-hidden">
-				<Image
-					src={portrait}
-					alt={portraitAlt}
-					class="h-full w-full object-cover"
-					widths={[400, 640, 900]}
-					sizes="(min-width: 768px) 420px, 90vw"
-				/>
+		<div class="mt-12 grid grid-cols-1 gap-x-16 gap-y-16 md:mt-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+			<!-- 直幅人像，固定 3:4。背後襯一塊微灰矩形只露左下一角，
+			     用來製造深度——這比加陰影乾淨，也是 Tom Quan 那張範例
+			     裡讓單張照片不顯得單薄的手法。 -->
+			<div class="offset-plate">
+				<div class="aspect-[3/4] w-full overflow-hidden">
+					<Image
+						src={portrait}
+						alt={portraitAlt}
+						class="h-full w-full object-cover"
+						widths={[400, 640, 900]}
+						sizes="(min-width: 768px) 420px, 90vw"
+					/>
+				</div>
 			</div>
 
 			<div class="flex flex-col">

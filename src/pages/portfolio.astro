@@ -2,17 +2,18 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import AlbumFlipbook from '../components/AlbumFlipbook.astro';
+import AlbumMosaic from '../components/AlbumMosaic.astro';
 import { getCollection } from 'astro:content';
 
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
 
 const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
-const description = '完整攝影集，用左右箭頭或滑動切換每個主題。';
+const totalPhotos = albums.reduce((sum, album) => sum + album.data.images.length, 0);
+const description = '每個主題各自獨立，點進去看完整的一組照片。';
 
-// 版面：書名頁（中軸）＋窄邊圖版。
-// 標題頁刻意留很大的上下留白，讓讀者先「停一拍」再進入照片。
+// 版面：書名頁（中軸）＋鑲嵌塊面預覽。
+// 與首頁共用 AlbumMosaic，差別只在這裡列出全部主題、首頁是精選。
 ---
 
 <!doctype html>
@@ -23,11 +24,12 @@ const description = '完整攝影集，用左右箭頭或滑動切換每個主�
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<!-- 書名頁：中軸置中 -->
-			<section class="page-wide pb-16 pt-40 md:pb-24 md:pt-52">
+			<!-- 書名頁：中軸置中，上下留大白讓讀者先停一拍 -->
+			<section class="page-wide pb-16 pt-44 md:pb-24 md:pt-56">
 				<div class="axis">
-					<!-- 眉標放「共幾組主題」而不是重複標題本身，避免同一個字出現兩次 -->
-					<p class="label">{String(albums.length).padStart(2, '0')} Series</p>
+					<p class="label">
+						{String(albums.length).padStart(2, '0')} Series · {totalPhotos} Photographs
+					</p>
 					<h1 class="title-display mt-9 text-app-ink">Portfolio</h1>
 					<p class="body-small mx-auto mt-8 max-w-[38ch]">
 						{description}
@@ -35,11 +37,11 @@ const description = '完整攝影集，用左右箭頭或滑動切換每個主�
 				</div>
 			</section>
 
-			<!-- 圖版：窄邊 -->
-			<section class="page-narrow pb-24 md:pb-32">
+			<!-- 塊面預覽：微灰區帶，照片浮在紙上 -->
+			<section class="band-tint page-narrow band">
 				{
 					albums.length > 0 ? (
-						<AlbumFlipbook albums={albums} />
+						<AlbumMosaic albums={albums} />
 					) : (
 						<p class="body-small text-center">還沒有相簿。</p>
 					)

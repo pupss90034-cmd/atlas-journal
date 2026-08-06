@@ -1,7 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
+import { getPublishedPosts } from '../utils/posts';
 
-const posts = await getCollection('blog');
+const posts = await getPublishedPosts();
+const [siteSettings] = await getCollection('siteSettings');
+const SITE_TITLE = siteSettings?.data.title ?? '';
 
 interface Props {
 	// 首頁與文章頁的第一屏是滿版照片，抬頭先透明浮在照片上（白字），
@@ -11,9 +14,10 @@ interface Props {
 
 const { transparent = false } = Astro.props;
 
-// 改版重點：抬頭不再顯示網站名稱。
-// 站名只出現在首頁第一屏與 Footer，抬頭只留導覽，
-// 讓照片與內容成為畫面主角，也解決原本三欄擠在一起的問題。
+// 2026-08-06：站名回到抬頭，但改成「兩行」。
+// 原本擁擠的原因不是站名本身，而是導覽、站名、按鈕三組東西擠在同一列，
+// 中間那欄被兩側夾住就沒有呼吸空間。拆成上下兩行之後，
+// 站名獨佔第一行、導覽置中排第二行，兩者都有完整的橫向空間。
 const nav = [
 	{ label: 'Index', href: '/' },
 	{ label: 'Journal', href: '/blog' },
@@ -43,33 +47,41 @@ const popularSearches =
 ---
 
 <header id="site-header" data-transparent={transparent ? 'true' : 'false'} class="fixed inset-x-0 top-0 z-50">
-	<div class="page-narrow flex items-center justify-between py-6">
-		<nav class="hidden items-baseline gap-10 md:flex">
+	<!-- 桌機：站名一行、導覽一行，都置中 -->
+	<div class="page-narrow hidden py-6 md:block">
+		<a href="/" class="header-wordmark title-spaced block text-center transition-colors duration-500">
+			{SITE_TITLE}
+		</a>
+
+		<nav class="mt-5 flex items-baseline justify-center gap-10">
 			{nav.map((item) => (
 				<a href={item.href} class="header-link label transition-colors duration-500">
 					{item.label}
 				</a>
 			))}
+			<button
+				id="search-open"
+				type="button"
+				aria-label="開啟搜尋"
+				class="header-link label transition-colors duration-500"
+			>
+				Search
+			</button>
 		</nav>
+	</div>
 
-		<!-- 手機版：左側只留一個選單鈕，右側搜尋，維持左右對稱的窄邊 -->
+	<!-- 手機：橫向空間不夠排兩行導覽，站名置中、選單鈕靠右 -->
+	<div class="page-narrow flex items-center justify-between py-5 md:hidden">
+		<span class="w-12"></span>
+		<a href="/" class="header-wordmark label transition-colors duration-500">{SITE_TITLE}</a>
 		<button
 			id="menu-toggle"
 			type="button"
 			aria-label="開啟選單"
 			aria-expanded="false"
-			class="header-link label md:hidden"
+			class="header-link label w-12 text-right"
 		>
 			Menu
-		</button>
-
-		<button
-			id="search-open"
-			type="button"
-			aria-label="開啟搜尋"
-			class="header-link label transition-colors duration-500"
-		>
-			Search
 		</button>
 	</div>
 </header>
@@ -145,6 +157,9 @@ const popularSearches =
 	#site-header[data-transparent='true'] .header-link {
 		color: rgba(255, 255, 255, 0.85);
 	}
+	#site-header[data-transparent='true'] .header-wordmark {
+		color: #ffffff;
+	}
 	#site-header[data-transparent='true'] .header-link:hover {
 		color: #ffffff;
 	}
@@ -162,6 +177,29 @@ const popularSearches =
 	#site-header[data-transparent='false'] .header-link:hover,
 	#site-header.is-scrolled .header-link:hover {
 		color: var(--color-app-ink);
+	}
+	#site-header[data-transparent='false'] .header-wordmark,
+	#site-header.is-scrolled .header-wordmark {
+		color: var(--color-app-ink);
+	}
+
+	/* 捲動之後把站名收起來，只留導覽。
+	   兩行的抬頭一直佔著畫面上緣會壓縮閱讀空間，
+	   而讀者往下捲時已經知道自己在哪個站了。 */
+	#site-header.is-scrolled .header-wordmark {
+		max-height: 0;
+		opacity: 0;
+		margin-bottom: 0;
+		overflow: hidden;
+		pointer-events: none;
+	}
+	.header-wordmark {
+		max-height: 4rem;
+		opacity: 1;
+		transition: max-height 0.5s ease, opacity 0.4s ease;
+	}
+	#site-header.is-scrolled nav {
+		margin-top: 0;
 	}
 
 	#mobile-drawer.flex {

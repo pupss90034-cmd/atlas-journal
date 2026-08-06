@@ -33,6 +33,12 @@
 	--color-app-ink: #14110f;
 	--color-app-text: #1c1917;
 
+	/* 區帶底色：白紙上的一塊微灰場。
+	   照片鋪在這層上面才會讀成「裱在卡紙上的相片」，
+	   而不是「直接貼在螢幕上的圖」——這是範例網站高級感的主要來源。
+	   刻意壓得非常淡（跟白只差一階），避免變成有顏色的色塊。 */
+	--color-app-band: #f2f1ed;
+
 	/* 灰階層次（100 最淡 → 600 最深） */
 	--color-app-gray-100: #f4f3f1;
 	--color-app-gray-200: #e6e4e0;
@@ -164,11 +170,73 @@
 	line-height: 1;
 }
 
+/* 區帶：整段鋪上微灰底，讓照片浮在紙上 */
+.band-tint {
+	background: var(--color-app-band);
+}
+
 /* 標題級距：只有三級，避免版面出現太多層 */
 .title-display {
 	font-size: clamp(2.75rem, 7vw, 5.5rem);
 	line-height: 1.02;
 	letter-spacing: 0.005em;
+}
+
+/* 區塊大標：全大寫、字距拉到很開。
+   這是範例網站（FIJI 的 WORK OVERVIEW、Amanda Willman 的署名）
+   最明顯的一個手勢——大字距的全大寫標題會立刻把版面從
+   「部落格」推向「作品集」。全站只有區塊大標用這一種。 */
+.title-spaced {
+	font-size: clamp(1.125rem, 2vw, 1.6rem);
+	letter-spacing: 0.42em;
+	text-transform: uppercase;
+	line-height: 1.3;
+	/* 字距是加在每個字的右邊，整體會視覺偏左，補一個縮排拉回來 */
+	text-indent: 0.42em;
+}
+
+/* 框標：細線方框包住的小標，用來當「一句話宣言」。
+   全站最多出現一次，多用就變成按鈕海。 */
+.boxed-label {
+	display: inline-block;
+	border: 1px solid var(--color-app-gray-300);
+	padding: 0.9em 2.2em;
+	font-size: 0.6875rem;
+	letter-spacing: 0.32em;
+	text-transform: uppercase;
+	color: var(--color-app-gray-500);
+	line-height: 1;
+}
+
+/* ── 錯落偏移 ──────────────────────────────
+   兩欄圖版，偶數欄整體往下推。視線會走 Z 字而不是掃描格線，
+   這是整齊格線最容易讀成模板的地方。 */
+.stagger > *:nth-child(even) {
+	margin-top: var(--stagger-offset, 0);
+}
+@media (min-width: 640px) {
+	.stagger {
+		--stagger-offset: clamp(3rem, 7vw, 7rem);
+	}
+}
+
+/* 偏移底塊：圖片背後襯一塊微灰矩形，只露出一角。
+   製造深度而不用陰影。 */
+.offset-plate {
+	position: relative;
+}
+.offset-plate::before {
+	content: "";
+	position: absolute;
+	inset: auto auto -1.5rem -1.5rem;
+	width: 62%;
+	height: 62%;
+	background: var(--color-app-band);
+	z-index: 0;
+}
+.offset-plate > * {
+	position: relative;
+	z-index: 1;
 }
 .title-lg {
 	font-size: clamp(1.75rem, 3.4vw, 2.75rem);

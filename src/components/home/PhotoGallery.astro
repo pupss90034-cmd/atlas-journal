@@ -1,12 +1,17 @@
 ---
 import { getCollection } from 'astro:content';
-import AlbumFlipbook from '../AlbumFlipbook.astro';
+import AlbumMosaic from '../AlbumMosaic.astro';
 
 const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
 
-// 版面：窄邊。前面的 About 與文章區都是寬邊（鬆），
-// 這裡收成窄邊讓照片盡量放大（緊），做出第二組鬆緊對比。
-// 底色也從灰色塊改回白紙——白底才不會偷走照片的層次。
+// 版面：微灰區帶 ＋ 窄邊鑲嵌塊面。
+// 2026-08-06：這一區從「四欄等距格線的翻頁相簿」改成
+// 「大小不一的塊面預覽」。原本一次要看完一整個主題的所有照片，
+// 現在一個主題只露一張代表照，點進去才展開——首頁的責任是
+// 讓人一眼看到有哪些主題，不是把照片全部倒出來。
+//
+// 底鋪一層極淡的灰（--color-app-band），照片浮在上面會讀成
+// 「裱在卡紙上的相片」，純白底則會讓照片邊緣直接消失在背景裡。
 
 // 排序邏輯備註（2026-08-03）：
 // 目前依 Obsidian 相簿檔案裡的 `order` 欄位手動排序。
@@ -18,11 +23,15 @@ const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.d
 // 搜尋開放時一起上線。相關備註也寫在 src/consts.ts 和使用說明.md。
 ---
 
-<section id="gallery" class="page-narrow band border-t border-app-gray-200">
-	<div class="mb-12 flex items-baseline justify-between md:mb-16">
-		<p class="label">Photography</p>
-		<a href="/portfolio" class="label link-underline">Full Portfolio</a>
+<section id="gallery" class="band-tint page-narrow band">
+	<div class="mb-12 text-center md:mb-16">
+		<p class="label">Featured Series</p>
+		<h2 class="title-spaced mt-6 text-app-ink">Work Overview</h2>
 	</div>
 
-	<AlbumFlipbook albums={albums} />
+	<AlbumMosaic albums={albums} />
+
+	<div class="mt-14 text-center md:mt-20">
+		<a href="/portfolio" class="label link-underline text-app-ink">View All Series</a>
+	</div>
 </section>

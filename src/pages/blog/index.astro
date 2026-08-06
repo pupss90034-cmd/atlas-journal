@@ -4,14 +4,13 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import BlogCard from '../../components/BlogCard.astro';
 import { getCollection } from 'astro:content';
+import { getSortedPosts } from '../../utils/posts';
 
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
 const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = await getSortedPosts();
 
 // 分類＝文章所在的資料夾（Obsidian 裡怎麼分資料夾，這裡就自動長出對應分類，
 // 不用寫死名稱）。之後改資料夾名稱或搬動文章，分類清單會自動跟著變。
@@ -87,12 +86,12 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 				</div>
 			</section>
 
-			<!-- 圖版：兩欄，間距與攝影集同一組節奏 -->
-			<section class="page-wide pb-28 pt-16 md:pb-36 md:pt-24">
+			<!-- 圖版：兩欄錯落，鋪微灰區帶讓圖片浮在紙上 -->
+			<section class="band-tint page-wide pb-28 pt-20 md:pb-36 md:pt-28">
 				<div class="mx-auto max-w-6xl">
 					{
 						posts.length > 0 ? (
-							<div class="grid grid-cols-1 gap-x-12 gap-y-20 sm:grid-cols-2 md:gap-x-16 md:gap-y-28" id="post-grid">
+							<div class="stagger grid grid-cols-1 gap-x-12 gap-y-20 sm:grid-cols-2 md:gap-x-16 md:gap-y-24" id="post-grid">
 								{posts.map((post) => (
 									<div
 										class="post-item"

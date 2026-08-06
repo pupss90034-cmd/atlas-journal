@@ -1,7 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
-import { getCollection } from 'astro:content';
+import { getSortedPosts } from '../utils/posts';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -15,9 +15,7 @@ const { title, description, pubDate, updatedDate, heroImage, tags, slug } = Astr
 const displayHero = resolveHeroImage(heroImage) ?? defaultCover;
 
 // Find the previous/next post (by publish date) so readers can keep browsing.
-const allPosts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const allPosts = await getSortedPosts();
 const currentIndex = allPosts.findIndex((p) => p.id === slug);
 const olderPost = currentIndex > -1 && currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
 const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;

@@ -1,10 +1,13 @@
 ---
-import { type CollectionEntry, getCollection } from 'astro:content';
+import { type CollectionEntry } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 import { render } from 'astro:content';
+import { getPublishedPosts } from '../../utils/posts';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+	// 只為「已發佈」的文章產生頁面。沒填標題的草稿不會有網址，
+	// 也就不會被搜尋引擎或連結意外挖出來。
+	const posts = await getPublishedPosts();
 	return posts.map((post) => ({
 		params: { slug: post.id },
 		props: post,

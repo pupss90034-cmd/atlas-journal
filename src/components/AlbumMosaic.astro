@@ -1,0 +1,181 @@
+---
+// 攝影集「鑲嵌預覽」元件（2026-08-06 新增，取代原本的等距四欄格線）。
+//
+// 為什麼換掉格線：等距的四欄格線是所有網站模板的預設長相，
+// 每張圖一樣大、間距一樣寬，讀者的視線會用「掃描」的方式帶過去，
+// 沒有任何一張照片被指定為重點。改成大小不一的塊面拼接之後，
+// 大塊自然成為視覺入口，視線會依塊面大小排出先後順序。
+//
+// 這一區的定位是「快速預覽」：一個主題只露一張代表照＋主題名稱，
+// 點進去才展開該主題的完整照片（/portfolio/[slug]）。
+//
+// 塊面規律以 6 個為一循環，剛好把 6 欄的格線填滿 4 列不留洞：
+//   0: 2×1    1: 2×1    2: 2×2    3: 4×2    4: 2×1    5: 6×1
+// 面積 2+2+4+8+2+6 = 24 = 6 欄 × 4 列。
+// 相簿數量不是 6 的倍數也不會壞，只是最後一列可能留白。
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	albums: CollectionEntry<'albums'>[];
+}
+
+const { albums } = Astro.props;
+
+// 每個塊面的尺寸樣式，依序循環套用
+const tileShapes = ['t-sm', 't-sm', 't-tall', 't-big', 't-sm', 't-wide'];
+---
+
+<div class="mosaic">
+	{
+		albums.map((album, i) => {
+			const cover = album.data.images[0];
+			if (!cover) return null;
+			return (
+				<a
+					href={`/portfolio/${album.id}/`}
+					class:list={['tile', tileShapes[i % tileShapes.length]]}
+					aria-label={`${album.data.label}，共 ${album.data.images.length} 張`}
+				>
+					<Image
+						src={cover.src}
+						alt=""
+						class="tile-img"
+						widths={[400, 800, 1400]}
+						sizes="(min-width: 768px) 50vw, 100vw"
+					/>
+					<span class="tile-scrim" aria-hidden="true"></span>
+					<span class="tile-caption">
+						<span class="tile-label">{album.data.label}</span>
+						<span class="tile-count">{String(album.data.images.length).padStart(2, '0')} Photographs</span>
+					</span>
+				</a>
+			);
+		})
+	}
+</div>
+
+<style>
+	.mosaic {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-auto-rows: 42vw;
+		gap: clamp(0.5rem, 1.2vw, 1rem);
+		grid-auto-flow: dense;
+	}
+
+	@media (min-width: 768px) {
+		.mosaic {
+			grid-template-columns: repeat(6, minmax(0, 1fr));
+			/* 一列的高度 ≈ 一個小塊面（2 欄寬）的高度的一半，
+			   讓 2×1 的小塊面接近 2:1、2×2 的高塊面接近 1:1。 */
+			grid-auto-rows: clamp(7rem, 11vw, 11rem);
+		}
+	}
+
+	.tile {
+		position: relative;
+		display: block;
+		overflow: hidden;
+		background: var(--color-app-gray-200);
+		grid-column: span 2;
+		grid-row: span 1;
+	}
+
+	/* 手機只有兩欄，大塊面改用整列寬並拉高，維持「有大有小」的節奏 */
+	.t-tall,
+	.t-big,
+	.t-wide {
+		grid-column: span 2;
+		grid-row: span 1;
+	}
+	.t-big,
+	.t-wide {
+		grid-row: span 1;
+	}
+
+	@media (min-width: 768px) {
+		.t-sm {
+			grid-column: span 2;
+			grid-row: span 1;
+		}
+		.t-tall {
+			grid-column: span 2;
+			grid-row: span 2;
+		}
+		.t-big {
+			grid-column: span 4;
+			grid-row: span 2;
+		}
+		.t-wide {
+			grid-column: span 6;
+			grid-row: span 1;
+		}
+	}
+
+	.tile-img {
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+		transition: transform 1.2s cubic-bezier(0.2, 0.6, 0.2, 1);
+	}
+	.tile:hover .tile-img {
+		transform: scale(1.04);
+	}
+
+	/* 壓字用的暗層：整體很淡，底部略深，確保標題在任何照片上都讀得到 */
+	.tile-scrim {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.12));
+		transition: background 0.6s ease;
+	}
+	.tile:hover .tile-scrim {
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.28));
+	}
+
+	/* 標題壓在塊面正中央，與 FIJI 的 Work Overview 相同 */
+	.tile-caption {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.9rem;
+		padding: 1rem;
+		text-align: center;
+		color: #ffffff;
+	}
+	.tile-label {
+		font-size: clamp(1.125rem, 2vw, 1.75rem);
+		line-height: 1.2;
+		letter-spacing: 0.04em;
+	}
+	.tile-count {
+		font-size: 0.625rem;
+		letter-spacing: 0.3em;
+		text-transform: uppercase;
+		text-indent: 0.3em;
+		color: rgba(255, 255, 255, 0.75);
+		/* 張數平常收起來，滑過去才浮現，避免每個塊面都塞兩行字 */
+		opacity: 0;
+		transform: translateY(0.4rem);
+		transition: opacity 0.5s ease, transform 0.5s ease;
+	}
+	.tile:hover .tile-count,
+	.tile:focus-visible .tile-count {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tile-img,
+		.tile-count {
+			transition: none;
+		}
+		.tile:hover .tile-img {
+			transform: none;
+		}
+	}
+</style>
