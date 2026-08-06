@@ -47,7 +47,11 @@ const tileShapes = ['t-sm', 't-sm', 't-tall', 't-big', 't-sm', 't-wide'];
 					<span class="tile-scrim" aria-hidden="true"></span>
 					<span class="tile-caption">
 						<span class="tile-label">{album.data.label}</span>
-						<span class="tile-count">{String(album.data.images.length).padStart(2, '0')} Photographs</span>
+						{/* 2026-08-07：排好版的攝影集（layout: 翻頁）算的是「頁」不是「張」 */}
+					<span class="tile-count">
+						{String(album.data.images.length).padStart(2, '0')}
+						{album.data.layout === '翻頁' ? ' Pages' : ' Photographs'}
+					</span>
 					</span>
 				</a>
 			);

@@ -67,7 +67,29 @@
 	--page-margin-wide: clamp(1.5rem, 8vw, 8rem); /* 寬邊：文字區 */
 	--page-margin-narrow: clamp(1rem, 3vw, 2.5rem); /* 窄邊：影像區 */
 	--band-space: clamp(5rem, 11vw, 9.5rem); /* 區塊之間的呼吸 */
-	--measure: 34rem; /* 內文行長上限 */
+
+	/* ── 行長（measure）──────────────────────────
+	   易讀行寬是 45–75 字符；中文一個字約等於兩個字符寬，
+	   所以中文落在 30–50 字／行。桌機上 65ch ≈ 680px，
+	   這裡取 42.5rem = 680px，作為全站內文行長的單一來源。
+	   （原本是 34rem/544px，中文一行只有約 25 字，偏短。） */
+	--measure: 42.5rem; /* 680px ≈ 65ch */
+	/* 中軸（書名頁）刻意比內文窄，置中的短段落太寬會讀不成一個「塊」 */
+	--measure-axis: 34rem;
+
+	/* ── 字級 ────────────────────────────────
+	   內文 16–18px、次要文字 12–14px。全站級數都從這裡取，
+	   不要在個別元件裡寫死 px。 */
+	--text-body: 1.0625rem; /* 17px */
+	--text-secondary: 0.875rem; /* 14px：圖說、輔助說明 */
+	--text-caption: 0.8125rem; /* 13px：圖說 */
+	--text-micro: 0.75rem; /* 12px：標籤、眉標 */
+
+	/* ── 行高 ────────────────────────────────
+	   正文 1.6–1.8；中文字面大、字距密，取偏上緣的 1.75。
+	   標題 1.1–1.3。 */
+	--leading-body: 1.75;
+	--leading-heading: 1.2;
 }
 
 @layer base {
@@ -145,8 +167,15 @@
 /* 中軸：置中欄，用於書名頁式的段落 */
 .axis {
 	margin-inline: auto;
-	max-width: var(--measure);
+	max-width: var(--measure-axis);
 	text-align: center;
+}
+
+/* 內文行長：桌機 680px ≈ 65ch（中文約 30–50 字／行）。
+   文章內頁的內文欄一律用這個，不要再各自寫 max-w-[38rem]。 */
+.measure {
+	margin-inline: auto;
+	max-width: var(--measure);
 }
 
 /* 區塊上下節奏 */
@@ -163,11 +192,11 @@
 
 /* 小標籤：全站唯一的「小級數大字距」樣式 */
 .label {
-	font-size: 0.6875rem;
-	letter-spacing: 0.32em;
+	font-size: var(--text-micro); /* 12px：次要文字的下限 */
+	letter-spacing: 0.28em;
 	text-transform: uppercase;
 	color: var(--color-app-gray-400);
-	line-height: 1;
+	line-height: 1.4;
 }
 
 /* 區帶：整段鋪上微灰底，讓照片浮在紙上 */
@@ -178,7 +207,7 @@
 /* 標題級距：只有三級，避免版面出現太多層 */
 .title-display {
 	font-size: clamp(2.75rem, 7vw, 5.5rem);
-	line-height: 1.02;
+	line-height: 1.1; /* 標題 1.1–1.3；超大級數取下限 */
 	letter-spacing: 0.005em;
 }
 
@@ -240,25 +269,35 @@
 }
 .title-lg {
 	font-size: clamp(1.75rem, 3.4vw, 2.75rem);
-	line-height: 1.14;
+	line-height: 1.18;
 	letter-spacing: 0.01em;
 }
 .title-sm {
 	font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-	line-height: 1.28;
+	line-height: 1.3; /* 標題行高上限 */
 	letter-spacing: 0.01em;
 }
 
 /* 內文：全站段落只有這一種樣式 */
 .body-text {
-	font-size: 1.0625rem;
-	line-height: 1.85;
+	font-size: var(--text-body); /* 17px */
+	line-height: var(--leading-body); /* 1.75 */
 	color: var(--color-app-gray-600);
 }
+
+/* 次要文字：圖說、輔助說明、摘要。14px，比內文小一階但仍好讀 */
 .body-small {
-	font-size: 0.9375rem;
-	line-height: 1.75;
+	font-size: var(--text-secondary); /* 14px */
+	line-height: 1.7;
 	color: var(--color-app-gray-500);
+}
+
+/* 圖說：比 body-small 再小一階，只用在照片下方 */
+.caption {
+	font-size: var(--text-caption); /* 13px */
+	line-height: 1.6;
+	letter-spacing: 0.02em;
+	color: var(--color-app-gray-400);
 }
 
 /* 細線：分隔一律用 1px 灰線，不用色塊 */
@@ -285,8 +324,12 @@
    ───────────────────────────────────────────── */
 .prose {
 	color: var(--color-app-text);
-	font-size: 1.0625rem;
-	line-height: 1.85;
+	/* 內文 16–18px：桌機 17px，手機縮到 16px 仍在範圍內 */
+	font-size: clamp(1rem, 0.5vw + 0.9rem, 1.0625rem);
+	/* 正文 1.6–1.8。原本 1.85 超出範圍，段落會鬆到失去段落感 */
+	line-height: var(--leading-body);
+	/* 中文與英數、標點之間自動補空隙，密度更接近排版品質 */
+	text-spacing-trim: trim-start;
 }
 .prose h1,
 .prose h2,
@@ -298,8 +341,9 @@
 	font-weight: 400;
 	color: var(--color-app-ink);
 	letter-spacing: 0.01em;
-	line-height: 1.2;
-	margin: 2.6em 0 0.9em;
+	/* 標題 1.1–1.3 */
+	line-height: var(--leading-heading);
+	margin: 2.4em 0 0.8em;
 }
 .prose h1 {
 	font-size: 1.9em;
@@ -317,7 +361,7 @@
 	letter-spacing: 0.08em;
 }
 .prose p {
-	margin: 0 0 1.5em;
+	margin: 0 0 1.4em;
 }
 /* 粗體在單一字體的版面裡會破壞灰度，改為極淡底線強調 */
 .prose strong {
@@ -372,10 +416,12 @@
 	margin: 2.6em 0;
 	width: 100%;
 }
+/* 圖說：次要文字下緣 13px，行高比正文緊一階 */
 .prose figcaption {
 	margin-top: 0.9em;
-	font-size: 0.8125rem;
-	letter-spacing: 0.06em;
+	font-size: var(--text-caption);
+	line-height: 1.6;
+	letter-spacing: 0.04em;
 	color: var(--color-app-gray-400);
 }
 .prose code {
@@ -397,7 +443,8 @@
 	width: 100%;
 	border-collapse: collapse;
 	margin: 2em 0;
-	font-size: 0.9375rem;
+	font-size: var(--text-secondary);
+	line-height: 1.6;
 }
 .prose th,
 .prose td {

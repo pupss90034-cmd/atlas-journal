@@ -14,11 +14,25 @@ type Props = CollectionEntry<'blog'>['data'] & { slug: string };
 const { title, description, pubDate, updatedDate, heroImage, tags, slug } = Astro.props;
 const displayHero = resolveHeroImage(heroImage) ?? defaultCover;
 
-// Find the previous/next post (by publish date) so readers can keep browsing.
-const allPosts = await getSortedPosts();
-const currentIndex = allPosts.findIndex((p) => p.id === slug);
-const olderPost = currentIndex > -1 && currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
-const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+// ── 上一篇／下一篇：只在「同系列」內走 ─────────────────────
+// 2026-08-07 改：原本是全站按日期串成一條線，於是「露營車指南」的下一篇
+// 可能是一篇法國飲食隨筆——兩篇之間沒有任何關係，這個連結等於沒有作用。
+// 現在系列＝文章所在的資料夾（Obsidian 裡怎麼分，這裡就怎麼算），
+// 只在同一個資料夾內找前後篇；同系列沒有鄰居就整個區塊不顯示，
+// 不回退到全站，寧可沒有連結也不要給一個假的關聯。
+// slug 可能沒有：/about 也共用這個 layout，它不是文章、沒有前後篇。
+const seriesOf = (id?: string) => (id && id.includes('/') ? id.split('/')[0] : '');
+const currentSeries = seriesOf(slug);
+
+// 沒有系列（文章直接放在 blog 根目錄）或不是文章時，一律不顯示前後篇：
+// 「根目錄的所有散篇」不構成一個系列，把它們串起來只是另一種假關聯。
+const allPosts = currentSeries ? await getSortedPosts() : [];
+// 同系列、依日期由新到舊（getSortedPosts 已排好，filter 不會打亂順序）
+const seriesPosts = allPosts.filter((p) => seriesOf(p.id) === currentSeries);
+const currentIndex = seriesPosts.findIndex((p) => p.id === slug);
+const olderPost =
+	currentIndex > -1 && currentIndex < seriesPosts.length - 1 ? seriesPosts[currentIndex + 1] : null;
+const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 
 // 改版重點（2026-08-04）：
 // 標題不再壓在照片上。壓字必須加深色遮罩，遮罩會毀掉照片；
@@ -59,7 +73,8 @@ const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 
 			<!-- 內文：寬邊，行長鎖在 measure，段落樣式全站統一 -->
 			<article class="page-wide pb-24 md:pb-32">
-				<div class="mx-auto max-w-[38rem]">
+				<!-- measure = 680px ≈ 65 字符（中文約 30–50 字／行） -->
+				<div class="measure">
 					<hr class="rule mb-16 md:mb-20" />
 
 					<div class="prose">
@@ -79,24 +94,33 @@ const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
 					}
 
 					{
+						/* 只有同系列真的有前後篇時才出現。單篇成立的文章（沒有系列，
+						   或系列裡只有這一篇）下方就直接結束，不放空欄位。 */
 						(olderPost || newerPost) && (
-							<nav class="mt-20 grid grid-cols-1 gap-10 border-t border-app-gray-200 pt-12 md:mt-28 md:grid-cols-2 md:gap-16">
-								{olderPost ? (
-									<a href={`/blog/${olderPost.id}/`} class="group block transition-opacity duration-500 hover:opacity-55">
-										<p class="label">Previous</p>
-										<p class="title-sm mt-4 text-app-ink">{olderPost.data.title}</p>
-									</a>
-								) : (
-									<div />
+							<nav class="mt-20 border-t border-app-gray-200 pt-12 md:mt-28">
+								{currentSeries && (
+									<p class="label mb-10 text-center">{currentSeries}</p>
 								)}
-								{newerPost ? (
-									<a href={`/blog/${newerPost.id}/`} class="group block transition-opacity duration-500 hover:opacity-55 md:text-right">
-										<p class="label">Next</p>
-										<p class="title-sm mt-4 text-app-ink">{newerPost.data.title}</p>
-									</a>
-								) : (
-									<div />
-								)}
+								<div class="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
+									{olderPost && (
+										<a
+											href={`/blog/${olderPost.id}/`}
+											class="group block transition-opacity duration-500 hover:opacity-55"
+										>
+											<p class="label">← 系列前一篇</p>
+											<p class="title-sm mt-4 text-app-ink">{olderPost.data.title}</p>
+										</a>
+									)}
+									{newerPost && (
+										<a
+											href={`/blog/${newerPost.id}/`}
+											class="group block transition-opacity duration-500 hover:opacity-55 md:col-start-2 md:text-right"
+										>
+											<p class="label">系列後一篇 →</p>
+											<p class="title-sm mt-4 text-app-ink">{newerPost.data.title}</p>
+										</a>
+									)}
+								</div>
 							</nav>
 						)
 					}

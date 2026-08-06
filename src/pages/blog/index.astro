@@ -31,6 +31,12 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 // 版面：書名頁（中軸）＋兩欄圖版。
 // 原本是三欄卡片格線，三欄會把圖壓得太小、讀起來像列表頁；
 // 改成兩欄大圖，並把分類／標籤篩選改成純文字列，去掉所有藥丸按鈕。
+//
+// 2026-08-07：圖版整體縮小（max-w-6xl → 5xl，卡片同步改橫幅），
+// 並加入每頁 8 篇的分頁。分頁做在前端而不是拆成 /blog/2/，
+// 因為分類與標籤篩選也是前端跑的——如果分頁在後端，
+// 篩選就只會作用在當前這 8 篇上，等於壞掉。
+const PAGE_SIZE = 8;
 ---
 
 <!doctype html>
@@ -88,10 +94,10 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 
 			<!-- 圖版：兩欄錯落，鋪微灰區帶讓圖片浮在紙上 -->
 			<section class="band-tint page-wide pb-28 pt-20 md:pb-36 md:pt-28">
-				<div class="mx-auto max-w-6xl">
+				<div class="mx-auto max-w-5xl">
 					{
 						posts.length > 0 ? (
-							<div class="stagger grid grid-cols-1 gap-x-12 gap-y-20 sm:grid-cols-2 md:gap-x-16 md:gap-y-24" id="post-grid">
+							<div class="stagger grid grid-cols-1 gap-x-10 gap-y-16 sm:grid-cols-2 md:gap-x-14 md:gap-y-20" id="post-grid">
 								{posts.map((post) => (
 									<div
 										class="post-item"
@@ -111,6 +117,21 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 					<p id="empty-state" class="body-small hidden py-20 text-center">
 						沒有符合的文章，換個關鍵字試試。
 					</p>
+
+					<!-- 分頁：每頁 8 篇。沿用全站單色語彙——不用藥丸按鈕、
+					     不用色塊，選取狀態只靠一條底線與墨色深淺。 -->
+					<nav
+						id="pagination"
+						class="mt-20 hidden border-t border-app-gray-200 pt-10 md:mt-28"
+						aria-label="文章分頁"
+					>
+						<div class="flex items-center justify-center gap-x-7">
+							<button type="button" id="page-prev" class="page-arrow label" aria-label="上一頁">←</button>
+							<div id="page-numbers" class="flex items-center gap-x-5"></div>
+							<button type="button" id="page-next" class="page-arrow label" aria-label="下一頁">→</button>
+						</div>
+						<p id="page-status" class="label mt-7 text-center"></p>
+					</nav>
 				</div>
 			</section>
 		</main>
@@ -135,6 +156,30 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 		color: var(--color-app-ink);
 		border-bottom-color: var(--color-app-ink);
 	}
+
+	/* 分頁：與篩選同一套語彙 */
+	.page-num,
+	.page-arrow {
+		border-bottom: 1px solid transparent;
+		padding-bottom: 0.3em;
+		transition: color 0.4s ease, border-color 0.4s ease, opacity 0.4s ease;
+	}
+	.page-num:hover,
+	.page-arrow:hover:not(:disabled) {
+		color: var(--color-app-ink);
+	}
+	.page-num[data-active='true'] {
+		color: var(--color-app-ink);
+		border-bottom-color: var(--color-app-ink);
+	}
+	.page-arrow:disabled {
+		opacity: 0.25;
+		cursor: default;
+	}
+	/* 省略號：不可點，只是視覺上的連續 */
+	.page-gap {
+		color: var(--color-app-gray-300);
+	}
 </style>
 
 <script>
@@ -144,14 +189,26 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 	const emptyState = document.getElementById('empty-state');
 	const searchStatus = document.getElementById('search-status');
 
+	// ── 分頁 ─────────────────────────────────────────────
+	// 每頁 8 篇。注意順序：先算出「通過篩選的文章」，再對那份清單分頁。
+	// 反過來（先分頁再篩選）會變成只在當前 8 篇裡找，那是壞掉的行為。
+	const PAGE_SIZE = 8;
+	const pagination = document.getElementById('pagination');
+	const pageNumbers = document.getElementById('page-numbers');
+	const pagePrev = document.getElementById('page-prev') as HTMLButtonElement | null;
+	const pageNext = document.getElementById('page-next') as HTMLButtonElement | null;
+	const pageStatus = document.getElementById('page-status');
+	const grid = document.getElementById('post-grid');
+	let currentPage = 1;
+
 	const params = new URLSearchParams(window.location.search);
 	let activeCategory = '';
 	let activeTag = params.get('tag')?.trim().toLowerCase() ?? '';
 	let activeQuery = params.get('q')?.trim().toLowerCase() ?? '';
 
-	function applyFilters() {
-		let visibleCount = 0;
-		items.forEach((item) => {
+	/** 通過目前分類／標籤／關鍵字篩選的文章（尚未分頁）。 */
+	function matchedItems() {
+		return Array.from(items).filter((item) => {
 			const itemTags = item.dataset.tags?.split('|') ?? [];
 			const matchesCategory = !activeCategory || item.dataset.category === activeCategory;
 			const matchesTag = !activeTag || itemTags.includes(activeTag);
@@ -160,11 +217,71 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 				item.dataset.title?.includes(activeQuery) ||
 				item.dataset.description?.includes(activeQuery) ||
 				itemTags.some((tag) => tag.includes(activeQuery));
-			const show = matchesCategory && matchesTag && matchesQuery;
-			item.classList.toggle('hidden', !show);
-			if (show) visibleCount += 1;
+			return matchesCategory && matchesTag && matchesQuery;
 		});
-		emptyState?.classList.toggle('hidden', visibleCount > 0);
+	}
+
+	/** 畫出頁碼列。頁數多的時候只顯示首尾與當前頁附近，中間用 … 帶過。 */
+	function renderPageNumbers(totalPages: number) {
+		if (!pageNumbers) return;
+		pageNumbers.innerHTML = '';
+
+		const shown = new Set<number>([1, totalPages, currentPage]);
+		if (currentPage - 1 > 1) shown.add(currentPage - 1);
+		if (currentPage + 1 < totalPages) shown.add(currentPage + 1);
+		const pages = [...shown].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+
+		let previous = 0;
+		for (const page of pages) {
+			if (previous && page - previous > 1) {
+				const gap = document.createElement('span');
+				gap.className = 'label page-gap';
+				gap.textContent = '…';
+				pageNumbers.append(gap);
+			}
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'page-num label';
+			button.textContent = String(page).padStart(2, '0');
+			button.dataset.active = page === currentPage ? 'true' : 'false';
+			if (page === currentPage) button.setAttribute('aria-current', 'page');
+			button.addEventListener('click', () => goToPage(page));
+			pageNumbers.append(button);
+			previous = page;
+		}
+	}
+
+	function goToPage(page: number) {
+		currentPage = page;
+		applyFilters({ resetPage: false });
+		// 換頁後回到圖版頂端，不然會停在上一頁的底部、看不出換了內容
+		grid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	}
+
+	function applyFilters({ resetPage = true } = {}) {
+		if (resetPage) currentPage = 1;
+
+		const matched = matchedItems();
+		const totalPages = Math.max(1, Math.ceil(matched.length / PAGE_SIZE));
+		if (currentPage > totalPages) currentPage = totalPages;
+
+		const start = (currentPage - 1) * PAGE_SIZE;
+		const visible = new Set(matched.slice(start, start + PAGE_SIZE));
+
+		items.forEach((item) => item.classList.toggle('hidden', !visible.has(item)));
+		emptyState?.classList.toggle('hidden', matched.length > 0);
+
+		// 一頁就放得下時整組分頁收起來，不留一個只有「01」的殘留元件
+		const needsPagination = matched.length > PAGE_SIZE;
+		pagination?.classList.toggle('hidden', !needsPagination);
+		if (needsPagination) {
+			renderPageNumbers(totalPages);
+			if (pagePrev) pagePrev.disabled = currentPage === 1;
+			if (pageNext) pageNext.disabled = currentPage === totalPages;
+			if (pageStatus) {
+				pageStatus.textContent = `第 ${currentPage} / ${totalPages} 頁 · 共 ${matched.length} 篇`;
+			}
+		}
 
 		if (activeQuery && searchStatus) {
 			searchStatus.textContent = `搜尋「${activeQuery}」`;
@@ -176,6 +293,11 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a
 			searchStatus.classList.add('hidden');
 		}
 	}
+
+	pagePrev?.addEventListener('click', () => {
+		if (currentPage > 1) goToPage(currentPage - 1);
+	});
+	pageNext?.addEventListener('click', () => goToPage(currentPage + 1));
 
 	categoryButtons.forEach((button) => {
 		button.addEventListener('click', () => {

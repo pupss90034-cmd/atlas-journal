@@ -16,30 +16,33 @@ const cover = resolveHeroImage(heroImage) ?? defaultCover;
 // 改版重點：不再是「卡片」。沒有外框、沒有底色、沒有標籤藥丸，
 // 就是一張圖版加下方的圖說（日期 / 標題 / 一句話），
 // 排版邏輯與攝影集圖說完全一致。
-// 比例改為 4:5 直幅——直幅在格線裡看起來像貼在頁面上的照片，
-// 橫幅 4:3 則會讀成部落格縮圖。
+//
+// 2026-08-07：比例由 4:5 直幅改回 3:2 橫幅。
+// 直幅在總覽頁佔的垂直高度太大，一屏只讀得到兩篇，整頁變成翻不完的圖牆；
+// 這裡的圖是「索引」不是「作品」，作品要看完整的請進攝影集頁。
+// 橫幅同時讓文字圖說更靠近圖片，一組就是一個可掃視的單位。
 ---
 
 <a href={`/blog/${post.id}/`} class="group block">
 	<article>
-		<div class="aspect-[4/5] w-full overflow-hidden bg-app-gray-100">
+		<div class="aspect-[3/2] w-full overflow-hidden bg-app-gray-100">
 			<Image
 				src={cover}
 				alt=""
 				class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
-				widths={[400, 700, 1000]}
-				sizes="(min-width: 768px) 30rem, 92vw"
+				widths={[400, 600, 900]}
+				sizes="(min-width: 768px) 26rem, 92vw"
 			/>
 		</div>
 
-		<div class="mt-6 transition-opacity duration-500 group-hover:opacity-60">
+		<div class="mt-5 transition-opacity duration-500 group-hover:opacity-60">
 			<p class="label">
 				<FormattedDate date={pubDate} />
 			</p>
-			<h3 class="title-sm mt-4 max-w-[26ch] text-app-ink">
+			<h3 class="title-sm mt-3 max-w-[26ch] text-app-ink">
 				{title}
 			</h3>
-			<p class="body-small mt-3 line-clamp-2 max-w-[38ch]">
+			<p class="body-small mt-2.5 line-clamp-2 max-w-[40ch]">
 				{description}
 			</p>
 		</div>

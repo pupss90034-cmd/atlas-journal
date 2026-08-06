@@ -1,6 +1,10 @@
 ---
 label: La Grotte de Glace La Grave La Meije
 order: 7
+# 這本是已經排好版的攝影集（說明文字已經在圖片裡），
+# 所以用「翻頁」版型：點進去一次看一頁、左右翻，不再另外顯示圖說小字。
+# 一般單張照片的相簿把這行刪掉、或改成「鑲嵌」即可。
+layout: 翻頁
 images:
   - src: 圖片/glacier-01.png
     alt: 冰洞入口指示牌與層層堆疊的冰河紋理

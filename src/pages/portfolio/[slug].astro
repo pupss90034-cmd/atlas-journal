@@ -5,11 +5,17 @@
 // 版面刻意不用等距格線。照片依序循環套用「整幅 → 半幅 → 半幅」，
 // 大小交替本身就是節奏；再加上半幅的第二張往下錯開，
 // 視線會走 Z 字，不會變成掃描表格。
+//
+// 2026-08-07：以上說的是預設的「鑲嵌」版型。相簿檔 frontmatter 若寫
+// `layout: 翻頁`，就改用 AlbumSpreads 元件——一次一張、左右翻頁、
+// 不顯示圖說。那是給已經排好版、說明文字印在圖上的攝影集用的，
+// 那種圖再錯落擺或再補一行圖說都只會打架。
 import { type CollectionEntry, getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import AlbumSpreads from '../../components/AlbumSpreads.astro';
 
 export async function getStaticPaths() {
 	const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
@@ -34,7 +40,8 @@ type Props = {
 };
 
 const { album, index, total, prev, next } = Astro.props;
-const { label, images } = album.data;
+const { label, images, layout } = album.data;
+const isSpreadLayout = layout === '翻頁';
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
 const description = `${label}，共 ${images.length} 張照片。`;
@@ -55,40 +62,70 @@ const description = `${label}，共 ${images.length} 張照片。`;
 						Series {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
 					</p>
 					<h1 class="title-display mt-9 text-app-ink">{label}</h1>
-					<p class="label mt-9">{String(images.length).padStart(2, '0')} Photographs</p>
+					<p class="label mt-9">
+						{String(images.length).padStart(2, '0')}
+						{isSpreadLayout ? ' Pages' : ' Photographs'}
+					</p>
 				</div>
 			</section>
 
 			<!-- 圖版：微灰區帶，照片浮在紙上 -->
 			<section class="band-tint page-narrow band">
-				<div class="plates">
-					{
-						images.map((photo, i) => (
-							<figure class:list={['plate', i % 3 === 0 ? 'plate-full' : 'plate-half']}>
-								<Image
-									src={photo.src}
-									alt={photo.alt}
-									class="w-full"
-									widths={[600, 1000, 1600]}
-									sizes={i % 3 === 0 ? '(min-width: 768px) 72rem, 100vw' : '(min-width: 768px) 36rem, 100vw'}
-								/>
-								{photo.alt && <figcaption class="label mt-5">{photo.alt}</figcaption>}
-							</figure>
-						))
-					}
-				</div>
+				{
+					isSpreadLayout ? (
+						/* 翻頁版型：一次一張，圖說不顯示（說明已排在圖裡） */
+						<AlbumSpreads images={images} />
+					) : (
+						<div class="plates">
+							{images.map((photo, i) => (
+								<figure class:list={['plate', i % 3 === 0 ? 'plate-full' : 'plate-half']}>
+									<Image
+										src={photo.src}
+										alt={photo.alt}
+										class="w-full"
+										widths={[600, 1000, 1600]}
+										sizes={
+											i % 3 === 0 ? '(min-width: 768px) 72rem, 100vw' : '(min-width: 768px) 36rem, 100vw'
+										}
+									/>
+									{/* 圖說是次要文字：13px，不套 label 的大字距全大寫 */}
+									{photo.alt && <figcaption class="caption mt-5">{photo.alt}</figcaption>}
+								</figure>
+							))}
+						</div>
+					)
+				}
 			</section>
 
-			<!-- 上下一組主題 -->
-			<nav class="page-wide band-tight">
-				<div class="mx-auto flex max-w-5xl items-baseline justify-between gap-8 border-t border-app-gray-200 pt-10">
-					<a href={`/portfolio/${prev.id}/`} class="group block transition-opacity duration-500 hover:opacity-55">
-						<p class="label">Previous Series</p>
-						<p class="title-sm mt-4 text-app-ink">{prev.data.label}</p>
+			{/* 上下一組主題：圖示化 ─────────────────────────────
+			    2026-08-07 改：原本兩側各一段「Previous Series ＋ 相簿名稱」的
+			    文字堆，攤在照片看完之後的位置，讀起來像是又開始了一段文案。
+			    這裡只需要「往前 / 往後」這一個動作，用箭頭表達就夠了；
+			    中間留一組頁碼指出在整本裡的位置。相簿名稱移到 title 提示，
+			    滑過去才出現，不佔版面。
+			    （這裡用大括號註解而不是 HTML 註解，說明才不會被送到瀏覽器。） */}
+			<nav class="page-wide band-tight" aria-label="攝影集導覽">
+				<div class="mx-auto flex max-w-5xl items-center justify-between gap-8 border-t border-app-gray-200 pt-10">
+					<a
+						href={`/portfolio/${prev.id}/`}
+						class="nav-icon"
+						title={prev.data.label}
+						aria-label={`上一組：${prev.data.label}`}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 L7 12 L15 20" /></svg>
 					</a>
-					<a href={`/portfolio/${next.id}/`} class="group block text-right transition-opacity duration-500 hover:opacity-55">
-						<p class="label">Next Series</p>
-						<p class="title-sm mt-4 text-app-ink">{next.data.label}</p>
+
+					<p class="label">
+						{String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+					</p>
+
+					<a
+						href={`/portfolio/${next.id}/`}
+						class="nav-icon"
+						title={next.data.label}
+						aria-label={`下一組：${next.data.label}`}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 L17 12 L9 20" /></svg>
 					</a>
 				</div>
 			</nav>
@@ -121,5 +158,36 @@ const description = `${label}，共 ${images.length} 張照片。`;
 		.plate-half {
 			grid-column: 1 / -1;
 		}
+	}
+
+	/* 導覽箭頭：細線描邊、無填色，跟全站 1px 灰線同一個粗細語言。
+	   點擊區域用 padding 撐到 44px 以上，手機才點得到。 */
+	.nav-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.75rem;
+		margin: -0.75rem;
+		color: var(--color-app-gray-400);
+		transition: color 0.4s ease, transform 0.4s ease;
+	}
+	.nav-icon svg {
+		width: 1.5rem;
+		height: 1.5rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1;
+		stroke-linecap: square;
+		stroke-linejoin: miter;
+	}
+	.nav-icon:hover {
+		color: var(--color-app-ink);
+	}
+	/* hover 時箭頭往它指的方向挪一點，動作本身就是提示 */
+	.nav-icon:first-of-type:hover {
+		transform: translateX(-0.25rem);
+	}
+	.nav-icon:last-of-type:hover {
+		transform: translateX(0.25rem);
 	}
 </style>

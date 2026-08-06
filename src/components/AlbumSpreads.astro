@@ -1,0 +1,239 @@
+---
+// 相簿內頁的「翻頁」版型（2026-08-07 新增）
+//
+// 用途：給已經在別的軟體排好版的攝影集——圖檔本身就是一整頁完成品，
+// 說明文字也已經印在圖上。這種圖不該被切成大小交錯的鑲嵌格線，
+// 也不該在下面再補一行圖說重複說一次。
+//
+// 所以這裡一次只顯示一張，用左右箭頭／滑動／鍵盤左右鍵翻到下一頁，
+// 就像翻一本實體的攝影集。圖片用 contain 完整顯示、不裁切，
+// 高度上限鎖在視窗高度內，橫幅與直幅混排時翻頁位置才不會忽上忽下。
+//
+// 要讓某本相簿用這個版型：在 src/content/編輯/攝影集/ 的相簿檔
+// frontmatter 加一行 `layout: 翻頁` 即可（預設是「鑲嵌」）。
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	images: CollectionEntry<'albums'>['data']['images'];
+}
+
+const { images } = Astro.props;
+const total = images.length;
+---
+
+<div class="spreads" data-total={total}>
+	<!-- 頁碼與翻頁鍵：與圖面共用同一條基線，維持書冊版面的語彙 -->
+	<div class="mb-6 flex items-baseline justify-between gap-8 border-b border-app-gray-200 pb-5 md:mb-8">
+		<p class="label">
+			<span class="spreads-counter">01</span>&nbsp;/&nbsp;{String(total).padStart(2, '0')}
+		</p>
+		<div class="flex shrink-0 items-baseline gap-4">
+			<button type="button" class="spreads-prev label spreads-arrow" aria-label="上一頁">Prev</button>
+			<button type="button" class="spreads-next label spreads-arrow" aria-label="下一頁">Next</button>
+		</div>
+	</div>
+
+	<div class="spreads-stage relative">
+		<button type="button" class="spreads-prev spreads-edge spreads-edge-left" aria-label="上一頁">
+			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+				<path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</button>
+
+		{
+			images.map((photo, i) => (
+				<figure class="spreads-page m-0" data-index={i} hidden={i !== 0}>
+					<Image
+						src={photo.src}
+						alt={photo.alt}
+						class="spreads-image"
+						widths={[800, 1200, 1800]}
+						sizes="(min-width: 768px) 72rem, 100vw"
+					/>
+					{/* 圖說刻意不顯示：說明文字已經排在圖片裡面了。
+					    alt 仍然保留在 <img> 上，搜尋引擎與報讀軟體讀得到。 */}
+				</figure>
+			))
+		}
+
+		<button type="button" class="spreads-next spreads-edge spreads-edge-right" aria-label="下一頁">
+			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+				<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</button>
+	</div>
+</div>
+
+<style>
+	/* 每一頁佔一個固定高度的舞台，翻頁時版面不跳動。
+	   圖片用 contain 完整放進去，橫幅、直幅、寬幅都不裁切。 */
+	.spreads-stage {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: min(78vh, 52rem);
+	}
+	.spreads-page {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+	}
+	.spreads-image {
+		width: auto;
+		max-width: 100%;
+		height: auto;
+		max-height: min(78vh, 52rem);
+		object-fit: contain;
+	}
+	@media (max-width: 767px) {
+		.spreads-stage {
+			min-height: 0;
+		}
+		.spreads-image {
+			width: 100%;
+			max-height: none;
+		}
+	}
+
+	/* 翻頁鍵：純文字，hover 只變濃淡 */
+	.spreads-arrow {
+		color: var(--color-app-gray-400);
+		transition: color 0.4s ease;
+	}
+	.spreads-arrow:hover {
+		color: var(--color-app-ink);
+	}
+
+	/* 邊緣熱區：很淡的箭頭，沒有底色與陰影，滑到圖面上才浮現 */
+	.spreads-edge {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 4rem;
+		width: 2.5rem;
+		color: #ffffff;
+		mix-blend-mode: difference;
+		opacity: 0;
+		transition: opacity 0.5s ease;
+		z-index: 10;
+	}
+	.spreads-stage:hover .spreads-edge,
+	.spreads-edge:focus-visible {
+		opacity: 0.9;
+	}
+	.spreads-edge-left {
+		left: 0;
+	}
+	.spreads-edge-right {
+		right: 0;
+	}
+	@media (max-width: 767px) {
+		.spreads-edge {
+			opacity: 0.9;
+		}
+	}
+
+	/* 翻頁：淡入淡出，不做位移，維持書頁翻開的安靜感 */
+	.spreads-page {
+		animation: spreads-fade-in 0.6s ease both;
+	}
+	@keyframes spreads-fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	.spreads-page[data-leaving='true'] {
+		animation: spreads-fade-out 0.2s ease both;
+	}
+	@keyframes spreads-fade-out {
+		from {
+			opacity: 1;
+		}
+		to {
+			opacity: 0;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.spreads-page,
+		.spreads-page[data-leaving='true'] {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	document.querySelectorAll<HTMLDivElement>('.spreads').forEach((book) => {
+		const pages = Array.from(book.querySelectorAll<HTMLElement>('.spreads-page'));
+		const total = pages.length;
+		if (total === 0) return;
+
+		const counter = book.querySelector<HTMLSpanElement>('.spreads-counter');
+		const prevButtons = book.querySelectorAll<HTMLButtonElement>('.spreads-prev');
+		const nextButtons = book.querySelectorAll<HTMLButtonElement>('.spreads-next');
+
+		let current = 0;
+
+		function render(nextIndex: number) {
+			const outgoing = pages[current];
+			outgoing.dataset.leaving = 'true';
+			window.setTimeout(() => {
+				pages.forEach((page, i) => {
+					page.hidden = i !== nextIndex;
+					delete page.dataset.leaving;
+				});
+			}, 180);
+
+			current = nextIndex;
+			if (counter) counter.textContent = String(current + 1).padStart(2, '0');
+		}
+
+		// 頭尾相接：翻到最後一頁再往後會回到第一頁，跟相簿之間的翻頁一致
+		function goTo(delta: number) {
+			render((current + delta + total) % total);
+		}
+
+		prevButtons.forEach((btn) => btn.addEventListener('click', () => goTo(-1)));
+		nextButtons.forEach((btn) => btn.addEventListener('click', () => goTo(1)));
+
+		// 鍵盤左右鍵：只有當圖面在畫面上時才反應
+		function inViewport() {
+			const rect = book.getBoundingClientRect();
+			return rect.top < window.innerHeight && rect.bottom > 0;
+		}
+		document.addEventListener('keydown', (e) => {
+			if (!inViewport()) return;
+			const target = e.target as HTMLElement | null;
+			if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+			if (e.key === 'ArrowLeft') goTo(-1);
+			if (e.key === 'ArrowRight') goTo(1);
+		});
+
+		// 手機滑動翻頁
+		let touchStartX = 0;
+		const stage = book.querySelector<HTMLDivElement>('.spreads-stage');
+		stage?.addEventListener(
+			'touchstart',
+			(e) => {
+				touchStartX = e.touches[0].clientX;
+			},
+			{ passive: true },
+		);
+		stage?.addEventListener(
+			'touchend',
+			(e) => {
+				const delta = e.changedTouches[0].clientX - touchStartX;
+				if (Math.abs(delta) < 40) return;
+				goTo(delta < 0 ? 1 : -1);
+			},
+			{ passive: true },
+		);
+	});
+</script>
