@@ -2,8 +2,6 @@
 import { getCollection } from 'astro:content';
 import AlbumMosaic from '../AlbumMosaic.astro';
 
-const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
-
 // 版面：微灰區帶 ＋ 窄邊鑲嵌塊面。
 // 2026-08-06：這一區從「四欄等距格線的翻頁相簿」改成
 // 「大小不一的塊面預覽」。原本一次要看完一整個主題的所有照片，
@@ -13,25 +11,50 @@ const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.d
 // 底鋪一層極淡的灰（--color-app-band），照片浮在上面會讀成
 // 「裱在卡紙上的相片」，純白底則會讓照片邊緣直接消失在背景裡。
 
-// 排序邏輯備註（2026-08-03）：
-// 目前依 Obsidian 相簿檔案裡的 `order` 欄位手動排序。
-// 未來規劃：等網站對 Google 開放搜尋（src/consts.ts 的
-// SITE_IS_PUBLISHED 改成 true）之後，這裡要改成依「點擊率／
-// 停留時間」等瀏覽數據自動排序精選攝影集，讓表現好的主題排在前面。
-// 這需要先接上分析工具（例如 Cloudflare Web Analytics 或 GA4）
-// 收集數據，屬於之後才會做的功能，先在這裡留紀錄，跟 Google
-// 搜尋開放時一起上線。相關備註也寫在 src/consts.ts 和使用說明.md。
+// 2026-08-07：標題文字改成從 Obsidian 編輯（src/content/編輯/首頁-攝影集.md）。
+// 原本寫死的「Work Overview」是改版時參考的版型留下來的字，不是這個網站的。
+
+// 2026-08-07 排版跑位的修法：首頁固定只露出 featuredCount 個相簿
+// （預設 6 個，剛好填滿鑲嵌塊面的一個完整循環），相簿再多也不會
+// 把版面撐破。超過的部分不是被埋起來，而是「每次重新建置網站隨機
+// 換一批」——所以每次部署首頁看到的組合都不一樣，冷門主題也輪得到
+// 被看見，而 /portfolio 一直都列出全部。
+//
+// 為什麼是隨機而不是照點擊率：點擊率排序需要先接分析工具
+// （Cloudflare Web Analytics 或 GA4）收集真實流量，而網站目前
+// 還沒對 Google 開放搜尋（src/consts.ts 的 SITE_IS_PUBLISHED），
+// 沒有資料可以排。等之後開放搜尋、數據累積起來，這裡的 shuffle
+// 換成依瀏覽數據排序即可，其餘不用動。備註同步寫在
+// src/consts.ts 和 src/content/編輯/使用說明.md。
+
+const [gallery] = await getCollection('homeGallery');
+const eyebrow = gallery?.data.eyebrow ?? 'Featured Series';
+const heading = gallery?.data.heading ?? '精選攝影集';
+const ctaLabel = gallery?.data.ctaLabel ?? 'View All Series';
+const featuredCount = gallery?.data.featuredCount ?? 6;
+
+const allAlbums = await getCollection('albums');
+
+// 隨機挑選（Fisher–Yates 洗牌），再依 order 排回來，
+// 讓「挑哪幾個」是隨機的、但「排出來的順序」仍照你設定的 order，
+// 版面節奏才不會每次部署都跳來跳去。
+const shuffled = [...allAlbums];
+for (let i = shuffled.length - 1; i > 0; i--) {
+	const j = Math.floor(Math.random() * (i + 1));
+	[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+}
+const featured = shuffled.slice(0, featuredCount).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <section id="gallery" class="band-tint page-narrow band">
 	<div class="mb-12 text-center md:mb-16">
-		<p class="label">Featured Series</p>
-		<h2 class="title-spaced mt-6 text-app-ink">Work Overview</h2>
+		<p class="label">{eyebrow}</p>
+		<h2 class="title-spaced mt-6 text-app-ink">{heading}</h2>
 	</div>
 
-	<AlbumMosaic albums={albums} />
+	<AlbumMosaic albums={featured} />
 
 	<div class="mt-14 text-center md:mt-20">
-		<a href="/portfolio" class="label link-underline text-app-ink">View All Series</a>
+		<a href="/portfolio" class="label link-underline text-app-ink">{ctaLabel}</a>
 	</div>
 </section>

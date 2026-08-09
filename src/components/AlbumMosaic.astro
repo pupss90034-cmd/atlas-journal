@@ -12,7 +12,17 @@
 // 塊面規律以 6 個為一循環，剛好把 6 欄的格線填滿 4 列不留洞：
 //   0: 2×1    1: 2×1    2: 2×2    3: 4×2    4: 2×1    5: 6×1
 // 面積 2+2+4+8+2+6 = 24 = 6 欄 × 4 列。
-// 相簿數量不是 6 的倍數也不會壞，只是最後一列可能留白。
+//
+// 2026-08-07 修正「排版跑位」：
+// 原本不管有幾個相簿都無腦套這 6 個一循環的規律，所以只要相簿總數
+// 不是 6 的倍數，最後就會剩幾個小塊面孤零零地掛在那裡、右邊一大片空白
+// ——那就是首頁看到的破版。現在改成把「最後不足一循環的餘數」另外用
+// 一組收尾規律處理，讓最後一排一定剛好填滿 6 欄：
+//   餘 1 → 6           餘 2 → 3+3
+//   餘 3 → 2+2+2       餘 4 → 3+3 / 3+3
+//   餘 5 → 2+2+2 / 3+3
+// 所以現在不論幾個相簿都不會留洞。首頁另外還會固定只取 6 個
+// （見 src/components/home/PhotoGallery.astro），/portfolio 則列出全部。
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 
@@ -22,23 +32,41 @@ interface Props {
 
 const { albums } = Astro.props;
 
-// 每個塊面的尺寸樣式，依序循環套用
-const tileShapes = ['t-sm', 't-sm', 't-tall', 't-big', 't-sm', 't-wide'];
+// 完整循環的塊面規律（6 個一組）
+const CYCLE = ['t-sm', 't-sm', 't-tall', 't-big', 't-sm', 't-wide'];
+
+// 餘數的收尾規律：每一列都剛好 6 欄，不留洞
+const TAIL: Record<number, string[]> = {
+	0: [],
+	1: ['t-wide'],
+	2: ['t-mid', 't-mid'],
+	3: ['t-sm', 't-sm', 't-sm'],
+	4: ['t-mid', 't-mid', 't-mid', 't-mid'],
+	5: ['t-sm', 't-sm', 't-sm', 't-mid', 't-mid'],
+};
+
+const fullCycles = Math.floor(albums.length / CYCLE.length);
+const tileShapes = [
+	...Array.from({ length: fullCycles }, () => CYCLE).flat(),
+	...TAIL[albums.length % CYCLE.length],
+];
 ---
 
 <div class="mosaic">
 	{
 		albums.map((album, i) => {
-			const cover = album.data.images[0];
+			// 2026-08-07：優先用相簿檔裡指定的 cover 當封面；
+			// 沒指定就沿用舊行為，拿 images 的第一張。
+			const cover = album.data.cover ?? album.data.images[0]?.src;
 			if (!cover) return null;
 			return (
 				<a
 					href={`/portfolio/${album.id}/`}
-					class:list={['tile', tileShapes[i % tileShapes.length]]}
+					class:list={['tile', tileShapes[i]]}
 					aria-label={`${album.data.label}，共 ${album.data.images.length} 張`}
 				>
 					<Image
-						src={cover.src}
+						src={cover}
 						alt=""
 						class="tile-img"
 						widths={[400, 800, 1400]}
@@ -86,21 +114,24 @@ const tileShapes = ['t-sm', 't-sm', 't-tall', 't-big', 't-sm', 't-wide'];
 		grid-row: span 1;
 	}
 
-	/* 手機只有兩欄，大塊面改用整列寬並拉高，維持「有大有小」的節奏 */
+	/* 手機只有兩欄，所有塊面一律整列寬、單列高，維持一張一張往下讀的節奏 */
+	.t-sm,
+	.t-mid,
 	.t-tall,
 	.t-big,
 	.t-wide {
 		grid-column: span 2;
 		grid-row: span 1;
 	}
-	.t-big,
-	.t-wide {
-		grid-row: span 1;
-	}
 
 	@media (min-width: 768px) {
 		.t-sm {
 			grid-column: span 2;
+			grid-row: span 1;
+		}
+		/* 收尾用的半列塊面：兩個併成一列剛好 6 欄 */
+		.t-mid {
+			grid-column: span 3;
 			grid-row: span 1;
 		}
 		.t-tall {
@@ -138,7 +169,7 @@ const tileShapes = ['t-sm', 't-sm', 't-tall', 't-big', 't-sm', 't-wide'];
 		background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.28));
 	}
 
-	/* 標題壓在塊面正中央，與 FIJI 的 Work Overview 相同 */
+	/* 標題壓在塊面正中央 */
 	.tile-caption {
 		position: absolute;
 		inset: 0;

@@ -150,6 +150,24 @@ const homeConsulting = defineCollection({
 	}),
 });
 
+// 首頁「精選攝影集」區塊的文字與顯示數量
+// 2026-08-07：原本標題「Work Overview」是改版時參考版型留下來的字，
+// 不屬於這個網站。改成跟其他首頁區塊一樣從 Obsidian 編輯，
+// 之後要換字不用再動程式碼。
+const homeGallery = defineCollection({
+	loader: glob({ base: "./src/content/編輯", pattern: "首頁-攝影集.md" }),
+	schema: z.object({
+		eyebrow: z.string(),
+		heading: z.string(),
+		ctaLabel: z.string(),
+		// 首頁露出幾個相簿。留空或填奇怪的值都退回 6。
+		featuredCount: z.preprocess(
+			(val) => (val === null || val === undefined || val === "" ? 6 : val),
+			z.coerce.number().int().min(1).catch(6),
+		),
+	}),
+});
+
 // About 頁面（/about）
 // 2026-07-30 修正：實際檔名是「About頁面（about 頁面的完整內文）.md」，跟原本
 // 寫死的 "About頁面.md" 對不上，導致 /about 完全建置失敗、整個網站建置中斷。
@@ -171,6 +189,19 @@ const albums = defineCollection({
 		z.object({
 			label: z.string(),
 			order: z.number(),
+			// 2026-08-07：相簿封面。這張只用在「相簿列表」的塊面上
+			// （首頁精選攝影集），是專門挑來當門面、會被裁成塊面的那張。
+			//
+			//   cover: 圖片/paris-04.jpg
+			//
+			// 不填就自動用 images 的第一張（跟以前的行為一樣），所以舊的
+			// 相簿檔不用改也能正常運作。封面圖可以是 images 裡已經有的
+			// 某一張，也可以是一張只當封面、不出現在相簿內頁的照片。
+			// 打錯字會讓建置失敗並印出找不到的檔名，改對即可。
+			cover: z.preprocess(
+				(val) => (val === null || val === undefined || val === "" ? undefined : val),
+				image().optional(),
+			),
 			// 2026-08-07：相簿內頁（點進去之後）的版型開關。
 			//
 			//   layout: 鑲嵌  ← 預設，不填就是這個
@@ -203,6 +234,7 @@ export const collections = {
 	homeHero,
 	homeAbout,
 	homeConsulting,
+	homeGallery,
 	aboutPage,
 	albums,
 };
