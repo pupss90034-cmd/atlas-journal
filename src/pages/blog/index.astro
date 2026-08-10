@@ -3,7 +3,6 @@ import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import BlogCard from '../../components/BlogCard.astro';
-import TagMap from '../../components/TagMap.astro';
 import { getCollection } from 'astro:content';
 import { getSortedPosts, getCategory, getCategories } from '../../utils/posts';
 import { parseEditableBlock } from '../../utils/editableBody';
@@ -30,14 +29,14 @@ const categories = getCategories(posts);
 
 // 標籤＝每篇文章 frontmatter 裡的 tags 清單，動態算出來的。
 // 之後在 Obsidian 裡新增、改名、刪除標籤，這裡的清單跟篩選都會自動更新。
-// 2026-08-10：標籤改用地圖呈現（見 src/components/TagMap.astro）。
-// 是地點的標籤變成地圖上的點，不是地點的仍然排成一列文字，兩種都能點。
-const tagCounts = new Map<string, number>();
-for (const post of posts) {
-	for (const tag of post.data.tags ?? []) {
-		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
-	}
-}
+//
+// 2026-08-10 傍晚：標籤退回純文字列。稍早改成的世界地圖搬去首頁了
+//（src/components/home/TravelMap.astro）。原因是這兩件事目的不同：
+// 這一頁的標籤是**篩選工具**，讀者要的是一眼掃完、馬上點到；
+// 地圖是**自我介紹**，屬於首頁。工具就該長得像工具。
+const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a, b) =>
+	a.localeCompare(b, 'zh-Hant'),
+);
 
 // 版面：書名頁（中軸）＋兩欄圖版。
 // 原本是三欄卡片格線，三欄會把圖壓得太小、讀起來像列表頁；
@@ -89,12 +88,17 @@ const PAGE_SIZE = 8;
 						)
 					}
 
-					{/* 標籤地圖：地點類的標籤變成地圖上的點（文字照樣顯示在點旁邊），
-					    不是地點的標籤仍排成一列文字。兩種都掛 .tag-btn，
-					    所以下方那段篩選程式一行都不用改。 */}
-					<div class="border-b border-app-gray-200" id="tag-filter">
-						<TagMap tagCounts={tagCounts} />
-					</div>
+					{
+						tags.length > 0 && (
+							<div class="flex flex-wrap items-baseline justify-center gap-x-7 gap-y-3 border-y border-app-gray-200 py-5" id="tag-filter">
+								{tags.map((tag) => (
+									<button type="button" data-tag={tag} class="tag-btn label">
+										{tag}
+									</button>
+								))}
+							</div>
+						)
+					}
 				</div>
 			</section>
 
@@ -195,9 +199,7 @@ const PAGE_SIZE = 8;
 
 <script>
 	const categoryButtons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-	// 標籤現在有兩種長相：地圖上的點（SVG 的 <g>）與地圖下方的文字鈕（<button>）。
-	// 兩種都掛 .tag-btn、都用 data-tag 帶標籤名，所以下面的篩選邏輯只有一份。
-	const tagButtons = document.querySelectorAll<HTMLElement | SVGElement>('.tag-btn');
+	const tagButtons = document.querySelectorAll<HTMLButtonElement>('.tag-btn');
 	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
 	const emptyState = document.getElementById('empty-state');
 	const searchStatus = document.getElementById('search-status');

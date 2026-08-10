@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Hero from '../components/home/Hero.astro';
 import About from '../components/home/About.astro';
+import TravelMap from '../components/home/TravelMap.astro';
 import LatestArticles from '../components/home/LatestArticles.astro';
 import PhotoGallery from '../components/home/PhotoGallery.astro';
 import Consulting from '../components/home/Consulting.astro';
@@ -25,6 +26,10 @@ const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 		<main class="flex-1">
 			<Hero />
 			<About />
+			{/* 足跡地圖：接在「關於我」後面、文章前面。
+			    「我是誰」→「我去過哪裡」→「我寫了什麼」，
+			    地圖是這條敘事線的中間那一段，不是篩選工具。 */}
+			<TravelMap />
 			<LatestArticles />
 			<PhotoGallery />
 			<Consulting />

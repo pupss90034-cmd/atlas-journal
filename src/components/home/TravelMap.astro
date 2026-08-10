@@ -1,0 +1,311 @@
+---
+import { getCollection } from 'astro:content';
+import { getSortedPosts } from '../../utils/posts';
+import { parseEditableBlock, parseMarkdownTable } from '../../utils/editableBody';
+import {
+	MAP_WIDTH,
+	MAP_HEIGHT,
+	COUNTRY_PATHS,
+	COUNTRY_BOXES,
+	WORLD_PATH,
+	project,
+} from '../../data/world-map';
+import { COUNTRY_NAME_ZH } from '../../data/country-names';
+
+// ── 這一區在做什麼 ──────────────────────────────────────
+//
+// 2026-08-10 傍晚調整：地圖從 /blog 搬到首頁，放在「關於我」與「最新文章」
+// 中間。理由是這兩件事本來就是分開的：
+//
+//   · /blog 的標籤是**工具**——讀者想篩掉不看的東西，要的是一眼掃完、
+//     馬上點得到，所以那邊回到純文字列。
+//   · 地圖是**自我介紹的一部分**——「我去過這些地方」。它屬於首頁，
+//     接在「關於我」後面剛剛好，然後才帶到文章。
+//
+// 互動：滑鼠移到右邊的地名上，左邊地圖對應的國家整塊亮起來；點下去
+// 跳到 /blog 該標籤的文章列表。反過來也成立（移到地圖上的國家色塊，
+// 右邊那一列也會跟著亮）。
+//
+// 沒有滑鼠的裝置（手機）不會有 hover，所以預設狀態就要看得懂：
+// 去過的國家一律先鋪一層很淡的灰，本身已經是一張「足跡圖」，
+// hover 只是把其中一塊加深。
+
+const [entry] = await getCollection('tagMap');
+const heading = entry?.data.heading ?? '去過的地方';
+const { intro } = parseEditableBlock(entry?.body);
+
+const posts = await getSortedPosts();
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags ?? []) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+
+interface Place {
+	tag: string;
+	count: number;
+	/** 這個標籤要點亮哪幾塊（已經是 SVG 路徑） */
+	shapes: string[];
+	/** 地圖上沒有形狀可用時的備案：一個小點（例如大溪地這種太小的島） */
+	point: { x: number; y: number } | null;
+	/** 小到光填色看不見的國家（台灣、瑞士），另外套一個圈把視線帶過去 */
+	ring: { x: number; y: number } | null;
+}
+
+/** 這幾塊加起來在地圖上有多大？小於這個尺寸就需要加圈。單位是地圖畫布單位。 */
+const RING_THRESHOLD = 18;
+
+function ringFor(countries: string[]) {
+	const boxes = countries.map((name) => COUNTRY_BOXES[name]).filter(Boolean);
+	if (boxes.length === 0) return null;
+	const left = Math.min(...boxes.map((b) => b[0]));
+	const top = Math.min(...boxes.map((b) => b[1]));
+	const right = Math.max(...boxes.map((b) => b[2]));
+	const bottom = Math.max(...boxes.map((b) => b[3]));
+	if (Math.max(right - left, bottom - top) >= RING_THRESHOLD) return null;
+	return { x: +((left + right) / 2).toFixed(1), y: +((top + bottom) / 2).toFixed(1) };
+}
+
+const places: Place[] = [];
+const mapped = new Set<string>();
+
+for (const row of parseMarkdownTable(entry?.body)) {
+	const tag = (row['標籤'] ?? '').trim();
+	if (tag === '' || mapped.has(tag)) continue;
+
+	// 表格裡有、但目前沒有任何文章在用的標籤不顯示——
+	// 免得地圖上亮了一塊，點進去卻沒有文章。
+	const count = tagCounts.get(tag);
+	if (!count) continue;
+
+	// 國家欄可以填不只一個（例如 TMB 橫跨法國、義大利、瑞士），
+	// 用頓號、逗號或斜線分隔都認得。
+	const countries = (row['國家'] ?? '')
+		.split(/[、,，/／]/)
+		.map((name) => name.trim())
+		.filter(Boolean)
+		.map((name) => COUNTRY_NAME_ZH[name] ?? name)
+		.filter((name) => COUNTRY_PATHS[name]);
+
+	const shapes = countries.map((name) => COUNTRY_PATHS[name]);
+
+	// 座標欄是備案，只有在國家欄空白或查不到形狀時才會用到。
+	const lat = Number(row['緯度']);
+	const lon = Number(row['經度']);
+	const point =
+		shapes.length === 0 && Number.isFinite(lat) && Number.isFinite(lon) ? project(lat, lon) : null;
+
+	// 兩種都沒有 ＝ 這一列什麼都畫不出來，略過（不會讓網站壞掉）。
+	if (shapes.length === 0 && !point) continue;
+
+	places.push({ tag, count, shapes, point, ring: ringFor(countries) });
+	mapped.add(tag);
+}
+
+// 排序：文章多的排前面，一樣多再照筆畫。這一列是「我主要待過哪裡」的
+// 濃度排序，不是字典。
+places.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, 'zh-Hant'));
+
+// 預設那層很淡的底色只畫「不重複的國家」。同一個國家被兩個標籤共用時
+//（法國、TMB），畫兩次會疊出比較深的灰，看起來像那一國比較特別，
+// 但那只是資料重複而已。
+const baseShapes = [...new Set(places.flatMap((p) => p.shapes))];
+
+// 底圖上的小記號：地圖畫不出來的地方（大溪地）與小到看不見的國家（台灣）。
+// 沒有這一層的話，這兩種地方在「沒有滑鼠碰到」的狀態下等於不存在——
+// 手機上就是永遠不存在。
+const baseMarks = places
+	.map((place) => ({ point: place.point, ring: place.ring }))
+	.filter((mark) => mark.point || mark.ring);
+---
+
+{
+	places.length > 0 && (
+		<section id="map" class="page-wide band-tight">
+			<div class="mx-auto max-w-5xl">
+				<div class="grid grid-cols-1 items-center gap-x-16 gap-y-10 md:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+					{/* ── 左：地圖 ─────────────────────────── */}
+					<div class="travel-map order-2 md:order-1">
+						<svg
+							viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+							role="img"
+							aria-label={`${heading}：${places.map((p) => p.tag).join('、')}`}
+							class="block h-auto w-full"
+						>
+							{/* 底圖：全世界的輪廓，只有線沒有填色 */}
+							<path d={WORLD_PATH} class="map-outline" />
+
+							{/* 去過的國家：預設鋪一層淡灰。這一層本身就是一張足跡圖，
+						    沒有滑鼠的裝置看到的就是它。 */}
+							{baseShapes.map((d) => (
+								<path d={d} class="map-visited" />
+							))}
+							{baseMarks.map((mark) => (
+								<>
+									{mark.point && <circle cx={mark.point.x} cy={mark.point.y} r="3.4" class="map-visited-dot" />}
+									{mark.ring && <circle cx={mark.ring.x} cy={mark.ring.y} r="11" class="map-visited-ring" />}
+								</>
+							))}
+
+							{/* 每個標籤一組「亮起來」的圖形，預設是透明的。
+							    移到右邊的地名（或直接移到這塊）就會顯形。 */}
+							{places.map((place) => (
+								<g class="map-shape" data-tag={place.tag}>
+									{place.shapes.map((d) => (
+										<path d={d} class="map-fill" />
+									))}
+									{place.point && (
+										<circle cx={place.point.x} cy={place.point.y} r="4" class="map-fill" />
+									)}
+									{/* 太小的國家（台灣、瑞士）光填色是看不見的，套一個圈把視線帶過去 */}
+									{place.ring && (
+										<circle cx={place.ring.x} cy={place.ring.y} r="11" class="map-ring" />
+									)}
+								</g>
+							))}
+						</svg>
+					</div>
+
+					{/* ── 右：地名列 ───────────────────────── */}
+					<div class="order-1 md:order-2">
+						<h2 class="title-h2 title-caps text-app-ink">{heading}</h2>
+						{intro && <p class="body-small mt-6 max-w-[30ch]">{intro}</p>}
+
+						<ul class="mt-9 border-t border-app-gray-200">
+							{places.map((place) => (
+								<li>
+									<a
+										href={`/blog?tag=${encodeURIComponent(place.tag)}`}
+										class="tag-row flex items-baseline justify-between gap-x-4 border-b border-app-gray-200 py-3"
+										data-tag={place.tag}
+									>
+										<span class="tag-name">{place.tag}</span>
+										<span class="tag-count label">{String(place.count).padStart(2, '0')}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</section>
+	)
+}
+
+<style>
+	/* 世界輪廓：一條很淡的線。地圖在這裡是背景不是主角，
+	   線壓得很淡，讓亮起來的那塊色塊是畫面上最深的東西。 */
+	.map-outline {
+		fill: none;
+		stroke: var(--color-app-gray-300);
+		stroke-width: 0.9;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+
+	/* 去過的國家的預設底色。淡到「有跟沒有看得出差別、但不搶戲」為止——
+	   手機沒有 hover，這層就是他們看到的全部，所以不能淡到等於沒畫。 */
+	.map-visited {
+		fill: var(--color-app-gray-300);
+		stroke: none;
+		fill-rule: evenodd;
+	}
+	.map-visited-dot {
+		fill: var(--color-app-gray-300);
+	}
+	.map-visited-ring {
+		fill: none;
+		stroke: var(--color-app-gray-300);
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+
+	/* 亮起來的那一塊。用不透明度做進出場，比換 fill 顏色平順。 */
+	.map-shape {
+		opacity: 0;
+		transition: opacity 0.45s ease;
+		cursor: pointer;
+	}
+	.map-shape[data-active='true'] {
+		opacity: 1;
+	}
+	.map-fill {
+		fill: var(--color-app-gray-600);
+		fill-rule: evenodd;
+	}
+	.map-ring {
+		fill: none;
+		stroke: var(--color-app-gray-600);
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+
+	/* 地名列：跟全站一樣不用色塊、不用藥丸，狀態只靠墨色深淺。 */
+	.tag-row {
+		color: var(--color-app-gray-500);
+		transition: color 0.35s ease;
+	}
+	.tag-name {
+		font-size: var(--text-body);
+	}
+	.tag-count {
+		color: var(--color-app-gray-300);
+		transition: color 0.35s ease;
+	}
+	.tag-row:hover,
+	.tag-row:focus-visible,
+	.tag-row[data-active='true'] {
+		color: var(--color-app-ink);
+	}
+	.tag-row:hover .tag-count,
+	.tag-row:focus-visible .tag-count,
+	.tag-row[data-active='true'] .tag-count {
+		color: var(--color-app-gray-400);
+	}
+
+	/* 手機：先看到地名列（order-1），地圖排在下面。
+	   沒有 hover 的裝置上，地圖是「去過哪些地方」的整體印象，
+	   逐一對照的工作交給上面那份清單。 */
+	@media (max-width: 767px) {
+		.travel-map {
+			margin-top: 0.5rem;
+		}
+	}
+</style>
+
+<script>
+	// 地名 ←→ 地圖色塊的連動。兩邊都用 data-tag 對應，
+	// 所以這裡不需要知道任何地名，加減標籤都不用改這段。
+	const rows = document.querySelectorAll<HTMLAnchorElement>('.tag-row');
+	const shapes = document.querySelectorAll<SVGGElement>('.map-shape');
+
+	function highlight(tag: string | null) {
+		rows.forEach((row) => {
+			row.dataset.active = row.dataset.tag === tag ? 'true' : 'false';
+		});
+		shapes.forEach((shape) => {
+			shape.dataset.active = shape.dataset.tag === tag ? 'true' : 'false';
+		});
+	}
+
+	function bind(element: HTMLElement | SVGElement) {
+		const tag = element.dataset.tag ?? null;
+		element.addEventListener('mouseenter', () => highlight(tag));
+		element.addEventListener('mouseleave', () => highlight(null));
+		// 鍵盤操作：Tab 到某一列時，地圖要跟著亮，不然用鍵盤的人
+		// 完全看不到這個區塊在做什麼。
+		element.addEventListener('focus', () => highlight(tag));
+		element.addEventListener('blur', () => highlight(null));
+	}
+
+	rows.forEach(bind);
+	shapes.forEach((shape) => {
+		bind(shape);
+		// 地圖上的色塊點下去等於點那一列（同一個標籤的文章列表）
+		shape.addEventListener('click', () => {
+			const tag = shape.dataset.tag;
+			if (tag) window.location.href = `/blog?tag=${encodeURIComponent(tag)}`;
+		});
+	});
+</script>
