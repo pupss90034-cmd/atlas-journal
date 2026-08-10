@@ -78,12 +78,21 @@ export function parseEditableBlock(body: string | undefined): EditableBlock {
 			current = { title: heading[1]!.trim(), lines: [] };
 			continue;
 		}
+		// 表格的每一行（以 | 開頭）不是給人讀的說明文字，是資料。
+		// 它由 parseMarkdownTable() 另外讀取，這裡要跳過，
+		// 否則整張表會被當成段落原封不動印在網站上。
+		if (isTableLine(line)) continue;
 		if (current) current.lines.push(line);
 		else introLines.push(line);
 	}
 	flush();
 
 	return { intro: joinParagraphs(introLines), items };
+}
+
+/** 這一行是 Markdown 表格的一部分嗎（含分隔列 |---|---|）。 */
+function isTableLine(line: string): boolean {
+	return line.trim().startsWith("|");
 }
 
 /** 把一疊行合併成文字：連續的行接成同一段，空行分段，段與段之間留一個換行。 */
