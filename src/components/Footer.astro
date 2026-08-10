@@ -11,14 +11,13 @@ const year = new Date().getFullYear();
 // 改成白紙＋一條細線，站名放在最左當版權頁，社群連結改成純文字。
 // 抬頭已經不顯示站名了，所以站名只出現在首頁第一屏與這裡。
 
-// Placeholder social links — swap the href="#" values for your real profile
-// URLs whenever you're ready; the layout is already final.
-const socialLinks = [
-	{ name: 'Instagram', href: '#' },
-	{ name: 'Facebook', href: '#' },
-	{ name: 'YouTube', href: '#' },
-	{ name: 'Pinterest', href: '#' },
-];
+// 2026-08-09：聯絡方式暫時只保留 email。
+// 原本這裡有四個社群連結，但 href 全是 "#"，點下去停在原地——
+// 一個不會動的連結比沒有連結更傷信任。GitHub 連結也一併收起來，
+// 那是給開發者看的，不是讀者要的聯絡方式。
+// 之後社群帳號開好了，把網址填進 src/consts.ts 的 SOCIAL_LINKS
+// 就會自動出現，這個檔案不用動。
+import { CONTACT_EMAIL, SOCIAL_LINKS } from '../consts';
 
 const sitemap = [
 	{ label: 'Index', href: '/' },
@@ -27,16 +26,14 @@ const sitemap = [
 	{ label: 'About', href: '/about' },
 	{ label: 'Newsletter', href: '/#newsletter' },
 ];
-
-const contactEmail = 'hello@atlas-terra.com';
 ---
 
 <footer class="page-wide border-t border-app-gray-200 pb-14 pt-20 md:pb-16 md:pt-28">
 	<div class="mx-auto max-w-6xl">
 		<div class="grid grid-cols-1 gap-x-16 gap-y-14 md:grid-cols-[1.4fr_1fr_1fr]">
 			<div>
-				<p class="title-sm text-app-ink">{SITE_TITLE}</p>
-				<p class="body-small mt-6 max-w-[34ch]">
+				<p class="title-h3 text-app-ink">{SITE_TITLE}</p>
+				<p class="body-small mt-6 max-w-[30ch]">
 					{SITE_DESCRIPTION}
 				</p>
 			</div>
@@ -57,10 +54,15 @@ const contactEmail = 'hello@atlas-terra.com';
 			</div>
 
 			<div>
-				<p class="label">Elsewhere</p>
+				<p class="label">Contact</p>
 				<ul class="mt-7 space-y-3.5">
+					<li>
+						<a href={`mailto:${CONTACT_EMAIL}`} class="body-small link-underline break-all">
+							{CONTACT_EMAIL}
+						</a>
+					</li>
 					{
-						socialLinks.map((social) => (
+						SOCIAL_LINKS.map((social) => (
 							<li>
 								<a href={social.href} target="_blank" rel="noopener noreferrer" class="body-small link-underline">
 									{social.name}
@@ -68,19 +70,6 @@ const contactEmail = 'hello@atlas-terra.com';
 							</li>
 						))
 					}
-					<li>
-						<a href={`mailto:${contactEmail}`} class="body-small link-underline">Email</a>
-					</li>
-					<li>
-						<a
-							href="https://github.com/pupss90034-cmd/atlas-journal"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="body-small link-underline"
-						>
-							GitHub
-						</a>
-					</li>
 				</ul>
 			</div>
 		</div>

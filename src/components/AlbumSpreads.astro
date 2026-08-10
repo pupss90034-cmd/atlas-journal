@@ -68,11 +68,14 @@ const total = images.length;
 <style>
 	/* 每一頁佔一個固定高度的舞台，翻頁時版面不跳動。
 	   圖片用 contain 完整放進去，橫幅、直幅、寬幅都不裁切。 */
+	/* 2026-08-09：上限從 78vh 收到 72vh，跟鑲嵌版型的整幅照片
+	   同一個數值。兩種版型的照片在螢幕上佔的高度一致，
+	   從一本翻到另一本時視覺尺度才不會忽大忽小。 */
 	.spreads-stage {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-height: min(78vh, 52rem);
+		min-height: min(72vh, 46rem);
 	}
 	.spreads-page {
 		display: flex;
@@ -84,16 +87,17 @@ const total = images.length;
 		width: auto;
 		max-width: 100%;
 		height: auto;
-		max-height: min(78vh, 52rem);
+		max-height: min(72vh, 46rem);
 		object-fit: contain;
 	}
 	@media (max-width: 767px) {
 		.spreads-stage {
 			min-height: 0;
 		}
+		/* 手機同樣鎖高度。原本設 max-height: none，直幅頁面會長到
+		   一個螢幕半，得捲兩次才看得完一頁。 */
 		.spreads-image {
-			width: 100%;
-			max-height: none;
+			max-height: 74vh;
 		}
 	}
 

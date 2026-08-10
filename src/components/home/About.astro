@@ -6,18 +6,31 @@ const [aboutEntry] = await getCollection('homeAbout');
 if (!aboutEntry) {
 	throw new Error('找不到「首頁-關於我.md」，請確認 src/content/編輯 資料夾裡有這個檔案。');
 }
-const { eyebrow, heading, portrait, portraitAlt, ctaLabel, stats } = aboutEntry.data;
+const { eyebrow, portrait, portraitAlt, ctaLabel } = aboutEntry.data;
 const { Content } = await render(aboutEntry);
 
 // 版面：寬邊。緊接在滿版 Hero 之後，用大留白把視覺鬆開，
 // 形成「滿版（緊）→ 寬邊（鬆）」的第一組節奏。
+//
+// 2026-08-09 改動兩件事：
+//
+// 1. 去贅字。原本這裡是「About Me」眉標＋「關於我」大標，
+//    同一件事用中英文各說一次，第二次沒有帶進任何新資訊。
+//    現在只留 About Me 一個標題，直接接段落。
+//    heading 欄位在 Obsidian 檔案裡保留但不再顯示。
+//
+// 2. 拿掉數據統計（22+ 國家 / 180K 公里 / 4 年）。
+//    那三個數字是網站模板的「成就欄」語彙，屬於接案作品集的
+//    信任背書；一個以文字與照片為主的個人誌不需要用數字證明
+//    自己，讀者也不會因為看到 180K 而更想讀文章。拿掉之後
+//    這一區只剩「一張人像＋一段自我介紹＋一個連結」，
+//    正好是這個區塊真正要做的事。
+//    stats 欄位在 Obsidian 檔案裡保留但不再顯示。
 ---
 
 <section id="about" class="page-wide band">
 	<div class="mx-auto max-w-5xl">
-		<p class="label">{eyebrow}</p>
-
-		<div class="mt-12 grid grid-cols-1 gap-x-16 gap-y-16 md:mt-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+		<div class="grid grid-cols-1 gap-x-16 gap-y-14 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
 			<!-- 直幅人像，固定 3:4。背後襯一塊微灰矩形只露左下一角，
 			     用來製造深度——這比加陰影乾淨，也是 Tom Quan 那張範例
 			     裡讓單張照片不顯得單薄的手法。 -->
@@ -33,26 +46,16 @@ const { Content } = await render(aboutEntry);
 				</div>
 			</div>
 
+			<!-- 層級：H2 標題 → 內文 → CTA。中間沒有第二個標題插隊。 -->
 			<div class="flex flex-col">
-				<h2 class="title-lg max-w-[20ch] text-app-ink">
-					{heading}
-				</h2>
+				<h2 class="title-h2 title-caps text-app-ink">{eyebrow}</h2>
 
 				<div class="about-copy mt-9">
 					<Content />
 				</div>
 
 				<div class="mt-auto pt-12">
-					<div class="grid grid-cols-3 gap-8 border-t border-app-gray-200 pt-8">
-						{stats.map((stat) => (
-							<div>
-								<p class="text-2xl text-app-ink md:text-3xl">{stat.value}</p>
-								<p class="label mt-3 leading-relaxed">{stat.label}</p>
-							</div>
-						))}
-					</div>
-
-					<a href="/about" class="label link-underline mt-10 inline-block text-app-ink">
+					<a href="/about" class="label link-underline inline-block text-app-ink">
 						{ctaLabel}
 					</a>
 				</div>
@@ -64,10 +67,12 @@ const { Content } = await render(aboutEntry);
 <style>
 	/* 同段落樣式：首頁 About 的內文與文章內文用同一套規格 */
 	.about-copy :global(p) {
-		font-size: 1.0625rem;
-		line-height: 1.85;
+		font-size: var(--text-body);
+		line-height: var(--leading-body);
 		color: var(--color-app-gray-600);
 		margin: 0 0 1.5em;
+		/* 行長上限：中文一行約 30–40 字，超過就不好讀 */
+		max-width: 40ch;
 	}
 	.about-copy :global(p:last-child) {
 		margin-bottom: 0;

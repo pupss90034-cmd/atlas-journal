@@ -35,14 +35,17 @@ const cover = resolveHeroImage(heroImage) ?? defaultCover;
 			/>
 		</div>
 
+		{/* 層級：MICRO 日期 → H3 篇名 → SMALL 摘要。
+		    篇名固定 H3，不隨欄寬改變——同一頁的所有篇名一樣大，
+		    讀者才不會誤以為字比較大的那篇比較重要。 */}
 		<div class="mt-5 transition-opacity duration-500 group-hover:opacity-60">
 			<p class="label">
 				<FormattedDate date={pubDate} />
 			</p>
-			<h3 class="title-sm mt-3 max-w-[26ch] text-app-ink">
+			<h3 class="title-h3 mt-3 max-w-[24ch] text-app-ink">
 				{title}
 			</h3>
-			<p class="body-small mt-2.5 line-clamp-2 max-w-[40ch]">
+			<p class="body-small mt-3 line-clamp-2 max-w-[38ch]">
 				{description}
 			</p>
 		</div>

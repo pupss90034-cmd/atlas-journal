@@ -55,14 +55,18 @@ const description = `${label}，共 ${images.length} 張照片。`;
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<!-- 章名頁：中軸，標示這是第幾組主題 -->
-			<section class="page-wide pb-14 pt-44 md:pb-20 md:pt-56">
+			{/* 章名頁：中軸，標示這是第幾組主題。
+			    2026-08-09：標題從 .title-display（最大 88px）降到 .title-h1。
+			    相簿名是中文，中文字在同樣的 px 下比英文佔的面積大得多，
+			    88px 的中文標題會直接吃掉半個螢幕；而且這一頁的主角是照片，
+			    標題只需要「說清楚這是哪一組」，不需要自己變成一件作品。 */}
+			<section class="page-wide pb-12 pt-40 md:pb-16 md:pt-52">
 				<div class="axis">
 					<p class="label">
 						Series {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
 					</p>
-					<h1 class="title-display mt-9 text-app-ink">{label}</h1>
-					<p class="label mt-9">
+					<h1 class="title-h1 mt-7 text-app-ink">{label}</h1>
+					<p class="label mt-7">
 						{String(images.length).padStart(2, '0')}
 						{isSpreadLayout ? ' Pages' : ' Photographs'}
 					</p>
@@ -82,14 +86,14 @@ const description = `${label}，共 ${images.length} 張照片。`;
 									<Image
 										src={photo.src}
 										alt={photo.alt}
-										class="w-full"
+										class="plate-img"
 										widths={[600, 1000, 1600]}
 										sizes={
-											i % 3 === 0 ? '(min-width: 768px) 72rem, 100vw' : '(min-width: 768px) 36rem, 100vw'
+											i % 3 === 0 ? '(min-width: 768px) 52rem, 100vw' : '(min-width: 768px) 26rem, 100vw'
 										}
 									/>
 									{/* 圖說是次要文字：13px，不套 label 的大字距全大寫 */}
-									{photo.alt && <figcaption class="caption mt-5">{photo.alt}</figcaption>}
+									{photo.alt && <figcaption class="caption mt-4">{photo.alt}</figcaption>}
 								</figure>
 							))}
 						</div>
@@ -135,28 +139,63 @@ const description = `${label}，共 ${images.length} 張照片。`;
 </html>
 
 <style>
+	/* ── 照片尺寸（2026-08-09 重做）─────────────────────────
+	   舊做法：圖片一律 width: 100%，高度由比例決定。
+	   橫幅照片這樣沒問題，但直幅照片一被拉到整欄寬，高度就會
+	   衝到 1.5 個視窗那麼高——讀者在螢幕上永遠看不到一張完整的
+	   直幅照片，只能一段一段往下捲。
+
+	   新做法：改用「高度」當作限制條件，寬度自己去對應。
+	   每一張照片都保證能完整放進一個螢幕裡：
+
+	     整幅 plate-full  最高 72vh   每一輪的視覺入口
+	     半幅 plate-half  最高 52vh   比整幅小一階，形成節奏
+
+	   直幅照片會因此自動變窄（高度撞到上限，寬度按比例縮），
+	   橫幅照片則多半用滿欄寬——這正是實體攝影集在一頁上
+	   同時排橫幅與直幅時的處理方式：對齊的是高度，不是寬度。
+
+	   另外拿掉了原本半幅第二張往下錯開的設定。照片已經有
+	   大小差異當節奏了，再加錯落只會讓「哪兩張是一組」讀不出來。 */
 	.plates {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: clamp(1.5rem, 4vw, 4rem) clamp(0.75rem, 2vw, 2rem);
+		gap: clamp(2rem, 4.5vw, 4rem) clamp(1rem, 2.5vw, 2.25rem);
 		align-items: start;
 	}
 	.plate {
 		margin: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
 	}
+	.plate-img {
+		width: auto;
+		max-width: 100%;
+		height: auto;
+	}
+
 	/* 整幅：橫跨兩欄，當作每一輪的視覺入口 */
 	.plate-full {
 		grid-column: 1 / -1;
 	}
-	/* 半幅的第二張往下錯開，讓左右兩欄不齊頭 */
 	@media (min-width: 640px) {
-		.plate-half:nth-of-type(3n) {
-			margin-top: clamp(2.5rem, 6vw, 6rem);
+		.plate-full .plate-img {
+			max-height: 72vh;
+		}
+		.plate-half .plate-img {
+			max-height: 52vh;
 		}
 	}
+	/* 手機：一欄到底。螢幕本來就窄，直幅照片同樣鎖高度，
+	   確保一張照片不會需要捲兩次才看得完。 */
 	@media (max-width: 639px) {
 		.plate-half {
 			grid-column: 1 / -1;
+		}
+		.plate-img {
+			max-height: 74vh;
 		}
 	}
 

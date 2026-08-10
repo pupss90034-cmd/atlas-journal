@@ -17,10 +17,10 @@ const { eyebrow, heading, description, ctaText, ctaButtonLabel, services } = con
 	<div class="mx-auto max-w-4xl">
 		<div class="axis">
 			<p class="label">{eyebrow}</p>
-			<h2 class="title-spaced mx-auto mt-6 max-w-[22ch] text-app-ink">
+			<h2 class="title-h2 title-caps mx-auto mt-5 max-w-[20ch] text-app-ink">
 				{heading}
 			</h2>
-			<p class="body-small mx-auto mt-7 max-w-[46ch]">
+			<p class="body-small mx-auto mt-6 max-w-[38ch]">
 				{description}
 			</p>
 		</div>
@@ -29,7 +29,7 @@ const { eyebrow, heading, description, ctaText, ctaButtonLabel, services } = con
 			{services.map((service, i) => (
 				<div class="border-t border-app-gray-200 pt-7">
 					<p class="label">{String(i + 1).padStart(2, '0')}</p>
-					<h3 class="title-sm mt-5 text-app-ink">{service.title}</h3>
+					<h3 class="title-h3 mt-5 text-app-ink">{service.title}</h3>
 					<p class="body-small mt-4">{service.description}</p>
 				</div>
 			))}

@@ -9,24 +9,40 @@ const posts = await getSortedPosts();
 const [featured, ...rest] = posts;
 const indexArticles = rest.slice(0, 4);
 
-// 版面：寬邊。
-// 改版重點：不再用「卡片格線」呈現文章——卡片格線是旅遊部落格的
-// 標準長相，也是視覺變廉價的主因。這裡改成書冊的目次頁結構：
-// 一張大圖當篇章扉頁，下面接一份編號＋細線的目次清單。
+// 版面：寬邊。書冊的目次頁結構——一張大圖當篇章扉頁，
+// 下面接一份編號＋細線的目次清單。
+//
+// ── 2026-08-09：字級層級重排 ────────────────────────────
+// 問題：原本這一區有四種字級，但彼此沒有層級關係——
+// 眉標 12px、區塊標 26px、頭條篇名 44px、清單篇名 22px。
+// 頭條篇名比區塊標題還大了將近一倍，讀者的眼睛會先看到
+// 「一篇文章的名字」再看到「這一區是什麼」，資訊順序是反的。
+//
+// 現在固定成一條由大到小、不回頭的階梯：
+//
+//   MICRO  12px  Latest              ← 眉標，說明這一區的性質
+//   H2     32px  FROM THE JOURNAL    ← 區塊標題，這一區的名字
+//   H3     24px  頭條文章篇名          ← 區塊裡最重要的那一個項目
+//   SMALL  15px  摘要                 ← 支援 H3 的說明
+//   H4     19px  清單裡的篇名          ← 次一層的項目，比 H3 小一階
+//   MICRO  12px  編號與日期            ← meta，最低層
+//
+// 判斷方式很簡單：由上往下看，字只會越來越小，不會忽大忽小。
 ---
 
 {
 	featured && (
 		<section id="latest" class="page-wide band">
 			<div class="mx-auto max-w-5xl">
+				{/* 層級 1＋2：眉標 → 區塊標題 */}
 				<div class="text-center">
 					<p class="label">Latest</p>
-					<h2 class="title-spaced mt-6 text-app-ink">From the Journal</h2>
+					<h2 class="title-h2 title-caps mt-5 text-app-ink">From the Journal</h2>
 				</div>
-				<hr class="rule mt-12 md:mt-16" />
+				<hr class="rule mt-10 md:mt-14" />
 
-				{/* 篇章扉頁：一張橫幅大圖，標題壓在圖下方，維持圖文左緣切齊 */}
-				<a href={`/blog/${featured.id}/`} class="group mt-14 block md:mt-16">
+				{/* 頭條：一張橫幅大圖，標題在圖下方，圖文左緣切齊 */}
+				<a href={`/blog/${featured.id}/`} class="group mt-12 block md:mt-14">
 					<div class="aspect-[16/9] w-full overflow-hidden bg-app-gray-100">
 						<Image
 							src={resolveHeroImage(featured.data.heroImage) ?? defaultCover}
@@ -37,30 +53,35 @@ const indexArticles = rest.slice(0, 4);
 						/>
 					</div>
 
-					<div class="mt-8 grid grid-cols-1 gap-x-16 gap-y-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-						<h2 class="title-lg max-w-[22ch] text-app-ink transition-opacity duration-500 group-hover:opacity-60">
+					<div class="mt-7 grid grid-cols-1 gap-x-16 gap-y-3 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+						{/* 層級 3：頭條篇名 = H3。比區塊標題小一階，不搶走區塊的位置 */}
+						<h3 class="title-h3 max-w-[24ch] text-app-ink transition-opacity duration-500 group-hover:opacity-60">
 							{featured.data.title}
-						</h2>
+						</h3>
 						<div>
+							{/* 層級 6：meta 永遠是最小的一級 */}
 							<p class="label">
 								<FormattedDate date={featured.data.pubDate} />
 							</p>
-							<p class="body-small mt-5 max-w-[42ch]">{featured.data.description}</p>
+							{/* 層級 4：摘要，支援上面的 H3 */}
+							<p class="body-small mt-4 max-w-[40ch]">{featured.data.description}</p>
 						</div>
 					</div>
 				</a>
 
-				{/* 目次清單：只有編號、標題、日期，靠 1px 細線分隔 */}
+				{/* 目次清單：編號、篇名、日期，靠 1px 細線分隔。
+				    篇名用 H4——比頭條的 H3 小一階，讓「頭條 vs 其餘」
+				    這件事光看字級就成立，不必另外加標記。 */}
 				{indexArticles.length > 0 && (
-					<ol class="mt-20 border-t border-app-gray-200 md:mt-28">
+					<ol class="mt-16 border-t border-app-gray-200 md:mt-20">
 						{indexArticles.map((post, i) => (
 							<li class="border-b border-app-gray-200">
 								<a
 									href={`/blog/${post.id}/`}
-									class="group grid grid-cols-[2.5rem_1fr] items-baseline gap-x-4 py-6 transition-opacity duration-500 hover:opacity-55 md:grid-cols-[3.5rem_1fr_8rem] md:gap-x-8 md:py-7"
+									class="group grid grid-cols-[2.5rem_1fr] items-baseline gap-x-4 py-5 transition-opacity duration-500 hover:opacity-55 md:grid-cols-[3.5rem_1fr_8rem] md:gap-x-8 md:py-6"
 								>
 									<span class="label">{String(i + 2).padStart(2, '0')}</span>
-									<span class="title-sm text-app-ink">{post.data.title}</span>
+									<span class="title-h4 text-app-ink">{post.data.title}</span>
 									<span class="label col-start-2 md:col-start-3 md:text-right">
 										<FormattedDate date={post.data.pubDate} />
 									</span>
@@ -70,7 +91,7 @@ const indexArticles = rest.slice(0, 4);
 					</ol>
 				)}
 
-				<div class="mt-16 text-center md:mt-20">
+				<div class="mt-14 text-center md:mt-16">
 					<a href="/blog" class="label link-underline text-app-ink">All Entries</a>
 				</div>
 			</div>

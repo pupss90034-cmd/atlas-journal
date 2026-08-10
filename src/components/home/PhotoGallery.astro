@@ -47,14 +47,15 @@ const featured = shuffled.slice(0, featuredCount).sort((a, b) => a.data.order - 
 ---
 
 <section id="gallery" class="band-tint page-narrow band">
-	<div class="mb-12 text-center md:mb-16">
+	{/* 層級：MICRO 眉標 → H2 區塊標題 → 塊面上的 H4 相簿名 → MICRO 張數 */}
+	<div class="mb-10 text-center md:mb-14">
 		<p class="label">{eyebrow}</p>
-		<h2 class="title-spaced mt-6 text-app-ink">{heading}</h2>
+		<h2 class="title-h2 title-caps mt-5 text-app-ink">{heading}</h2>
 	</div>
 
 	<AlbumMosaic albums={featured} />
 
-	<div class="mt-14 text-center md:mt-20">
+	<div class="mt-12 text-center md:mt-16">
 		<a href="/portfolio" class="label link-underline text-app-ink">{ctaLabel}</a>
 	</div>
 </section>

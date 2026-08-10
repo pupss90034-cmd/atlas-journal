@@ -52,8 +52,8 @@ const PAGE_SIZE = 8;
 				<div class="axis">
 					<!-- 眉標放「共幾篇」而不是重複標題本身，避免同一個字出現兩次 -->
 					<p class="label">{String(posts.length).padStart(2, '0')} Entries</p>
-					<h1 class="title-display mt-9 text-app-ink">Journal</h1>
-					<p class="body-small mx-auto mt-8 max-w-[38ch]">
+					<h1 class="title-h1 mt-7 text-app-ink">Journal</h1>
+					<p class="body-small mx-auto mt-6 max-w-[34ch]">
 						{SITE_DESCRIPTION}
 					</p>
 					<p id="search-status" class="label mx-auto mt-8 hidden text-app-ink"></p>
@@ -92,12 +92,17 @@ const PAGE_SIZE = 8;
 				</div>
 			</section>
 
-			<!-- 圖版：兩欄錯落，鋪微灰區帶讓圖片浮在紙上 -->
+			{/* 圖版：兩欄「齊頭齊尾」，鋪微灰區帶讓圖片浮在紙上。
+			    2026-08-09：拿掉原本偶數欄往下推的錯落（.stagger）。
+			    錯落適合作品集那種「隨意瀏覽」的版面；文章列表是一份
+			    要被掃讀的目錄，同一列的兩篇必須對齊，讀者才能用
+			    「一列＝一組」的方式往下讀，日期與標題也才對得起來。
+			    規則：文章相關的版面一律不做錯落。 */}
 			<section class="band-tint page-wide pb-28 pt-20 md:pb-36 md:pt-28">
 				<div class="mx-auto max-w-5xl">
 					{
 						posts.length > 0 ? (
-							<div class="stagger grid grid-cols-1 gap-x-10 gap-y-16 sm:grid-cols-2 md:gap-x-14 md:gap-y-20" id="post-grid">
+							<div class="grid grid-cols-1 items-start gap-x-10 gap-y-14 sm:grid-cols-2 md:gap-x-14 md:gap-y-16" id="post-grid">
 								{posts.map((post) => (
 									<div
 										class="post-item"

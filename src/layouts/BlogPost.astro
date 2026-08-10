@@ -53,8 +53,11 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 				<Image src={displayHero} alt="" class="h-full w-full object-cover" />
 			</figure>
 
-			<!-- 標題頁：寬邊＋中軸 -->
-			<header class="page-wide pb-16 pt-20 md:pb-24 md:pt-28">
+			{/* 標題頁：寬邊＋中軸。
+			    層級：MICRO 日期 → H1 標題 → SMALL 摘要 → 內文。
+			    文章標題是這一頁層級最高的字，所以用 H1；
+			    內文裡的 ## 標題會自動小它一階（見 global.css 的 .prose）。 */}
+			<header class="page-wide pb-14 pt-20 md:pb-20 md:pt-28">
 				<div class="axis">
 					<p class="label">
 						<FormattedDate date={pubDate} />
@@ -62,11 +65,11 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 							<span> · Updated <FormattedDate date={updatedDate} /></span>
 						)}
 					</p>
-					<h1 class="title-lg mx-auto mt-9 max-w-[24ch] text-app-ink">
+					<h1 class="title-h1 mx-auto mt-7 max-w-[20ch] text-app-ink">
 						{title}
 					</h1>
 					{description && (
-						<p class="body-small mx-auto mt-8 max-w-[40ch]">{description}</p>
+						<p class="body-small mx-auto mt-6 max-w-[34ch]">{description}</p>
 					)}
 				</div>
 			</header>
@@ -77,7 +80,10 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 				<div class="measure">
 					<hr class="rule mb-16 md:mb-20" />
 
-					<div class="prose">
+					{/* .no-copy：關閉內文的選取與複製（規則見 global.css 與 BaseHead）。
+					    只套在內文上——標題、日期、標籤仍可選取，
+					    讀者要引用篇名分享時才不會整頁都動不了。 */}
+					<div class="prose no-copy">
 						<slot />
 					</div>
 
@@ -108,7 +114,7 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 											class="group block transition-opacity duration-500 hover:opacity-55"
 										>
 											<p class="label">← 系列前一篇</p>
-											<p class="title-sm mt-4 text-app-ink">{olderPost.data.title}</p>
+											<p class="title-h4 mt-4 text-app-ink">{olderPost.data.title}</p>
 										</a>
 									)}
 									{newerPost && (
@@ -117,7 +123,7 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 											class="group block transition-opacity duration-500 hover:opacity-55 md:col-start-2 md:text-right"
 										>
 											<p class="label">系列後一篇 →</p>
-											<p class="title-sm mt-4 text-app-ink">{newerPost.data.title}</p>
+											<p class="title-h4 mt-4 text-app-ink">{newerPost.data.title}</p>
 										</a>
 									)}
 								</div>

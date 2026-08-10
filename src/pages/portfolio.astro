@@ -1,8 +1,8 @@
 ---
+import { Image } from 'astro:assets';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import AlbumMosaic from '../components/AlbumMosaic.astro';
 import { getCollection } from 'astro:content';
 
 const [siteSettings] = await getCollection('siteSettings');
@@ -12,8 +12,20 @@ const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.d
 const totalPhotos = albums.reduce((sum, album) => sum + album.data.images.length, 0);
 const description = '每個主題各自獨立，點進去看完整的一組照片。';
 
-// 版面：書名頁（中軸）＋鑲嵌塊面預覽。
-// 與首頁共用 AlbumMosaic，差別只在這裡列出全部主題、首頁是精選。
+// ── 2026-08-09：不再共用首頁的鑲嵌塊面 ────────────────────
+//
+// 之前這一頁直接把首頁那組大小不一的鑲嵌塊面搬過來，兩頁看起來
+// 一模一樣，點「View All Series」等於原地不動，讀者不會知道自己
+// 換頁了。兩個頁面的任務其實不同：
+//
+//   首頁    要製造「這裡有東西可看」的印象 → 大小不一、有主次
+//   這一頁  要讓人「挑一個主題進去」       → 每個主題地位相同
+//
+// 所以這裡改成等寬雙欄圖卡：兩欄一樣寬、圖一樣大（統一 4:3），
+// 標題排在圖的下方而不是壓在圖上。壓字需要暗色遮罩，遮罩會吃掉
+// 照片的層次；作品集頁面的照片是主角，不該被自己的標題壓著。
+//
+// 版面刻意齊頭齊尾、不做錯落——這是一份可以掃讀的清單。
 ---
 
 <!doctype html>
@@ -25,29 +37,99 @@ const description = '每個主題各自獨立，點進去看完整的一組照�
 		<Header />
 		<main class="flex-1">
 			<!-- 書名頁：中軸置中，上下留大白讓讀者先停一拍 -->
-			<section class="page-wide pb-16 pt-44 md:pb-24 md:pt-56">
+			<section class="page-wide pb-14 pt-40 md:pb-20 md:pt-52">
 				<div class="axis">
 					<p class="label">
 						{String(albums.length).padStart(2, '0')} Series · {totalPhotos} Photographs
 					</p>
-					<h1 class="title-display mt-9 text-app-ink">Portfolio</h1>
-					<p class="body-small mx-auto mt-8 max-w-[38ch]">
+					<h1 class="title-h1 mt-7 text-app-ink">Portfolio</h1>
+					<p class="body-small mx-auto mt-6 max-w-[34ch]">
 						{description}
 					</p>
 				</div>
 			</section>
 
-			<!-- 塊面預覽：微灰區帶，照片浮在紙上 -->
-			<section class="band-tint page-narrow band">
-				{
-					albums.length > 0 ? (
-						<AlbumMosaic albums={albums} />
-					) : (
-						<p class="body-small text-center">還沒有相簿。</p>
-					)
-				}
+			<!-- 等寬雙欄圖卡：微灰區帶，照片浮在紙上 -->
+			<section class="band-tint page-wide pb-28 pt-16 md:pb-36 md:pt-20">
+				<div class="mx-auto max-w-5xl">
+					{
+						albums.length > 0 ? (
+							<div class="series-grid">
+								{albums.map((album, i) => {
+									const cover = album.data.cover ?? album.data.images[0]?.src;
+									if (!cover) return null;
+									const isSpread = album.data.layout === '翻頁';
+									return (
+										<a href={`/portfolio/${album.id}/`} class="series-card group">
+											{/* 統一 4:3，所有主題的門面一樣大，沒有誰被排在前面 */}
+											<div class="aspect-[4/3] w-full overflow-hidden bg-app-gray-200">
+												<Image
+													src={cover}
+													alt=""
+													class="series-img h-full w-full object-cover"
+													widths={[400, 800, 1200]}
+													sizes="(min-width: 768px) 32rem, 100vw"
+												/>
+											</div>
+
+											{/* 層級：H3 主題名 → MICRO 編號與張數。標題在圖下方，不壓在圖上 */}
+											<div class="mt-5 flex items-baseline justify-between gap-6 border-t border-app-gray-300 pt-4">
+												<h2 class="title-h3 text-app-ink transition-opacity duration-500 group-hover:opacity-55">
+													{album.data.label}
+												</h2>
+												<span class="label shrink-0">
+													{String(i + 1).padStart(2, '0')}
+												</span>
+											</div>
+											<p class="label mt-3">
+												{String(album.data.images.length).padStart(2, '0')}
+												{isSpread ? ' Pages' : ' Photographs'}
+											</p>
+										</a>
+									);
+								})}
+							</div>
+						) : (
+							<p class="body-small text-center">還沒有相簿。</p>
+						)
+					}
+				</div>
 			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	/* 兩欄等寬。欄距比列距窄一點，讓「同一列＝並排的兩個主題」
+	   這件事讀得出來，不會糊成一團。 */
+	.series-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: clamp(3rem, 6vw, 5rem) clamp(1rem, 2.5vw, 2.25rem);
+	}
+	@media (max-width: 639px) {
+		.series-grid {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 3rem;
+		}
+	}
+
+	.series-card {
+		display: block;
+	}
+	.series-img {
+		transition: transform 1.2s cubic-bezier(0.2, 0.6, 0.2, 1);
+	}
+	.series-card:hover .series-img {
+		transform: scale(1.03);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.series-img {
+			transition: none;
+		}
+		.series-card:hover .series-img {
+			transform: none;
+		}
+	}
+</style>

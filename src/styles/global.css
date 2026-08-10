@@ -77,11 +77,28 @@
 	/* 中軸（書名頁）刻意比內文窄，置中的短段落太寬會讀不成一個「塊」 */
 	--measure-axis: 34rem;
 
-	/* ── 字級 ────────────────────────────────
-	   內文 16–18px、次要文字 12–14px。全站級數都從這裡取，
-	   不要在個別元件裡寫死 px。 */
+	/* ── 字級：單一階梯 ──────────────────────────
+	   2026-08-09 重整。原本標題級距散在 title-display / title-spaced /
+	   title-lg / title-sm 四個名字裡，彼此沒有固定比例，所以同一個畫面上
+	   會出現「眉標 12px → 區塊標 26px → 篇名 44px」這種不照層級走的跳動。
+	   現在改成一條由大到小的階梯，每一階固定約 1.25 倍（大三度），
+	   任何一頁都只准從這條階梯上取級數：
+
+	     H1  頁面標題      一頁只有一個（Hero 站名、文章標題、相簿名）
+	     H2  區塊標題      From the Journal、精選攝影集…
+	     H3  項目標題      單篇文章名、相簿名、服務項目
+	     H4  次項目標題    清單裡的次要標題
+	     BODY / SMALL / CAPTION / MICRO 為內文與輔助層
+
+	   資訊「層層推進」的規則：同一個區塊裡，
+	   眉標(MICRO) → 區塊標(H2) → 項目標(H3) → 說明(SMALL) → meta(MICRO)，
+	   級數只能往下走，不能中途放大。 */
+	--text-h1: clamp(2rem, 4.2vw, 3.25rem); /* 32 → 52px */
+	--text-h2: clamp(1.5rem, 2.6vw, 2rem); /* 24 → 32px */
+	--text-h3: clamp(1.1875rem, 1.7vw, 1.5rem); /* 19 → 24px */
+	--text-h4: clamp(1.0625rem, 1.2vw, 1.1875rem); /* 17 → 19px */
 	--text-body: 1.0625rem; /* 17px */
-	--text-secondary: 0.875rem; /* 14px：圖說、輔助說明 */
+	--text-secondary: 0.9375rem; /* 15px：摘要、說明 */
 	--text-caption: 0.8125rem; /* 13px：圖說 */
 	--text-micro: 0.75rem; /* 12px：標籤、眉標 */
 
@@ -104,6 +121,22 @@
 		-moz-osx-font-smoothing: grayscale;
 	}
 
+	/* ── 換行規則（比照 Word 的中文斷行邏輯）──────────────
+	   2026-08-09 新增。原本只設了 word-wrap: break-word，那條規則會
+	   在「一個英文單字塞不下時把它從中間切開」，於是版面上會出現
+	   Portfo / lio 這種斷法——Word 不會這樣做。改成：
+
+	   1. line-break: strict
+	      套用中文的避頭尾規則：句號、逗號、頓號、右括號、右引號
+	      不會被丟到下一行的行首；左括號、左引號不會被留在行尾。
+	      這就是 Word「中文版式 → 允許標點溢出邊界」的行為。
+	   2. overflow-wrap: break-word（取代 anywhere / break-all）
+	      只有當「單一個字串長到整行都放不下」時才切開，
+	      一般英文單字一律整個字換到下一行。
+	   3. word-break: normal
+	      明確關掉任何把中英文一視同仁硬切的行為。
+	   4. text-wrap: pretty
+	      避免段落最後一行只剩一個孤字（Word 的「孤行控制」）。 */
 	body {
 		margin: 0;
 		padding: 0;
@@ -111,13 +144,36 @@
 		font-weight: 400;
 		color: var(--color-app-text);
 		background: var(--color-app-body);
-		word-wrap: break-word;
+		line-break: strict;
+		word-break: normal;
 		overflow-wrap: break-word;
+		text-wrap: pretty;
+	}
+
+	/* 標題改用 balance：多行標題會被平均分配到每一行，
+	   不會出現「第一行滿、第二行只有兩個字」的殘行。
+	   這是 Word 手動調整標題斷行時在做的事。 */
+	h1,
+	h2,
+	h3,
+	h4 {
+		text-wrap: balance;
 	}
 
 	img {
 		max-width: 100%;
 		height: auto;
+	}
+
+	/* ── 影像保護 ────────────────────────────────
+	   2026-08-09：關閉右鍵選單與拖曳另存。
+	   說明：這只能擋掉「順手右鍵存檔」的使用者，擋不了開發者工具
+	   或直接抓圖片網址的人——網路上的圖片在技術上無法真正防下載。
+	   要更強的保護只能靠壓低解析度或加浮水印。 */
+	img {
+		-webkit-user-drag: none;
+		user-select: none;
+		-webkit-touch-callout: none;
 	}
 
 	/* 一字體到底：標題不另外加粗，層級靠級數與字距處理 */
@@ -204,24 +260,68 @@
 	background: var(--color-app-band);
 }
 
-/* 標題級距：只有三級，避免版面出現太多層 */
+/* ─────────────────────────────────────────────
+   標題階梯（2026-08-09 重整）
+
+   四級，由大到小。每一級只差約 1.25 倍，字距與行高隨級數
+   反向變化（級數越大、字距越緊、行高越低），這是襯線排版的
+   標準做法，也是「看起來有層級」而不是「有些字比較大」的差別。
+
+   使用規則：
+   - .title-h1 一頁只能出現一次，且只給該頁的主體名稱。
+   - .title-h2 給區塊標題。同一頁可以有多個，但級數一律相同。
+   - .title-h3 給區塊裡的項目名稱（文章篇名、相簿名、服務項目）。
+   - .title-h4 給清單裡的次要標題。
+   絕不允許在 H2 底下出現比 H2 更大的字。
+   ───────────────────────────────────────────── */
+.title-h1 {
+	font-size: var(--text-h1);
+	line-height: 1.14;
+	letter-spacing: 0.01em;
+}
+.title-h2 {
+	font-size: var(--text-h2);
+	line-height: 1.22;
+	letter-spacing: 0.02em;
+}
+.title-h3 {
+	font-size: var(--text-h3);
+	line-height: 1.32;
+	letter-spacing: 0.015em;
+}
+.title-h4 {
+	font-size: var(--text-h4);
+	line-height: 1.42;
+	letter-spacing: 0.01em;
+}
+
+/* Hero 的站名：整站唯一比 H1 再大一階的字。
+   它不是內容標題，是封面上的書名，所以獨立於階梯之外。 */
 .title-display {
-	font-size: clamp(2.75rem, 7vw, 5.5rem);
-	line-height: 1.1; /* 標題 1.1–1.3；超大級數取下限 */
+	font-size: clamp(2.5rem, 6vw, 4.5rem);
+	line-height: 1.1;
 	letter-spacing: 0.005em;
 }
 
-/* 區塊大標：全大寫、字距拉到很開。
-   這是範例網站（FIJI 的 WORK OVERVIEW、Amanda Willman 的署名）
-   最明顯的一個手勢——大字距的全大寫標題會立刻把版面從
-   「部落格」推向「作品集」。全站只有區塊大標用這一種。 */
-.title-spaced {
-	font-size: clamp(1.125rem, 2vw, 1.6rem);
-	letter-spacing: 0.42em;
+/* 區塊大標的「大字距全大寫」手勢。
+   2026-08-09：這個 class 現在只負責字距與大寫，級數交給 .title-h2 決定，
+   才不會出現「同樣是區塊標，有的 26px 有的 32px」的狀況。
+   用法固定為：class="title-h2 title-caps"。 */
+.title-caps {
+	letter-spacing: 0.34em;
 	text-transform: uppercase;
-	line-height: 1.3;
 	/* 字距是加在每個字的右邊，整體會視覺偏左，補一個縮排拉回來 */
-	text-indent: 0.42em;
+	text-indent: 0.34em;
+}
+
+/* 舊名保留為別名，避免還沒改到的地方掉字級。
+   新的版面請一律用 .title-h1 ~ .title-h4。 */
+.title-spaced {
+	font-size: var(--text-h2);
+	line-height: 1.22;
+	letter-spacing: 0.34em;
+	text-transform: uppercase;
+	text-indent: 0.34em;
 }
 
 /* 框標：細線方框包住的小標，用來當「一句話宣言」。
@@ -237,16 +337,34 @@
 	line-height: 1;
 }
 
-/* ── 錯落偏移 ──────────────────────────────
-   兩欄圖版，偶數欄整體往下推。視線會走 Z 字而不是掃描格線，
-   這是整齊格線最容易讀成模板的地方。 */
+/* ── 錯落偏移：已停用（2026-08-09）──────────────────
+   原本兩欄圖版的偶數欄會整體往下推，做出 Z 字視線。
+   問題是文章列表是「一份可以掃讀的目錄」，錯落會破壞
+   「同一列＝同一批」的閱讀假設，日期與標題也對不齊。
+   規則改為：文章相關的所有版面（/blog 列表、文章內頁）
+   一律齊頭齊尾，不做任何錯落。
+   class 保留成空殼，讓舊 markup 就算漏改也不會再位移。 */
 .stagger > *:nth-child(even) {
-	margin-top: var(--stagger-offset, 0);
+	margin-top: 0;
 }
-@media (min-width: 640px) {
-	.stagger {
-		--stagger-offset: clamp(3rem, 7vw, 7rem);
-	}
+
+/* ── 禁止選取／複製 ────────────────────────────
+   2026-08-09：套在文章內文上。
+   說明：這擋得掉滑鼠拖曳選取與 Ctrl/Cmd+C，擋不掉檢視原始碼、
+   關閉 JavaScript 或用閱讀器模式的人——網頁上的文字在技術上
+   無法真正防複製。真的要防抄襲，實務上是靠「發佈時間戳＋
+   搜尋引擎索引」證明原創，而不是靠前端。
+   另外要知道：這也會讓一般讀者無法引用你的句子分享出去。 */
+.no-copy {
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
+/* 例外：程式碼區塊仍然可以複製，否則貼上範例會變成不可能 */
+.no-copy pre,
+.no-copy code {
+	user-select: text;
+	-webkit-user-select: text;
 }
 
 /* 偏移底塊：圖片背後襯一塊微灰矩形，只露出一角。
@@ -267,15 +385,17 @@
 	position: relative;
 	z-index: 1;
 }
+/* 舊名別名：title-lg = H2、title-sm = H3。
+   之後改版時請直接改用 .title-h2 / .title-h3。 */
 .title-lg {
-	font-size: clamp(1.75rem, 3.4vw, 2.75rem);
-	line-height: 1.18;
-	letter-spacing: 0.01em;
+	font-size: var(--text-h2);
+	line-height: 1.22;
+	letter-spacing: 0.02em;
 }
 .title-sm {
-	font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-	line-height: 1.3; /* 標題行高上限 */
-	letter-spacing: 0.01em;
+	font-size: var(--text-h3);
+	line-height: 1.32;
+	letter-spacing: 0.015em;
 }
 
 /* 內文：全站段落只有這一種樣式 */
@@ -345,20 +465,28 @@
 	line-height: var(--leading-heading);
 	margin: 2.4em 0 0.8em;
 }
+/* 內文標題也走同一條 1.25 倍階梯。
+   刻意壓得比頁面標題小：文章標題（.title-h1）才是這一頁的最高層級，
+   內文裡的 H1 只是「章」，不該跟頁面標題一樣大。 */
 .prose h1 {
-	font-size: 1.9em;
+	font-size: 1.5em;
+	margin-top: 2.6em;
 }
 .prose h2 {
-	font-size: 1.5em;
+	font-size: 1.28em;
 }
 .prose h3 {
-	font-size: 1.22em;
+	font-size: 1.12em;
 }
 .prose h4,
 .prose h5,
 .prose h6 {
-	font-size: 1.05em;
-	letter-spacing: 0.08em;
+	font-size: 1em;
+	letter-spacing: 0.06em;
+}
+/* 內文標題的第一個不需要上方那一大段留白 */
+.prose > :first-child {
+	margin-top: 0;
 }
 .prose p {
 	margin: 0 0 1.4em;
@@ -399,8 +527,9 @@
 	margin: 2.4em 0 2.4em;
 	padding-left: 0;
 	font-style: italic;
-	font-size: 1.28em;
-	line-height: 1.6;
+	/* 引言不可以比內文的 H3 還大，否則層級會被引言蓋過去 */
+	font-size: 1.12em;
+	line-height: 1.7;
 	color: var(--color-app-gray-600);
 	text-indent: -0.4em;
 }
@@ -410,11 +539,24 @@
 	margin: 3.5em auto;
 	width: 4rem;
 }
-/* 文章內的圖片打破行長限制，做成滿版感的展開圖 */
+/* 文章內的圖片：一律置中、單欄、齊頭，不做任何錯落或並排。
+   2026-08-09：加上高度上限。直幅照片原本 width:100% 之後高度會
+   衝到一個半螢幕，讀者得捲兩次才看得完一張圖；改成撞到 72vh
+   就停下來、寬度自己按比例縮。這跟攝影集內頁用的是同一個數值。 */
 .prose img {
 	border-radius: 0;
+	display: block;
+	margin: 2.6em auto;
+	width: auto;
+	max-width: 100%;
+	max-height: 72vh;
+}
+.prose figure {
 	margin: 2.6em 0;
-	width: 100%;
+	text-align: center;
+}
+.prose figure img {
+	margin-block: 0;
 }
 /* 圖說：次要文字下緣 13px，行高比正文緊一階 */
 .prose figcaption {

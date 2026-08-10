@@ -56,3 +56,51 @@ const { title, description, image = '/images/default-cover.jpg' } = Astro.props;
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={new URL(image, Astro.url)} />
+
+<!--
+	內容保護（2026-08-09 新增，全站生效）
+
+	做了兩件事：
+	1. 圖片上按右鍵不跳出選單 → 擋掉「另存圖片」
+	2. 文章內文（.no-copy）不能選取、複製、剪下
+
+	必須先知道這件事能做到什麼程度：
+	這只擋得掉「順手右鍵存檔」和「拖曳選取複製」的一般讀者。
+	會用開發者工具、關閉 JavaScript、看網頁原始碼、或直接把圖片
+	網址貼到新分頁的人完全擋不住——瀏覽器必須把圖片和文字下載到
+	使用者的電腦才能顯示，這在技術上沒有辦法避免。
+
+	想要更實際的保護：
+	- 照片：上傳前把長邊壓到 1600px 以內，或加上不影響觀看的浮水印
+	- 文章：把發佈時間留下來（RSS、搜尋引擎索引都會記錄），
+	  真的被抄襲時那份時間戳才是有用的證據
+-->
+<script is:inline>
+	(function () {
+		// 圖片右鍵：只擋圖片，其他地方的右鍵維持正常
+		// （整頁封鎖右鍵會連「上一頁」「重新整理」都不能用，很擾人）
+		document.addEventListener('contextmenu', function (e) {
+			var el = e.target;
+			if (el && (el.tagName === 'IMG' || el.tagName === 'PICTURE')) e.preventDefault();
+		});
+
+		// 拖曳圖片到桌面 = 另存，一併擋掉
+		document.addEventListener('dragstart', function (e) {
+			var el = e.target;
+			if (el && el.tagName === 'IMG') e.preventDefault();
+		});
+
+		// 文章內文的複製與剪下
+		['copy', 'cut'].forEach(function (type) {
+			document.addEventListener(type, function (e) {
+				var el = e.target;
+				var node = el && el.nodeType === 3 ? el.parentElement : el;
+				if (node && node.closest && node.closest('.no-copy')) {
+					// 程式碼區塊仍然放行，否則貼上範例會變成不可能
+					if (node.closest('pre') || node.closest('code')) return;
+					e.preventDefault();
+				}
+			});
+		});
+	})();
+</script>

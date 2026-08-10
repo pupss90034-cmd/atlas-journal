@@ -15,3 +15,15 @@
 // 這需要先接分析工具收集數據，屬於「開放 Google 搜尋」之後才會做的
 // 功能，先把 SITE_IS_PUBLISHED 改成 true 時一併評估、開發、上線。
 export const SITE_IS_PUBLISHED = false;
+
+// ── 聯絡方式 ────────────────────────────────────────────
+// 2026-08-09：聯絡方式暫時只保留 email。
+// 原本頁尾與手機選單各有一組 Instagram / Facebook / YouTube / Pinterest
+// 連結，但四個 href 全都是 "#"——點下去停在原地，比沒有連結更糟。
+// 等社群帳號真的開好之後，把網址填進下面的 SOCIAL_LINKS 就會自動顯示，
+// 不用再改版面的程式碼。
+export const CONTACT_EMAIL = "explore0305@gmail.com";
+
+// 之後要恢復社群連結：在這個陣列裡加上 { name, href }，
+// 頁尾與手機選單會自動長出來。空陣列＝完全不顯示。
+export const SOCIAL_LINKS: { name: string; href: string }[] = [];

@@ -88,20 +88,34 @@ const tileShapes = [
 </div>
 
 <style>
+	/* ── 間隔（2026-08-09 收緊）────────────────────────
+	   原本固定 8–16px，跟塊面大小無關，所以視覺上會出現
+	   「小塊面之間看起來很擠、大塊面之間看起來很鬆」。
+	   間隔改成綁在欄寬上（0.55% 的容器寬），塊面放大時間隔
+	   等比放大，整組看起來才像同一張版。
+
+	   數值取 0.55%：實體攝影集裱貼相片時，相片之間的留白
+	   大約是相片寬度的 0.5–1%（一張 20cm 寬的照片留 1–2mm），
+	   這裡取中間值。比原本窄了大約一半，照片會靠得更近，
+	   讀成「一整組作品」而不是「幾張各自獨立的圖」。 */
 	.mosaic {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		grid-auto-rows: 42vw;
-		gap: clamp(0.5rem, 1.2vw, 1rem);
+		/* 手機兩欄：每塊接近 3:2，比原本的 42vw 矮，一屏看得到更多組 */
+		grid-auto-rows: 32vw;
+		gap: 0.55%;
 		grid-auto-flow: dense;
 	}
 
 	@media (min-width: 768px) {
 		.mosaic {
 			grid-template-columns: repeat(6, minmax(0, 1fr));
-			/* 一列的高度 ≈ 一個小塊面（2 欄寬）的高度的一半，
-			   讓 2×1 的小塊面接近 2:1、2×2 的高塊面接近 1:1。 */
-			grid-auto-rows: clamp(7rem, 11vw, 11rem);
+			/* 一列的高度 ≈ 小塊面（2 欄寬）高度的一半，
+			   讓 2×1 接近 2:1、2×2 接近 1:1、4×2 接近 3:2——
+			   三種比例都是攝影常用的裁切比，塊面才不會出現
+			   「怪比例」的框。 */
+			grid-auto-rows: clamp(6.5rem, 10.2vw, 10.5rem);
+			gap: 0.55%;
 		}
 	}
 
@@ -182,13 +196,17 @@ const tileShapes = [
 		text-align: center;
 		color: #ffffff;
 	}
+	/* 2026-08-09：塊面上的相簿名固定用 H4 級距。
+	   原本是 18–28px 的自適應級數，於是同一個畫面上會出現
+	   四種不同大小的相簿名，看起來像有主從關係，其實沒有——
+	   哪一個字比較大只是因為那塊剛好比較寬。 */
 	.tile-label {
-		font-size: clamp(1.125rem, 2vw, 1.75rem);
-		line-height: 1.2;
+		font-size: var(--text-h4);
+		line-height: 1.32;
 		letter-spacing: 0.04em;
 	}
 	.tile-count {
-		font-size: 0.625rem;
+		font-size: 0.6875rem;
 		letter-spacing: 0.3em;
 		text-transform: uppercase;
 		text-indent: 0.3em;
