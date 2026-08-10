@@ -98,9 +98,11 @@ const popularSearches =
 		<button id="drawer-search-open" type="button" class="label mt-4">Search</button>
 	</nav>
 
+	<!-- 2026-08-10：跟頁尾一致，顯示「Email」而不是整串信箱地址。
+	     點下去會打開信件軟體並帶好收件人。 -->
 	<div class="flex items-center justify-center px-6 py-12">
 		<a href={`mailto:${CONTACT_EMAIL}`} class="body-small link-underline text-app-gray-500">
-			{CONTACT_EMAIL}
+			Email
 		</a>
 	</div>
 </div>

@@ -4,13 +4,22 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { getCollection } from 'astro:content';
+import { parseEditableBlock } from '../utils/editableBody';
 
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
 
 const albums = (await getCollection('albums')).sort((a, b) => a.data.order - b.data.order);
 const totalPhotos = albums.reduce((sum, album) => sum + album.data.images.length, 0);
-const description = '每個主題各自獨立，點進去看完整的一組照片。';
+
+// 2026-08-10：大標與底下的引導小字改成從 Obsidian 編輯
+//（編輯/頁面-攝影集總覽.md）。以前兩行都寫死在這個檔案裡，改不到。
+const introEntry = (await getCollection('pageIntros')).find((e) =>
+	(e.filePath ?? e.id).includes('攝影集總覽'),
+);
+const pageHeading = introEntry?.data.heading ?? 'Portfolio';
+const description =
+	parseEditableBlock(introEntry?.body).intro || '每個主題各自獨立，點進去看完整的一組照片。';
 
 // ── 2026-08-09：不再共用首頁的鑲嵌塊面 ────────────────────
 //
@@ -42,7 +51,7 @@ const description = '每個主題各自獨立，點進去看完整的一組照�
 					<p class="label">
 						{String(albums.length).padStart(2, '0')} Series · {totalPhotos} Photographs
 					</p>
-					<h1 class="title-h1 mt-7 text-app-ink">Portfolio</h1>
+					<h1 class="title-h1 mt-7 text-app-ink">{pageHeading}</h1>
 					<p class="body-small mx-auto mt-6 max-w-[34ch]">
 						{description}
 					</p>

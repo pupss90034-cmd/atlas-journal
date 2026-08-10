@@ -1,6 +1,7 @@
 import { glob } from "astro/loaders";
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
+import { toWebPath } from "./utils/naming.mjs";
 
 const blog = defineCollection({
 	// Load Markdown and MDX files in the `src/content/blog/` directory.
@@ -8,14 +9,29 @@ const blog = defineCollection({
 	// don't break the build (they're missing required frontmatter).
 	loader: glob({
 		base: "./src/content/blog",
+		// 2026-08-10：網址不再照抄資料夾與檔名。
+		// Obsidian 側邊欄用「A - 」「Ｎ13.」這種前綴排序，那是寫作工具，
+		// 讀者不該在網址列看到它。這裡統一脫掉排序前綴再轉成網址，
+		// 規則寫在 src/utils/naming.mjs（wikilink 外掛用的是同一份，
+		// 兩邊算出來的網址永遠一致）。
+		generateId: ({ entry }) => toWebPath(entry.replace(/\.(md|mdx)$/i, "")),
 		pattern: [
 			"**/*.{md,mdx}",
-			"!模板/**",
-			// Draft convention: put unfinished notes in a folder named with
-			// half-width parentheses, e.g. "(隱藏發佈)/", to keep them out of
-			// the build without editing this file each time.
-			"!\\(隱藏發佈\\)/**",
-			"!標題練習.md",
+			// ── 不會出現在網站上的資料夾 ────────────────────────
+			// 2026-08-10：Obsidian 那邊重整了資料夾、加上排序前綴，
+			// 這裡的排除規則跟著對齊。用 `*` 開頭比對，之後你把
+			// 「Z - 模板」改成「ZZ - 模板」之類也不會漏掉。
+			// 比對的是「資料夾名稱裡有沒有這幾個字」，不是完整名稱，
+			// 所以前面加什麼排序前綴、括號用全形半形，都一樣擋得住。
+			"!**/*模板*/**", // 寫作用的範本
+			"!**/*隱藏發佈*/**", // 寫好但還不想公開的
+			"!**/*未歸類*/**", // 還沒決定放哪一區的草稿（2026-08-10 起不上傳）
+			"!**/*Pic*/**", // 只是放圖的資料夾，不是文章
+			// 販售包：即將上架的付費內容。這些文章不進 Journal（不然等於
+			// 免費送出去），首頁的顧問服務區會以「即將推出」的形式預告，
+			// 內容在 src/content/編輯/首頁-販售包.md 維護。
+			"!**/*販售包*/**",
+			"!**/標題練習.md",
 			// 2026-08-07：這裡原本手動排除了「Ｎ02.大溪地」，因為文中引用的
 			// DSC_0249.jpg 已經不在 Pic/ 資料夾裡，會讓整站建置失敗。
 			// 現在改成「找不到的圖片自動略過並印出提醒」（見
@@ -83,6 +99,12 @@ const blog = defineCollection({
 // 以下 collections 對應「src/content/編輯」資料夾裡的檔案。
 // 這個資料夾就是給你在 Obsidian 打開編輯用的：文字改 frontmatter 或內文，
 // 圖片直接在 Obsidian 裡拖拉置換同名/同路徑的檔案即可。
+//
+// 2026-08-10 的大原則改變：**會重複的項目一律搬到內文，不留在 frontmatter。**
+// frontmatter 的巢狀清單在 Obsidian 裡是點不動的唯讀屬性面板，要改就得
+// 切原始碼跟 YAML 縮排搏鬥。現在那些項目改成用內文的 `## 標題` ＋ 段落來寫，
+// 就是普通打字。frontmatter 只留「一格一個值」的單行文字。
+// 解析規則見 src/utils/editableBody.ts。
 // 圖片一律用 image() 宣告，Astro 建置網站時會自動依實際顯示尺寸重新
 // 壓縮、產生多種解析度與新格式（webp），所以不用擔心原始照片檔案太大，
 // 直接把手機或相機拍出來的原始檔放進去也沒問題。
@@ -113,6 +135,9 @@ const homeHero = defineCollection({
 });
 
 // 首頁「關於我」區塊
+// 2026-08-10：拿掉 stats。那三個數字（22+ 國家／180K 公里／4 年）從
+// 2026-08-09 起就不再顯示在網站上了，卻還留在 Obsidian 的屬性面板裡，
+// 讓人以為改了會有效果——一個改了不會怎樣的欄位，比沒有這個欄位更糟。
 const homeAbout = defineCollection({
 	loader: glob({ base: "./src/content/編輯", pattern: "首頁-關於我.md" }),
 	schema: ({ image }) =>
@@ -122,17 +147,14 @@ const homeAbout = defineCollection({
 			portrait: image(),
 			portraitAlt: z.string(),
 			ctaLabel: z.string(),
-			stats: z.array(
-				z.object({
-					value: z.string(),
-					label: z.string(),
-				}),
-			),
 		}),
 	// 內文（Markdown body）＝「關於我」的段落文字
 });
 
 // 首頁「顧問諮詢服務」區塊
+// 2026-08-10：三個服務項目從 frontmatter 的 services 清單搬到內文，
+// 改用 `## 服務名稱` ＋ 底下一段說明來寫。要新增第四項就在檔案最後
+// 再打一個 `## `，要刪掉就整段刪掉，跟寫筆記完全一樣。
 const homeConsulting = defineCollection({
 	loader: glob({ base: "./src/content/編輯", pattern: "首頁-顧問服務.md" }),
 	schema: z.object({
@@ -141,13 +163,67 @@ const homeConsulting = defineCollection({
 		description: z.string(),
 		ctaText: z.string(),
 		ctaButtonLabel: z.string(),
-		services: z.array(
-			z.object({
-				title: z.string(),
-				description: z.string(),
-			}),
+	}),
+	// 內文：`## 服務名稱` ＋ 說明段落 ＝ 一個服務項目
+});
+
+// 首頁「即將上架的內容包」區塊（2026-08-10 新增）
+// 接在顧問服務下面，同一區的第二段。對應 Obsidian 裡
+// blog/「Y - (販售包⋯)」那幾個資料夾正在準備的產品。
+// 那些資料夾的文章本身不會發佈到 Journal（付費內容不該免費送出去），
+// 網站上只露出這裡寫的預告文字。
+const homeProducts = defineCollection({
+	loader: glob({ base: "./src/content/編輯", pattern: "首頁-販售包.md" }),
+	schema: z.object({
+		eyebrow: z.string(),
+		heading: z.string(),
+		// 想暫時整區收起來（例如全部都還沒準備好）就把這行改成 false
+		enabled: z.preprocess(
+			(val) => (val === null || val === undefined || val === "" ? true : val),
+			z.coerce.boolean().catch(true),
 		),
 	}),
+	// 內文：開場說明段落 ＋ `## 產品名稱` ＋ 說明段落
+});
+
+// 首頁「Keep in Touch」電子報區塊（2026-08-10 從程式碼搬出來）
+// 標題下方那段短介紹、輸入框提示字、送出鍵字樣、最下面的隱私說明，
+// 以前全都寫死在 src/components/home/Newsletter.astro 裡。
+const homeNewsletter = defineCollection({
+	loader: glob({ base: "./src/content/編輯", pattern: "首頁-電子報.md" }),
+	schema: z.object({
+		eyebrow: z.string(),
+		heading: z.string(),
+		placeholder: z.string(),
+		buttonLabel: z.string(),
+		privacyNote: z.string(),
+	}),
+	// 內文（第一個 ## 之前的段落）＝ 標題下方的短介紹文字
+});
+
+// 文章總覽（/blog）與攝影集總覽（/portfolio）的頁面文字
+// 2026-08-10：這兩頁的大標與下方的引導小字原本寫死在程式碼裡，
+// /blog 甚至是拿網站簡介來充數，等於沒有為這一頁寫過字。
+const pageIntros = defineCollection({
+	loader: glob({ base: "./src/content/編輯", pattern: "頁面-*.md" }),
+	schema: z.object({
+		heading: z.string(),
+	}),
+	// 內文（第一個 ## 之前的段落）＝ 大標題下方的引導小字
+});
+
+// 文章標籤地圖（2026-08-10 新增）
+// 標籤現在等於「去過的地方」，所以 /blog 的標籤列改成一張細線世界地圖。
+// 每個標籤要點在地圖的哪裡，用內文的表格維護（Obsidian 的表格可以像
+// Excel 一樣按 Tab 換格編輯）。沒寫在表格裡的標籤不會消失，會排在
+// 地圖下方的文字列，一樣可以點。
+const tagMap = defineCollection({
+	loader: glob({ base: "./src/content/編輯", pattern: "標籤地圖.md" }),
+	schema: z.object({
+		heading: z.string(),
+		otherTagsLabel: z.string(),
+	}),
+	// 內文：說明段落 ＋ 一個「標籤／緯度／經度」的表格
 });
 
 // 首頁「精選攝影集」區塊的文字與顯示數量
@@ -184,7 +260,14 @@ const aboutPage = defineCollection({
 
 // 首頁「精選攝影集」的各個相簿，一個檔案就是一個相簿
 const albums = defineCollection({
-	loader: glob({ base: "./src/content/編輯/攝影集", pattern: "*.md" }),
+	loader: glob({
+		base: "./src/content/編輯/攝影集",
+		pattern: "*.md",
+		// 檔名前面的 01-、02- 只是為了讓 Obsidian 側邊欄照順序排，
+		// 不該出現在網址裡（/portfolio/01-巴黎地標/ → /portfolio/巴黎地標/）。
+		// 相簿在網站上的排序看的是 frontmatter 的 order，跟檔名無關。
+		generateId: ({ entry }) => toWebPath(entry.replace(/\.md$/i, "")),
+	}),
 	schema: ({ image }) =>
 		z.object({
 			label: z.string(),
@@ -234,7 +317,11 @@ export const collections = {
 	homeHero,
 	homeAbout,
 	homeConsulting,
+	homeProducts,
+	homeNewsletter,
 	homeGallery,
+	pageIntros,
+	tagMap,
 	aboutPage,
 	albums,
 };

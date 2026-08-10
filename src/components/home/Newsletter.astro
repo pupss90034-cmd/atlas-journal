@@ -1,15 +1,29 @@
 ---
+import { getCollection } from 'astro:content';
+import { parseEditableBlock } from '../../utils/editableBody';
+
 // 版面：寬邊＋中軸，白底。
 // 原本是整塊深色底＋實心按鈕，那個對比會把視線從照片上搶走。
 // 改成白紙上的一條輸入線——欄位只有底線，送出鍵是純文字。
+//
+// 2026-08-10：這一區的所有文字（標題、標題下方的短介紹、輸入框提示、
+// 送出鍵字樣、最下面的隱私說明）原本全部寫死在這個檔案裡，
+// 在 Obsidian 完全改不到。現在搬到「編輯/首頁-電子報.md」。
+const [entry] = await getCollection('homeNewsletter');
+if (!entry) {
+	throw new Error('找不到「首頁-電子報.md」，請確認 src/content/編輯 資料夾裡有這個檔案。');
+}
+const { eyebrow, heading, placeholder, buttonLabel, privacyNote } = entry.data;
+// 內文第一個 ## 之前的段落 ＝ 標題下方那段短介紹
+const { intro } = parseEditableBlock(entry.body);
 ---
 
 <section id="newsletter" class="band-tint page-wide band">
 	<div class="axis">
-		<p class="label">Newsletter</p>
-		<h2 class="title-h2 title-caps mt-5 text-app-ink">Keep in Touch</h2>
+		<p class="label">{eyebrow}</p>
+		<h2 class="title-h2 title-caps mt-5 text-app-ink">{heading}</h2>
 		<p class="body-small mx-auto mt-6 max-w-[38ch]">
-			每次發佈新文章或新攝影集，第一時間寄到你的信箱，不定期分享路上的私房清單。
+			{intro}
 		</p>
 
 		<form id="newsletter-form" class="mx-auto mt-14 flex max-w-md items-baseline gap-6 border-b border-app-gray-400 pb-4" novalidate>
@@ -24,22 +38,23 @@
 				name="email"
 				id="newsletter-email"
 				required
-				placeholder="你的電子信箱"
+				placeholder={placeholder}
 				class="w-full flex-1 bg-transparent text-left text-lg text-app-ink placeholder:text-app-gray-300 focus:outline-none"
 			/>
 			<button
 				type="submit"
 				id="newsletter-submit"
+				data-label={buttonLabel}
 				class="label link-underline shrink-0 whitespace-nowrap text-app-ink disabled:opacity-40"
 			>
-				Subscribe
+				{buttonLabel}
 			</button>
 		</form>
 
 		<p id="newsletter-message" class="body-small mt-6 min-h-[1.25rem] text-xs" role="status" aria-live="polite"></p>
 
 		<p class="mx-auto mt-8 max-w-[44ch] text-[11px] leading-relaxed text-app-gray-400">
-			訂閱即表示你同意收到本站的電子報通知，我們不會分享你的信箱給第三方，取消訂閱請直接回信告知。
+			{privacyNote}
 		</p>
 	</div>
 </section>
@@ -101,7 +116,9 @@
 		} finally {
 			if (submitBtn) {
 				submitBtn.disabled = false;
-				submitBtn.textContent = '訂閱';
+				// 送出後把字樣還原成你在「首頁-電子報.md」設定的那個，
+				// 而不是寫死的「訂閱」——以前這裡按一次就會從 Subscribe 變成訂閱。
+				submitBtn.textContent = submitBtn.dataset.label ?? 'Subscribe';
 			}
 		}
 	});

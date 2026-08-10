@@ -22,26 +22,26 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { findAndReplace } from "mdast-util-find-and-replace";
-import { slug as githubSlug } from "github-slugger";
+import { stripSortingPrefix, toWebPath } from "../utils/naming.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BLOG_DIR = path.resolve(__dirname, "../content/blog");
 
-// 跟 src/content.config.ts 用同一套邏輯：這些資料夾不會被建置進網站。
-const EXCLUDED_DIR_NAMES = new Set(["模板", "(隱藏發佈)", ".obsidian"]);
+// 跟 src/content.config.ts 用同一套邏輯：名稱裡含有這些字的資料夾不會被
+// 建置進網站，所以連到裡面的 [[連結]] 一律當成待修連結，不會產生死網址。
+// 用「包含」比對而不是完整名稱，這樣加不加排序前綴都擋得住。
+const EXCLUDED_DIR_KEYWORDS = ["模板", "隱藏發佈", "未歸類", "販售包", "Pic"];
+
+function isExcludedDir(name) {
+	if (name.startsWith(".")) return true;
+	return EXCLUDED_DIR_KEYWORDS.some((keyword) => name.includes(keyword));
+}
 
 const AMBIGUOUS = Symbol("ambiguous");
 
-function pathToSlug(relNoExtPosix) {
-	// 比照 Astro glob loader 預設 slug 演算法（astro/dist/content/utils.js
-	// 的 getContentEntryIdAndSlug）：每段路徑各自用 github-slugger 處理，
-	// 再用 "/" 接回去，最後去掉結尾的 "/index"。
-	return relNoExtPosix
-		.split("/")
-		.map((segment) => githubSlug(segment))
-		.join("/")
-		.replace(/\/index$/, "");
-}
+// 網址算法跟 src/content.config.ts 的 generateId 共用同一份程式碼
+// （src/utils/naming.mjs），所以這裡算出來的連結一定跟文章實際網址一致。
+const pathToSlug = toWebPath;
 
 function hasRequiredFrontmatter(raw) {
 	const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -63,9 +63,9 @@ function scanBlogNotes(dir, byBasename, byPath) {
 	}
 	for (const entry of entries) {
 		if (entry.name.startsWith(".")) continue;
-		if (EXCLUDED_DIR_NAMES.has(entry.name)) continue;
 		const fullPath = path.join(dir, entry.name);
 		if (entry.isDirectory()) {
+			if (isExcludedDir(entry.name)) continue;
 			scanBlogNotes(fullPath, byBasename, byPath);
 			continue;
 		}
@@ -85,12 +85,20 @@ function scanBlogNotes(dir, byBasename, byPath) {
 		const slug = valid ? pathToSlug(relNoExtPosix) : null;
 
 		byPath.set(relNoExtPosix, slug);
+		// 也記一份「脫掉排序前綴」的路徑，讓 [[旅行隨記/巴賽隆納｜米拉之家]]
+		// 這種比較好讀的寫法也連得到。
+		const cleanPath = relNoExtPosix.split("/").map(stripSortingPrefix).join("/");
+		if (!byPath.has(cleanPath)) byPath.set(cleanPath, slug);
 
-		if (!byBasename.has(basename)) {
-			byBasename.set(basename, slug);
-		} else if (byBasename.get(basename) !== AMBIGUOUS && byBasename.get(basename) !== slug) {
-			// 同一個檔名在不同資料夾出現超過一次：標記成無法確定。
-			byBasename.set(basename, AMBIGUOUS);
+		// 檔名別名：原始檔名（你在 Obsidian 裡按 [[ 自動補的那個）
+		// 與脫掉排序前綴後的名字都能連得到。
+		for (const alias of new Set([basename, stripSortingPrefix(basename)])) {
+			if (!byBasename.has(alias)) {
+				byBasename.set(alias, slug);
+			} else if (byBasename.get(alias) !== AMBIGUOUS && byBasename.get(alias) !== slug) {
+				// 同一個檔名在不同資料夾出現超過一次：標記成無法確定。
+				byBasename.set(alias, AMBIGUOUS);
+			}
 		}
 	}
 }

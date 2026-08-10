@@ -56,9 +56,14 @@ const sitemap = [
 			<div>
 				<p class="label">Contact</p>
 				<ul class="mt-7 space-y-3.5">
+					{/* 2026-08-10：顯示「Email」兩個字，不再把整串信箱地址攤在版面上。
+					    點下去一樣會打開你電腦的信件軟體、帶好收件人（mailto: 的行為沒變）。
+					    一長串 explore0305@gmail.com 在頁尾要斷成兩行、又跟旁邊的
+					    Index / Portfolio 這類短詞打架；而且信箱明碼放在網頁上
+					    也比較容易被爬蟲抓去寄垃圾信。 */}
 					<li>
-						<a href={`mailto:${CONTACT_EMAIL}`} class="body-small link-underline break-all">
-							{CONTACT_EMAIL}
+						<a href={`mailto:${CONTACT_EMAIL}`} class="body-small link-underline">
+							Email
 						</a>
 					</li>
 					{

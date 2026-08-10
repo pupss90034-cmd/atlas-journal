@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from "astro:content";
+import { stripSortingPrefix } from "./naming.mjs";
 
 /**
  * 取得「可以發佈」的文章。
@@ -43,4 +44,32 @@ export async function getPublishedPosts(): Promise<CollectionEntry<"blog">[]> {
 export async function getSortedPosts(): Promise<CollectionEntry<"blog">[]> {
 	const posts = await getPublishedPosts();
 	return posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+}
+
+/**
+ * 一篇文章的「分類」＝它在 Obsidian 裡所在的資料夾名稱，
+ * 但**脫掉排序前綴**：資料夾叫「A - 旅行隨記」，網站上顯示「旅行隨記」。
+ *
+ * 2026-08-10 之前這裡是拿網址的第一段來當分類名，所以側邊欄用來排序的
+ * 「A - 」「Z - 」會一路跟到讀者眼前。現在改成讀實際的檔案路徑再處理，
+ * 你在 Obsidian 怎麼排序都不會漏到網站上。
+ *
+ * 放在最外層（沒有資料夾）的文章回傳空字串，代表「不分類」。
+ */
+export function getCategory(post: CollectionEntry<"blog">): string {
+	// filePath 例如 "src/content/blog/A - 旅行隨記/Ｎ13.巴賽隆納｜米拉之家.md"
+	const filePath = post.filePath ?? "";
+	const match = filePath.split("src/content/blog/")[1];
+	if (!match) return "";
+
+	const segments = match.split("/");
+	if (segments.length < 2) return ""; // 沒有資料夾，直接放在 blog 底下
+
+	return stripSortingPrefix(segments[0]!);
+}
+
+/** 目前所有文章用到的分類，依中文筆劃排序。 */
+export function getCategories(posts: CollectionEntry<"blog">[]): string[] {
+	const set = new Set(posts.map(getCategory).filter((c) => c !== ""));
+	return [...set].sort((a, b) => a.localeCompare(b, "zh-Hant"));
 }

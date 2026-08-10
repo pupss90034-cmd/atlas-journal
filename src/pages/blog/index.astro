@@ -3,30 +3,41 @@ import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import BlogCard from '../../components/BlogCard.astro';
+import TagMap from '../../components/TagMap.astro';
 import { getCollection } from 'astro:content';
-import { getSortedPosts } from '../../utils/posts';
+import { getSortedPosts, getCategory, getCategories } from '../../utils/posts';
+import { parseEditableBlock } from '../../utils/editableBody';
 
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
 const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 
+// 2026-08-10：這一頁的大標與底下的引導小字改成從 Obsidian 編輯
+//（編輯/頁面-文章總覽.md）。以前標題寫死成 Journal，小字直接拿
+// 網站簡介充數——等於這一頁從來沒有被寫過字。
+const introEntry = (await getCollection('pageIntros')).find((e) =>
+	(e.filePath ?? e.id).includes('文章總覽'),
+);
+const pageHeading = introEntry?.data.heading ?? 'Journal';
+const pageIntro = parseEditableBlock(introEntry?.body).intro || SITE_DESCRIPTION;
+
 const posts = await getSortedPosts();
 
-// 分類＝文章所在的資料夾（Obsidian 裡怎麼分資料夾，這裡就自動長出對應分類，
-// 不用寫死名稱）。之後改資料夾名稱或搬動文章，分類清單會自動跟著變。
-const categories = [
-	...new Set(
-		posts
-			.map((post) => (post.id.includes('/') ? post.id.split('/')[0] : null))
-			.filter((c): c is string => Boolean(c)),
-	),
-];
+// 分類＝文章所在的資料夾，但**脫掉排序前綴**：Obsidian 裡叫「A - 旅行隨記」，
+// 網站上顯示「旅行隨記」。那個 A 是你用來排側邊欄順序的，讀者不需要看到。
+// 邏輯在 src/utils/posts.ts 的 getCategory()。
+const categories = getCategories(posts);
 
-// 標籤＝每篇文章 frontmatter 裡的 tags 清單，同樣是動態算出來的。
+// 標籤＝每篇文章 frontmatter 裡的 tags 清單，動態算出來的。
 // 之後在 Obsidian 裡新增、改名、刪除標籤，這裡的清單跟篩選都會自動更新。
-const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a, b) =>
-	a.localeCompare(b, 'zh-Hant'),
-);
+// 2026-08-10：標籤改用地圖呈現（見 src/components/TagMap.astro）。
+// 是地點的標籤變成地圖上的點，不是地點的仍然排成一列文字，兩種都能點。
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags ?? []) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
 
 // 版面：書名頁（中軸）＋兩欄圖版。
 // 原本是三欄卡片格線，三欄會把圖壓得太小、讀起來像列表頁；
@@ -52,9 +63,9 @@ const PAGE_SIZE = 8;
 				<div class="axis">
 					<!-- 眉標放「共幾篇」而不是重複標題本身，避免同一個字出現兩次 -->
 					<p class="label">{String(posts.length).padStart(2, '0')} Entries</p>
-					<h1 class="title-h1 mt-7 text-app-ink">Journal</h1>
+					<h1 class="title-h1 mt-7 text-app-ink">{pageHeading}</h1>
 					<p class="body-small mx-auto mt-6 max-w-[34ch]">
-						{SITE_DESCRIPTION}
+						{pageIntro}
 					</p>
 					<p id="search-status" class="label mx-auto mt-8 hidden text-app-ink"></p>
 				</div>
@@ -78,17 +89,12 @@ const PAGE_SIZE = 8;
 						)
 					}
 
-					{
-						tags.length > 0 && (
-							<div class="flex flex-wrap items-baseline justify-center gap-x-7 gap-y-3 border-y border-app-gray-200 py-5" id="tag-filter">
-								{tags.map((tag) => (
-									<button type="button" data-tag={tag} class="tag-btn label">
-										{tag}
-									</button>
-								))}
-							</div>
-						)
-					}
+					{/* 標籤地圖：地點類的標籤變成地圖上的點（文字照樣顯示在點旁邊），
+					    不是地點的標籤仍排成一列文字。兩種都掛 .tag-btn，
+					    所以下方那段篩選程式一行都不用改。 */}
+					<div class="border-b border-app-gray-200" id="tag-filter">
+						<TagMap tagCounts={tagCounts} />
+					</div>
 				</div>
 			</section>
 
@@ -106,7 +112,7 @@ const PAGE_SIZE = 8;
 								{posts.map((post) => (
 									<div
 										class="post-item"
-										data-category={post.id.includes('/') ? post.id.split('/')[0] : ''}
+										data-category={getCategory(post)}
 										data-tags={(post.data.tags ?? []).join('|').toLowerCase()}
 										data-title={post.data.title.toLowerCase()}
 										data-description={post.data.description.toLowerCase()}
@@ -189,7 +195,9 @@ const PAGE_SIZE = 8;
 
 <script>
 	const categoryButtons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-	const tagButtons = document.querySelectorAll<HTMLButtonElement>('.tag-btn');
+	// 標籤現在有兩種長相：地圖上的點（SVG 的 <g>）與地圖下方的文字鈕（<button>）。
+	// 兩種都掛 .tag-btn、都用 data-tag 帶標籤名，所以下面的篩選邏輯只有一份。
+	const tagButtons = document.querySelectorAll<HTMLElement | SVGElement>('.tag-btn');
 	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
 	const emptyState = document.getElementById('empty-state');
 	const searchStatus = document.getElementById('search-status');
