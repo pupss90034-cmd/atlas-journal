@@ -74,20 +74,29 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 				</div>
 			</header>
 
-			<!-- 內文：寬邊，行長鎖在 measure，段落樣式全站統一 -->
-			<article class="page-wide pb-24 md:pb-32">
-				<!-- measure = 680px ≈ 65 字符（中文約 30–50 字／行） -->
-				<div class="measure">
-					<hr class="rule mb-16 md:mb-20" />
-
-					{/* .no-copy：關閉內文的選取與複製（規則見 global.css 與 BaseHead）。
-					    只套在內文上——標題、日期、標籤仍可選取，
-					    讀者要引用篇名分享時才不會整頁都動不了。 */}
-					<div class="prose no-copy">
-						<slot />
+			{/* 內文：外層不再包 .measure，也不再上 page-wide 內距。
+			    行長（680px）與左右留白改由 .prose 自己的三軌格線負責，
+			    這樣照片才有辦法「破欄」跑到文字欄以外——被 max-width 包住的話，
+			    照片永遠只能跟文字一樣寬。格線定義見 global.css 的 .prose。
+			    2026-08-11 改。 */}
+			<article class="pb-24 md:pb-32">
+				<div class="page-wide">
+					<div class="measure">
+						<hr class="rule mb-16 md:mb-20" />
 					</div>
+				</div>
 
-					{
+				{/* .no-copy：關閉內文的選取與複製（規則見 global.css 與 BaseHead）。
+				    只套在內文上——標題、日期、標籤仍可選取，
+				    讀者要引用篇名分享時才不會整頁都動不了。 */}
+				<div class="prose no-copy">
+					<slot />
+				</div>
+
+				<!-- 標籤與前後篇仍然齊著內文欄，跟著文字走而不是跟著照片走 -->
+				<div class="page-wide">
+					<div class="measure">
+						{
 						tags && tags.length > 0 && (
 							<div class="mt-16 flex flex-wrap gap-x-6 gap-y-2 border-t border-app-gray-200 pt-8">
 								{tags.map((tag) => (
@@ -130,6 +139,7 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 							</nav>
 						)
 					}
+					</div>
 				</div>
 			</article>
 		</main>

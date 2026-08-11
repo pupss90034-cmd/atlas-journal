@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import FormattedDate from './FormattedDate.astro';
 import defaultCover from '../assets/site/default-cover.jpg';
 import { resolveHeroImage } from '../utils/heroImage';
+import { getCategory } from '../utils/posts';
 
 interface Props {
 	post: CollectionEntry<'blog'>;
@@ -12,40 +13,57 @@ interface Props {
 const { post } = Astro.props;
 const { title, description, pubDate, heroImage } = post.data;
 const cover = resolveHeroImage(heroImage) ?? defaultCover;
+const category = getCategory(post);
 
 // 改版重點：不再是「卡片」。沒有外框、沒有底色、沒有標籤藥丸，
-// 就是一張圖版加下方的圖說（日期 / 標題 / 一句話），
-// 排版邏輯與攝影集圖說完全一致。
+// 就是一張圖版加旁邊的圖說（分類・日期 / 標題 / 一句話）。
 //
 // 2026-08-07：比例由 4:5 直幅改回 3:2 橫幅。
 // 直幅在總覽頁佔的垂直高度太大，一屏只讀得到兩篇，整頁變成翻不完的圖牆；
 // 這裡的圖是「索引」不是「作品」，作品要看完整的請進攝影集頁。
-// 橫幅同時讓文字圖說更靠近圖片，一組就是一個可掃視的單位。
+//
+// ── 2026-08-11：兩欄格線 → 單欄橫列（圖左、文右）─────────────
+// 原因：兩欄格線一次要比較四樣東西（左圖、左字、右圖、右字），
+// 眼睛得在四個角落之間跳。改成一列一篇之後，視線只剩一條
+// 由上往下的直線，圖是「認路用的縮圖」、字是「要讀的內容」，
+// 職責分開，掃讀速度快很多。
+//
+// 同時在標題上方補上「分類・日期」眉標。以前只有日期，
+// 讀者得靠篇名猜這篇屬於哪一區；分類是這個網站最主要的
+// 導覽軸線（資料夾＝分類），它應該跟日期站在同一排。
+//
+// 手機維持圖上文下——寬度不夠時橫列會把圖擠成郵票大小。
 ---
 
 <a href={`/blog/${post.id}/`} class="group block">
-	<article>
+	<article class="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] sm:items-start md:gap-x-12">
 		<div class="aspect-[3/2] w-full overflow-hidden bg-app-gray-100">
 			<Image
 				src={cover}
 				alt=""
 				class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
-				widths={[400, 600, 900]}
-				sizes="(min-width: 768px) 26rem, 92vw"
+				widths={[320, 480, 720]}
+				sizes="(min-width: 640px) 16rem, 92vw"
 			/>
 		</div>
 
-		{/* 層級：MICRO 日期 → H3 篇名 → SMALL 摘要。
+		{/* 層級：MICRO 分類・日期 → H3 篇名 → SMALL 摘要。
 		    篇名固定 H3，不隨欄寬改變——同一頁的所有篇名一樣大，
 		    讀者才不會誤以為字比較大的那篇比較重要。 */}
-		<div class="mt-5 transition-opacity duration-500 group-hover:opacity-60">
+		<div class="transition-opacity duration-500 group-hover:opacity-60">
 			<p class="label">
+				{category && (
+					<>
+						{category}
+						<span class="mx-1.5 text-app-gray-300">·</span>
+					</>
+				)}
 				<FormattedDate date={pubDate} />
 			</p>
-			<h3 class="title-h3 mt-3 max-w-[24ch] text-app-ink">
+			<h3 class="title-h3 mt-3 max-w-[28ch] text-app-ink">
 				{title}
 			</h3>
-			<p class="body-small mt-3 line-clamp-2 max-w-[38ch]">
+			<p class="body-small mt-3 line-clamp-2 max-w-[46ch]">
 				{description}
 			</p>
 		</div>

@@ -76,6 +76,10 @@
 	--measure: 42.5rem; /* 680px ≈ 65ch */
 	/* 中軸（書名頁）刻意比內文窄，置中的短段落太寬會讀不成一個「塊」 */
 	--measure-axis: 34rem;
+	/* 破欄寬：照片專用，比內文欄寬約一半，但兩側仍留白。
+	   照片跟文字不共用行長規則——行長是為了眼球掃視一行不要太累，
+	   照片不需要掃視，鎖在 680px 只會讓它變成郵票。 */
+	--measure-wide: 60rem; /* 960px */
 
 	/* ── 字級：單一階梯 ──────────────────────────
 	   2026-08-09 重整。原本標題級距散在 title-display / title-spaced /
@@ -442,6 +446,21 @@
    文章內文（Markdown / MDX）
    同字體、同段落樣式：不使用粗體與彩色強調
    ───────────────────────────────────────────── */
+/* ── 內文版面：三軌破欄格線（2026-08-11）────────────────────
+   改版前，內文被一個 max-width:680px 的 .measure 包住，所以照片最大
+   只能 680px——文字有多寬，照片就只能有多寬。攝影集內頁不是這樣運作的：
+   文字要窄（行長好讀），照片要寬（看得見細節），兩者的寬度是分開決定的。
+
+   做法：.prose 自己變成一張三軌格線，一次定義三種寬度，
+   段落預設走最窄的 text 軌，照片可以指定走 wide 或 full。
+
+     full ├────────────────────────────────────────────┤ 貼齊螢幕左右
+     wide      ├──────────────────────────────┤          960px
+     text            ├──────────────┤                    680px
+
+   所以 .prose 現在必須是「整個文章容器的寬度」，
+   外層不能再包 .measure，也不能有 page-wide 的左右內距
+   （左右留白改由格線自己的外軌負責）。見 src/layouts/BlogPost.astro。 */
 .prose {
 	color: var(--color-app-text);
 	/* 內文 16–18px：桌機 17px，手機縮到 16px 仍在範圍內 */
@@ -450,6 +469,20 @@
 	line-height: var(--leading-body);
 	/* 中文與英數、標點之間自動補空隙，密度更接近排版品質 */
 	text-spacing-trim: trim-start;
+
+	display: grid;
+	grid-template-columns:
+		[full-start] minmax(var(--page-margin-narrow), 1fr)
+		[wide-start] minmax(0, calc((var(--measure-wide) - var(--measure)) / 2))
+		[text-start] min(var(--measure), 100% - var(--page-margin-wide) * 2)
+		[text-end] minmax(0, calc((var(--measure-wide) - var(--measure)) / 2))
+		[wide-end] minmax(var(--page-margin-narrow), 1fr) [full-end];
+}
+
+/* 預設：所有內文元素都走文字軌。
+   只有被 image-layout 外掛標記過的圖片區塊才會跳出去。 */
+.prose > * {
+	grid-column: text;
 }
 .prose h1,
 .prose h2,
@@ -463,14 +496,38 @@
 	letter-spacing: 0.01em;
 	/* 標題 1.1–1.3 */
 	line-height: var(--leading-heading);
-	margin: 2.4em 0 0.8em;
+}
+
+/* ── 段落間距：只用「上緣間距」────────────────────────────
+   .prose 改成 grid 之後，相鄰元素的上下 margin 不再互相抵銷
+   （margin collapsing 在 grid 容器裡不會發生）。如果還是上下都給值，
+   段落 1.4em ＋ 標題 2.4em 會相加變成 3.8em，整篇文章會鬆掉一大截。
+
+   所以間距一律改成「只設上緣」：兩個元素之間的距離，
+   完全由後面那個元素的 margin-block-start 單一決定，不會有相加問題。 */
+.prose > * {
+	margin-block: 0;
+}
+/* 預設間距（段落與段落之間） */
+.prose > * + * {
+	margin-block-start: 1.4em;
+}
+/* 標題前面留白多一點，把它跟上一段推開，讀者才看得出這是新的一節 */
+.prose > :is(h1, h2, h3, h4, h5, h6) {
+	margin-block-start: 2.4em;
+}
+.prose > h1 {
+	margin-block-start: 2.6em;
+}
+/* 標題和它自己底下的第一段要靠近，否則標題看起來像屬於上一節 */
+.prose > :is(h1, h2, h3, h4, h5, h6) + * {
+	margin-block-start: 0.8em;
 }
 /* 內文標題也走同一條 1.25 倍階梯。
    刻意壓得比頁面標題小：文章標題（.title-h1）才是這一頁的最高層級，
    內文裡的 H1 只是「章」，不該跟頁面標題一樣大。 */
 .prose h1 {
 	font-size: 1.5em;
-	margin-top: 2.6em;
 }
 .prose h2 {
 	font-size: 1.28em;
@@ -484,12 +541,9 @@
 	font-size: 1em;
 	letter-spacing: 0.06em;
 }
-/* 內文標題的第一個不需要上方那一大段留白 */
+/* 第一個元素不需要上方那一大段留白 */
 .prose > :first-child {
-	margin-top: 0;
-}
-.prose p {
-	margin: 0 0 1.4em;
+	margin-block-start: 0;
 }
 /* 粗體在單一字體的版面裡會破壞灰度，改為極淡底線強調 */
 .prose strong {
@@ -512,8 +566,13 @@
 }
 .prose ul,
 .prose ol {
-	margin: 0 0 1.5em;
 	padding-left: 1.3em;
+}
+.prose > :is(ul, ol) {
+	margin-block-start: 1.5em;
+}
+.prose > :is(ul, ol) + * {
+	margin-block-start: 1.5em;
 }
 .prose li {
 	margin: 0.35em 0;
@@ -524,8 +583,6 @@
 .prose blockquote {
 	border: 0;
 	padding: 0;
-	margin: 2.4em 0 2.4em;
-	padding-left: 0;
 	font-style: italic;
 	/* 引言不可以比內文的 H3 還大，否則層級會被引言蓋過去 */
 	font-size: 1.12em;
@@ -533,31 +590,137 @@
 	color: var(--color-app-gray-600);
 	text-indent: -0.4em;
 }
+.prose > blockquote,
+.prose > blockquote + * {
+	margin-block-start: 2.4em;
+}
 .prose hr {
 	border: 0;
 	border-top: 1px solid var(--color-app-gray-200);
-	margin: 3.5em auto;
+	margin-inline: auto;
 	width: 4rem;
+}
+.prose > hr,
+.prose > hr + * {
+	margin-block-start: 3.5em;
+}
+.prose > table,
+.prose > table + * {
+	margin-block-start: 2em;
 }
 /* 文章內的圖片：一律置中、單欄、齊頭，不做任何錯落或並排。
    2026-08-09：加上高度上限。直幅照片原本 width:100% 之後高度會
    衝到一個半螢幕，讀者得捲兩次才看得完一張圖；改成撞到 72vh
    就停下來、寬度自己按比例縮。這跟攝影集內頁用的是同一個數值。 */
+/* ─────────────────────────────────────────────
+   內文照片：三種寬度 ＋ 並排 ＋ 圖文並排
+   （由 src/remark-plugins/image-layout.mjs 依 alt 指令加上 class）
+
+   共通原則：一律不裁切。寬度用滿、高度撞到上限就自己按比例縮，
+   所以直幅照片會自動變窄——這是攝影集的做法，不是把每張照片
+   硬塞進同一個方框裡。
+   ───────────────────────────────────────────── */
 .prose img {
 	border-radius: 0;
 	display: block;
-	margin: 2.6em auto;
+	margin-inline: auto;
 	width: auto;
 	max-width: 100%;
+	/* 高度上限：直幅照片不能高到讀者要捲兩次才看得完 */
 	max-height: 72vh;
 }
+
+/* figure 的瀏覽器預設左右各有 40px 外距，會讓破欄圖對不齊，先歸零 */
 .prose figure {
-	margin: 2.6em 0;
+	margin-inline: 0;
 	text-align: center;
 }
-.prose figure img {
-	margin-block: 0;
+
+/* ── 三種寬度 ──────────────────────────────
+   text（預設）＝ 跟內文同寬，維持改版前的樣子
+   wide        ＝ 破欄，960px
+   full        ＝ 滿版，貼齊螢幕左右 */
+.prose > .fig--wide {
+	grid-column: wide;
 }
+.prose > .fig--full {
+	grid-column: full;
+}
+.prose > .fig--wide img {
+	max-height: 78vh;
+}
+.prose > .fig--full img {
+	width: 100%;
+	max-height: 88vh;
+}
+
+/* 破欄與滿版的上下留白比一般圖再大一點：
+   照片一旦超出文字欄，它就從「插圖」變成「一個段落」，
+   前後需要更多空白才不會擠到文字。 */
+.prose > .fig,
+.prose > .fig + * {
+	margin-block-start: 2.6em;
+}
+.prose > :is(.fig--wide, .fig--full, .figrow),
+.prose > :is(.fig--wide, .fig--full, .figrow) + * {
+	margin-block-start: clamp(2.75rem, 5vw, 4.5rem);
+}
+
+/* ── 兩張以上並排 ────────────────────────────
+   等高、不等寬、不裁切：每張照片的高度相同，寬度各自按原比例長，
+   這是攝影集裡「一組照片」的標準排法。放不下時自動換行堆疊，
+   所以手機上不需要另外寫斷點。 */
+.fig--cols-2 {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: flex-end;
+	gap: clamp(0.75rem, 1.6vw, 1.5rem);
+}
+.fig--cols-2 > img {
+	height: clamp(11rem, 30vw, 27rem);
+	width: auto;
+	max-width: 100%;
+	max-height: none;
+	flex: 0 1 auto;
+}
+.fig--cols-2 > figcaption {
+	flex-basis: 100%;
+}
+
+/* ── 圖文並排 ────────────────────────────────
+   左圖／右圖：照片與緊接著的那一段文字排成兩欄。
+   窄螢幕自動回到上下排——兩欄各半在手機上會讓行長只剩十幾個字。 */
+.prose > .figrow {
+	grid-column: wide;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(1.5rem, 4vw, 3.5rem);
+	align-items: center;
+}
+.figrow .fig {
+	margin: 0;
+}
+.figrow .fig img {
+	max-height: 62vh;
+}
+.figrow__text {
+	margin: 0;
+}
+/* 圖在右：DOM 順序仍是「圖、文」（讓沒有 CSS 時閱讀順序正確），
+   靠 order 把文字調到左邊。 */
+.figrow--right .figrow__text {
+	order: -1;
+}
+@media (max-width: 48rem) {
+	.prose > .figrow {
+		grid-template-columns: 1fr;
+	}
+	.figrow--right .figrow__text {
+		order: 0;
+	}
+}
+
 /* 圖說：次要文字下緣 13px，行高比正文緊一階 */
 .prose figcaption {
 	margin-top: 0.9em;
@@ -565,6 +728,11 @@
 	line-height: 1.6;
 	letter-spacing: 0.04em;
 	color: var(--color-app-gray-400);
+}
+/* 圖說跟著照片走：照片多寬，圖說就最多多寬，但不超過一個易讀行長 */
+.prose .fig__caption {
+	max-width: var(--measure);
+	margin-inline: auto;
 }
 .prose code {
 	padding: 2px 6px;

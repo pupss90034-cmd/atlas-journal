@@ -72,7 +72,9 @@ const PAGE_SIZE = 8;
 
 			<!-- 篩選：純文字，兩列，用細線與上方標題頁分開 -->
 			<section class="page-wide">
-				<div class="mx-auto max-w-6xl">
+				{/* 2026-08-11：寬度由 6xl 收到 4xl，與下方單欄目錄的左右邊界對齊。
+				    篩選列與它篩選的東西不對齊，會讓兩者看起來不是同一組。 */}
+				<div class="mx-auto max-w-4xl">
 					{
 						categories.length > 0 && (
 							<div class="flex flex-wrap justify-center gap-x-8 gap-y-3 border-t border-app-gray-200 py-5" id="category-filter">
@@ -102,20 +104,25 @@ const PAGE_SIZE = 8;
 				</div>
 			</section>
 
-			{/* 圖版：兩欄「齊頭齊尾」，鋪微灰區帶讓圖片浮在紙上。
+			{/* 目錄：單欄縱列，一列一篇，列與列之間用 1px 細線隔開。
 			    2026-08-09：拿掉原本偶數欄往下推的錯落（.stagger）。
 			    錯落適合作品集那種「隨意瀏覽」的版面；文章列表是一份
-			    要被掃讀的目錄，同一列的兩篇必須對齊，讀者才能用
-			    「一列＝一組」的方式往下讀，日期與標題也才對得起來。
-			    規則：文章相關的版面一律不做錯落。 */}
+			    要被掃讀的目錄。規則：文章相關的版面一律不做錯落。
+
+			    2026-08-11：兩欄圖版 → 單欄橫列（卡片內部改成圖左文右，
+			    在 BlogCard.astro）。兩欄的問題是同一屏要比較四個區塊，
+			    視線得在四個角落之間跳；單欄之後只剩一條由上往下的直線，
+			    「分類・日期 → 篇名 → 摘要」每一列都在同一個 X 位置起跑，
+			    掃讀成本最低。寬度同步由 5xl 收到 4xl——單欄再寬，
+			    摘要一行就會超過舒適的閱讀長度。 */}
 			<section class="band-tint page-wide pb-28 pt-20 md:pb-36 md:pt-28">
-				<div class="mx-auto max-w-5xl">
+				<div class="mx-auto max-w-4xl">
 					{
 						posts.length > 0 ? (
-							<div class="grid grid-cols-1 items-start gap-x-10 gap-y-14 sm:grid-cols-2 md:gap-x-14 md:gap-y-16" id="post-grid">
+							<div class="border-t border-app-gray-200" id="post-grid">
 								{posts.map((post) => (
 									<div
-										class="post-item"
+										class="post-item border-b border-app-gray-200 py-9 md:py-11"
 										data-category={getCategory(post)}
 										data-tags={(post.data.tags ?? []).join('|').toLowerCase()}
 										data-title={post.data.title.toLowerCase()}

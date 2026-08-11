@@ -130,14 +130,21 @@ export default function remarkRobustImages() {
 						if (part !== "") children.push({ type: "text", value: part });
 						continue;
 					}
-					const target = part.split("|")[0].trim();
+					const segments = part.split("|");
+					const target = segments[0].trim();
 					if (!IMAGE_EXT_RE.test(target)) {
 						// 不是圖片（例如 ![[某篇筆記]] 的內容嵌入），原樣留著，
 						// 交給 wikilink 外掛或當成純文字處理。
 						children.push({ type: "text", value: `![[${part}]]` });
 						continue;
 					}
-					children.push({ type: "image", url: target, alt: "", title: null });
+					// ![[照片.jpg|寬|圖說]]：| 後面的東西原封不動搬到 alt 上，
+					// 交給 image-layout 外掛去解讀版型指令與圖說。
+					// 例外：![[照片.jpg|300]] 是 Obsidian 內建的「顯示寬度」語法，
+					// 那是給 Obsidian 預覽用的，不是要給網站的文字，直接丟掉。
+					let alt = segments.slice(1).join("|").trim();
+					if (/^\d+(x\d+)?$/i.test(alt)) alt = "";
+					children.push({ type: "image", url: target, alt, title: null });
 					changed = true;
 				}
 			}
