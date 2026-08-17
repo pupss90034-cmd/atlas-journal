@@ -443,6 +443,154 @@
 }
 
 /* ─────────────────────────────────────────────
+   篩選工具（2026-08-17 新增）
+
+   兩種：首頁 Latest 用「一列文字」，Archive 用「下拉選單」。
+   兩種都遵守同一條規則——**選取狀態不換顏色，只轉深並加一條線**。
+   參考版型（quietpages）用的是圓角藥丸＋磚紅底色，那會變成這個
+   白紙墨字網站上唯一的色塊，所以只抄結構、不抄語彙。
+   ───────────────────────────────────────────── */
+
+/* 首頁 Latest 的分類列：純文字，選到的那個轉深並加底線 */
+.filter-text {
+	border-bottom: 1px solid transparent;
+	padding-bottom: 0.3em;
+	transition:
+		color 0.4s ease,
+		border-color 0.4s ease;
+}
+.filter-text:hover {
+	color: var(--color-app-ink);
+}
+.filter-text[data-active="true"] {
+	color: var(--color-app-ink);
+	border-bottom-color: var(--color-app-ink);
+}
+
+/* Archive 的下拉觸發鈕。用 <details><summary> 做，
+   所以要先關掉瀏覽器自己的三角形箭頭。 */
+.filter-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	border: 1px solid var(--color-app-gray-200);
+	padding: 0.8rem 1.1rem;
+	font-size: var(--text-micro);
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	line-height: 1;
+	color: var(--color-app-gray-500);
+	cursor: pointer;
+	list-style: none;
+	transition:
+		border-color 0.4s ease,
+		color 0.4s ease;
+}
+.filter-pill::-webkit-details-marker {
+	display: none;
+}
+.filter-pill:hover {
+	border-color: var(--color-app-gray-400);
+	color: var(--color-app-ink);
+}
+[data-filter-menu][open] > .filter-pill,
+[data-filter-menu][data-active] > .filter-pill {
+	border-color: var(--color-app-ink);
+	color: var(--color-app-ink);
+}
+.filter-pill-label {
+	color: var(--color-app-gray-400);
+}
+.filter-pill-value {
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--color-app-ink);
+}
+
+/* 下拉面板：白底 ＋ 1px 線。這個系統不用陰影製造層次，
+   靠「實心白底蓋住底下的內容」與外框把它讀成獨立的一層。 */
+.filter-popover {
+	position: absolute;
+	left: 0;
+	top: calc(100% + 0.5rem);
+	z-index: 40;
+	display: grid;
+	gap: 1px;
+	min-width: 14rem;
+	max-width: min(20rem, calc(100vw - 2.5rem));
+	max-height: min(22rem, 60svh);
+	overflow-y: auto;
+	border: 1px solid var(--color-app-gray-400);
+	background: var(--color-app-surface);
+	padding: 0.4rem;
+}
+
+/* 螢幕很窄時面板改成貼齊整條篩選列，否則長標籤名會被推出畫面外 */
+@media (width < 40rem) {
+	[data-filter-menu] {
+		position: static;
+	}
+	.filter-popover {
+		right: 0;
+		min-width: 0;
+		max-width: none;
+	}
+}
+
+/* 選單裡的一列：左邊名稱、右邊「選了會看到幾篇」 */
+.facet {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	width: 100%;
+	padding: 0.6rem 0.7rem;
+	font-size: var(--text-caption);
+	line-height: 1.5;
+	text-align: left;
+	color: var(--color-app-gray-500);
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease;
+}
+.facet:hover,
+.facet[aria-current="true"] {
+	background: var(--color-app-gray-100);
+	color: var(--color-app-ink);
+}
+/* 選了會變成 0 篇的選項：變淡但不移除。選單長度固定，
+   滑鼠移動時才不會有選項在指標底下忽然消失。 */
+.facet[data-empty] {
+	opacity: 0.38;
+}
+.facet-label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.facet-count {
+	font-size: var(--text-micro);
+	letter-spacing: 0.08em;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-app-gray-400);
+}
+
+.filter-reset {
+	border-bottom: 1px solid transparent;
+	padding-bottom: 0.3em;
+	transition:
+		color 0.4s ease,
+		border-color 0.4s ease;
+}
+.filter-reset:hover {
+	color: var(--color-app-ink);
+	border-bottom-color: var(--color-app-ink);
+}
+
+/* ─────────────────────────────────────────────
    文章內文（Markdown / MDX）
    同字體、同段落樣式：不使用粗體與彩色強調
    ───────────────────────────────────────────── */
@@ -677,15 +825,28 @@
 	align-items: flex-end;
 	gap: clamp(0.75rem, 1.6vw, 1.5rem);
 }
+/* 2026-08-17 修正：原本是「固定高度、寬度自己長」，高度用 30vw 算。
+   問題是照片欄最寬只有 960px，但 30vw 在 1440px 螢幕上是 432px 高——
+   兩張橫幅照片加起來 1296px，放不下就自動換行，於是「並排」在桌機上
+   其實一直是上下排。
+   改成「各佔一半欄寬、高度按原比例長」：兩張永遠並排、永遠不裁切，
+   底緣對齊。手機（<48rem）改回上下排，因為各半在手機上等於兩張郵票。 */
 .fig--cols-2 > img {
-	height: clamp(11rem, 30vw, 27rem);
-	width: auto;
-	max-width: 100%;
-	max-height: none;
-	flex: 0 1 auto;
+	flex: 1 1 0;
+	min-width: 0;
+	width: 100%;
+	height: auto;
+	max-width: none;
+	max-height: 30rem;
+	object-fit: contain;
 }
 .fig--cols-2 > figcaption {
 	flex-basis: 100%;
+}
+@media (max-width: 48rem) {
+	.fig--cols-2 > img {
+		flex-basis: 100%;
+	}
 }
 
 /* ── 圖文並排 ────────────────────────────────
@@ -701,23 +862,96 @@
 .figrow .fig {
 	margin: 0;
 }
+/* 直幅照片在窄欄裡不硬撐滿寬（撐滿會高到把旁邊的文字擠成一長條），
+   一律「寬度用滿、高度撞到上限就自己按比例縮」，不裁切。 */
 .figrow .fig img {
 	max-height: 62vh;
 }
 .figrow__text {
 	margin: 0;
+	min-width: 0;
 }
 /* 圖在右：DOM 順序仍是「圖、文」（讓沒有 CSS 時閱讀順序正確），
    靠 order 把文字調到左邊。 */
 .figrow--right .figrow__text {
 	order: -1;
 }
+
+/* ── 圖文欄寬比例（2026-08-17 新增）──────────────────────────
+   一半一半不是永遠對的：照片是主角、文字只是一句註解時，
+   照片應該佔多一點；反過來文字是主角、照片只是佐證時，
+   照片應該讓位。所以指令多了「大」與「小」兩種比例。
+
+     左圖／右圖      1 : 1     （預設，勢均力敵）
+     左圖大／右圖大  1.4 : 1   （照片是主角）
+     左圖小／右圖小  1 : 1.4   （文字是主角）
+
+   注意 DOM 順序永遠是「圖、文」，圖在右時是用 order 把文字
+   調到第一軌，所以下面「圖在右」的比例要左右對調著寫。 */
+.prose > .figrow--left.figrow--size-lg {
+	grid-template-columns: 1.4fr 1fr;
+}
+.prose > .figrow--left.figrow--size-sm {
+	grid-template-columns: 1fr 1.4fr;
+}
+.prose > .figrow--right.figrow--size-lg {
+	grid-template-columns: 1fr 1.4fr;
+}
+.prose > .figrow--right.figrow--size-sm {
+	grid-template-columns: 1.4fr 1fr;
+}
+
+/* ── 圖旁邊那一欄可以放不只一段（2026-08-17）────────────────
+   以前只吃緊接著的一個段落，所以「圖 ＋ 小標題 ＋ 兩段字」做不到。
+   現在那一欄是一個真正的區塊，裡面可以有小標題、段落、清單。
+   .prose 的間距規則只作用在它的直接子層，所以這一欄要自己定義。 */
+.figrow__text > * {
+	margin-block: 0;
+}
+.figrow__text > * + * {
+	margin-block-start: 1.2em;
+}
+.figrow__text > :is(h1, h2, h3, h4, h5, h6) {
+	font-family: var(--font-serif);
+	font-weight: 400;
+	color: var(--color-app-ink);
+	line-height: var(--leading-heading);
+	letter-spacing: 0.01em;
+}
+.figrow__text > h1,
+.figrow__text > h2 {
+	font-size: 1.28em;
+}
+.figrow__text > h3 {
+	font-size: 1.12em;
+}
+.figrow__text > :is(h4, h5, h6) {
+	font-size: 1em;
+	letter-spacing: 0.06em;
+}
+/* 小標題跟它底下的第一段要靠近，否則看起來像屬於上一段 */
+.figrow__text > :is(h1, h2, h3, h4, h5, h6) + * {
+	margin-block-start: 0.7em;
+}
+/* 文字比照片長很多時，置中對齊會讓照片浮在中間、上緣對不到任何東西。
+   超過兩段就改成上緣對齊，照片與第一行文字切齊。 */
+.figrow:has(.figrow__text > * + * + *) {
+	align-items: start;
+}
+
 @media (max-width: 48rem) {
-	.prose > .figrow {
+	.prose > .figrow,
+	.prose > .figrow--left.figrow--size-lg,
+	.prose > .figrow--left.figrow--size-sm,
+	.prose > .figrow--right.figrow--size-lg,
+	.prose > .figrow--right.figrow--size-sm {
 		grid-template-columns: 1fr;
 	}
 	.figrow--right .figrow__text {
 		order: 0;
+	}
+	.figrow .fig img {
+		max-height: 72vh;
 	}
 }
 

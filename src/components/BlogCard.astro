@@ -4,68 +4,120 @@ import { Image } from 'astro:assets';
 import FormattedDate from './FormattedDate.astro';
 import defaultCover from '../assets/site/default-cover.jpg';
 import { resolveHeroImage } from '../utils/heroImage';
-import { getCategory } from '../utils/posts';
+import { getCategory, getReadingMinutes } from '../utils/posts';
+
+// ── 2026-08-17：改成「一個元件、兩種版型」──────────────────────
+// 參考 quietpages 的 PostCard。它的作法是同一份資料在不同頁面用不同
+// 排法，但**眉標、標題、摘要、meta 的順序永遠一樣**——讀者在首頁學會
+// 怎麼讀一張卡片之後，到了 Archive 頁不用重學。
+//
+//   variant="grid"（首頁 Latest 三欄格線）
+//     圖在上（16:10）→ 分類 · 日期 → 篇名 → 摘要兩行 → 閱讀時間
+//
+//   variant="list"（/blog Archive 一列一篇）
+//     文字在左、方形縮圖在右 → 分類 · 日期 → 篇名 → 摘要 → 閱讀時間
+//
+// 兩種版型的資訊順序相同，差別只有「圖放哪裡、字多大」。
+//
+// data-* 屬性是給 /blog 的搜尋與篩選用的（篩選是前端跑的，
+// 靠這幾個屬性決定一張卡片要不要顯示），首頁的分類篩選也共用同一組。
 
 interface Props {
 	post: CollectionEntry<'blog'>;
+	variant?: 'grid' | 'list';
+	showReadingTime?: boolean;
+	hidden?: boolean;
 }
 
-const { post } = Astro.props;
-const { title, description, pubDate, heroImage } = post.data;
+const { post, variant = 'grid', showReadingTime = true, hidden = false } = Astro.props;
+const { title, description, pubDate, heroImage, tags } = post.data;
 const cover = resolveHeroImage(heroImage) ?? defaultCover;
 const category = getCategory(post);
+const minutes = getReadingMinutes(post);
 
-// 改版重點：不再是「卡片」。沒有外框、沒有底色、沒有標籤藥丸，
-// 就是一張圖版加旁邊的圖說（分類・日期 / 標題 / 一句話）。
-//
-// 2026-08-07：比例由 4:5 直幅改回 3:2 橫幅。
-// 直幅在總覽頁佔的垂直高度太大，一屏只讀得到兩篇，整頁變成翻不完的圖牆；
-// 這裡的圖是「索引」不是「作品」，作品要看完整的請進攝影集頁。
-//
-// ── 2026-08-11：兩欄格線 → 單欄橫列（圖左、文右）─────────────
-// 原因：兩欄格線一次要比較四樣東西（左圖、左字、右圖、右字），
-// 眼睛得在四個角落之間跳。改成一列一篇之後，視線只剩一條
-// 由上往下的直線，圖是「認路用的縮圖」、字是「要讀的內容」，
-// 職責分開，掃讀速度快很多。
-//
-// 同時在標題上方補上「分類・日期」眉標。以前只有日期，
-// 讀者得靠篇名猜這篇屬於哪一區；分類是這個網站最主要的
-// 導覽軸線（資料夾＝分類），它應該跟日期站在同一排。
-//
-// 手機維持圖上文下——寬度不夠時橫列會把圖擠成郵票大小。
+// 搜尋用的字串：篇名 ＋ 摘要 ＋ 分類 ＋ 標籤，全部轉小寫先算好，
+// 瀏覽器那邊每按一個鍵只要做一次 includes()，不用重組字串。
+const searchable = [title, description, category, ...(tags ?? [])].join(' ').toLowerCase();
 ---
 
-<a href={`/blog/${post.id}/`} class="group block">
-	<article class="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] sm:items-start md:gap-x-12">
-		<div class="aspect-[3/2] w-full overflow-hidden bg-app-gray-100">
-			<Image
-				src={cover}
-				alt=""
-				class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
-				widths={[320, 480, 720]}
-				sizes="(min-width: 640px) 16rem, 92vw"
-			/>
-		</div>
+{
+	variant === 'list' ? (
+		<article
+			class="group grid grid-cols-1 gap-x-10 gap-y-5 border-b border-app-gray-200 py-9 sm:grid-cols-[minmax(0,1fr)_13.75rem] md:py-11"
+			data-post-card
+			data-category={category}
+			data-tags={(tags ?? []).join('|').toLowerCase()}
+			data-search={searchable}
+			hidden={hidden}
+		>
+			<div class="order-2 sm:order-1">
+				<p class="label">
+					{category && (
+						<>
+							{category}
+							<span class="mx-1.5 text-app-gray-300">·</span>
+						</>
+					)}
+					<FormattedDate date={pubDate} />
+				</p>
+				<a href={`/blog/${post.id}/`} class="mt-3 block">
+					<h2 class="title-h3 max-w-[28ch] text-app-ink transition-opacity duration-500 group-hover:opacity-60">
+						{title}
+					</h2>
+				</a>
+				<p class="body-small mt-3 line-clamp-2 max-w-[46ch]">{description}</p>
+				{showReadingTime && <p class="label mt-5">{minutes} MIN READ</p>}
+			</div>
 
-		{/* 層級：MICRO 分類・日期 → H3 篇名 → SMALL 摘要。
-		    篇名固定 H3，不隨欄寬改變——同一頁的所有篇名一樣大，
-		    讀者才不會誤以為字比較大的那篇比較重要。 */}
-		<div class="transition-opacity duration-500 group-hover:opacity-60">
-			<p class="label">
-				{category && (
-					<>
-						{category}
-						<span class="mx-1.5 text-app-gray-300">·</span>
-					</>
-				)}
-				<FormattedDate date={pubDate} />
-			</p>
-			<h3 class="title-h3 mt-3 max-w-[28ch] text-app-ink">
-				{title}
-			</h3>
-			<p class="body-small mt-3 line-clamp-2 max-w-[46ch]">
-				{description}
-			</p>
-		</div>
-	</article>
-</a>
+			<a href={`/blog/${post.id}/`} class="order-1 block sm:order-2" aria-label={`閱讀：${title}`}>
+				<div class="aspect-[3/2] w-full overflow-hidden bg-app-gray-100 sm:aspect-square">
+					<Image
+						src={cover}
+						alt=""
+						class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
+						widths={[280, 440, 660]}
+						sizes="(min-width: 640px) 13.75rem, 92vw"
+					/>
+				</div>
+			</a>
+		</article>
+	) : (
+		<article
+			class="group"
+			data-post-card
+			data-category={category}
+			data-tags={(tags ?? []).join('|').toLowerCase()}
+			data-search={searchable}
+			hidden={hidden}
+		>
+			<a href={`/blog/${post.id}/`} class="block" aria-label={`閱讀：${title}`}>
+				<div class="aspect-[16/10] w-full overflow-hidden bg-app-gray-100">
+					<Image
+						src={cover}
+						alt=""
+						class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
+						widths={[320, 480, 720]}
+						sizes="(min-width: 1024px) 22rem, (min-width: 640px) 45vw, 92vw"
+					/>
+				</div>
+			</a>
+
+			<div class="mt-5 transition-opacity duration-500 group-hover:opacity-60">
+				<p class="label">
+					{category && (
+						<>
+							{category}
+							<span class="mx-1.5 text-app-gray-300">·</span>
+						</>
+					)}
+					<FormattedDate date={pubDate} />
+				</p>
+				<a href={`/blog/${post.id}/`} class="mt-3 block">
+					<h3 class="title-h4 max-w-[26ch] text-app-ink">{title}</h3>
+				</a>
+				<p class="body-small mt-3 line-clamp-2">{description}</p>
+				{showReadingTime && <p class="label mt-4">{minutes} MIN READ</p>}
+			</div>
+		</article>
+	)
+}

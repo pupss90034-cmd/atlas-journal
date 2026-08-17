@@ -24,14 +24,32 @@ const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header transparent />
 		<main class="flex-1">
+			{/* ── 首頁區塊順序（2026-08-17 依 quietpages 的編排邏輯重排）──
+			    改動：文章從第四區移到第二區，直接接在封面大圖後面。
+
+			    原本的順序是「我是誰 → 我去過哪裡 → 我寫了什麼」——那是
+			    自我介紹的順序，適合一個認識你的人。但第一次進站的讀者要的
+			    是「這個網站有什麼可以讀」，先看三段自我介紹才看到第一篇文章，
+			    很多人在那之前就離開了。
+
+			    新的順序讓文章先出現，自我介紹往後移：
+
+			      Hero            封面大圖
+			      LatestArticles  頭條一篇 ＋ 三欄格線（← quietpages 的排法）
+			      PhotoGallery    精選攝影集
+			      About           關於我
+			      TravelMap       去過的地方
+			      Consulting      顧問服務 ＋ 販售包
+			      Newsletter      電子報
+
+			    「先給東西看，再說自己是誰」——攝影集接在文章後面，
+			    因為它同樣是「作品」；關於我與地圖是背景資料，讀者對內容
+			    產生興趣之後才會想知道，所以排在後面、電子報之前。 */}
 			<Hero />
-			<About />
-			{/* 足跡地圖：接在「關於我」後面、文章前面。
-			    「我是誰」→「我去過哪裡」→「我寫了什麼」，
-			    地圖是這條敘事線的中間那一段，不是篩選工具。 */}
-			<TravelMap />
 			<LatestArticles />
 			<PhotoGallery />
+			<About />
+			<TravelMap />
 			<Consulting />
 			<Newsletter />
 		</main>

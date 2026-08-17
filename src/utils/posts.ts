@@ -73,3 +73,31 @@ export function getCategories(posts: CollectionEntry<"blog">[]): string[] {
 	const set = new Set(posts.map(getCategory).filter((c) => c !== ""));
 	return [...set].sort((a, b) => a.localeCompare(b, "zh-Hant"));
 }
+
+/**
+ * 估算閱讀時間（分鐘）。
+ *
+ * 2026-08-17 新增，給首頁頭條與 /blog 列表的 meta 那一行用。
+ *
+ * 中文與英文的閱讀速度差很多，所以分開算再相加：
+ *   中日韓文字：每分鐘 400 字
+ *   英文單字：  每分鐘 220 字
+ * 圖片語法、程式碼區塊、`%% 註解 %%` 都不算。最少顯示 1 分鐘。
+ *
+ * 這個數字只是「這篇要花多久」的粗略提示，不需要精準——
+ * 讀者在意的是 3 分鐘跟 15 分鐘的差別，不是 3 跟 4 的差別。
+ * 不想在網站上顯示它：把「編輯/頁面-文章總覽.md」與
+ * 「編輯/首頁-最新文章.md」的 showReadingTime 改成 false。
+ */
+export function getReadingMinutes(post: CollectionEntry<"blog">): number {
+	const text = (post.body ?? "")
+		.replace(/```[\s\S]*?```/g, "") // 程式碼區塊
+		.replace(/%%[\s\S]*?%%/g, "") // Obsidian 註解
+		.replace(/!?\[\[[^\]]*\]\]/g, "") // ![[照片.jpg]] / [[筆記]]
+		.replace(/!?\[[^\]]*\]\([^)]*\)/g, ""); // ![圖說](路徑)
+
+	const cjk = (text.match(/[㐀-䶿一-鿿豈-﫿぀-ヿ]/g) ?? []).length;
+	const words = (text.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) ?? []).length;
+
+	return Math.max(1, Math.round(cjk / 400 + words / 220));
+}

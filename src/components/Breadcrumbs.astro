@@ -1,0 +1,35 @@
+---
+import Icon from './Icon.astro';
+
+// 麵包屑：目前只用在 /blog（Archive）頁最上方。
+// 用最小的字級（.label ＝ 12px 大字距），因為它是「你在哪裡」的提示，
+// 不是內容——它出現在 H1 上方，但層級比 H1 低得多。
+
+interface Crumb {
+	label: string;
+	to?: string;
+}
+
+interface Props {
+	items: Crumb[];
+}
+
+const { items = [] } = Astro.props;
+---
+
+<nav aria-label="麵包屑" class="flex flex-wrap items-center gap-x-2 gap-y-1">
+	{
+		items.map((item, index) => (
+			<span class="flex items-center gap-x-2">
+				{index > 0 && <Icon name="chevron-right" class="h-3 w-3 text-app-gray-300" />}
+				{item.to ? (
+					<a href={item.to} class="label transition-colors hover:text-app-ink">
+						{item.label}
+					</a>
+				) : (
+					<span class="label text-app-ink">{item.label}</span>
+				)}
+			</span>
+		))
+	}
+</nav>

@@ -201,13 +201,72 @@ const homeNewsletter = defineCollection({
 	// 內文（第一個 ## 之前的段落）＝ 標題下方的短介紹文字
 });
 
+// 首頁文章區（2026-08-17 新增，對應 src/components/home/LatestArticles.astro）
+//
+// 這一區以前完全寫死在程式碼裡：「Latest」「From the Journal」「All Entries」
+// 這幾個字改不了，頭條永遠是最新那篇，也沒辦法決定格線要露幾篇。
+// 依 quietpages 的編排改版之後，全部搬到 Obsidian。
+const homeLatest = defineCollection({
+	loader: glob({ base: "./src/content/編輯", pattern: "首頁-最新文章.md" }),
+	schema: z.object({
+		// ── 頭條那一段 ──
+		featuredEyebrow: z.string().default("Featured"),
+		archiveLinkLabel: z.string().default("All Writing"),
+		featuredCtaLabel: z.string().default("Read the essay"),
+		// 想固定某一篇當頭條就填它的標題（打幾個關鍵字就行，用「包含」比對）。
+		// 留空 ＝ 永遠用最新發佈的那一篇。填了但找不到也只會退回最新那篇，不會壞掉。
+		featuredTitle: z.preprocess(
+			(val) => (val === null || val === undefined ? "" : val),
+			z.string().default(""),
+		),
+		// ── 底下的格線那一段 ──
+		eyebrow: z.string().default("Latest"),
+		heading: z.string().default("From the Journal"),
+		allLabel: z.string().default("All"),
+		ctaLabel: z.string().default("Browse the Archive"),
+		emptyText: z.string().default("這個分類目前還沒有文章。"),
+		// 格線最多露出幾篇。填 3 的倍數（3／6／9）版面最整齊。
+		gridCount: z.preprocess(
+			(val) => (val === null || val === undefined || val === "" ? 6 : val),
+			z.coerce.number().int().min(1).catch(6),
+		),
+		// 要不要顯示「X MIN READ」
+		showReadingTime: z.preprocess(
+			(val) => (val === null || val === undefined || val === "" ? true : val),
+			z.coerce.boolean().catch(true),
+		),
+	}),
+});
+
 // 文章總覽（/blog）與攝影集總覽（/portfolio）的頁面文字
 // 2026-08-10：這兩頁的大標與下方的引導小字原本寫死在程式碼裡，
 // /blog 甚至是拿網站簡介來充數，等於沒有為這一頁寫過字。
+//
+// 2026-08-17：/blog 改版成 Archive（搜尋 ＋ 分類／標籤下拉 ＋ 載入更多）之後，
+// 那些工具上的字樣也一起搬進來。除了 heading 以外全部是選填，
+// 所以「頁面-攝影集總覽.md」不用跟著加這些欄位也不會壞。
 const pageIntros = defineCollection({
 	loader: glob({ base: "./src/content/編輯", pattern: "頁面-*.md" }),
 	schema: z.object({
 		heading: z.string(),
+		// 以下只有 /blog（Archive）會用到
+		searchPlaceholder: z.string().optional(),
+		categoryLabel: z.string().optional(),
+		tagLabel: z.string().optional(),
+		allCategoriesLabel: z.string().optional(),
+		anyTagLabel: z.string().optional(),
+		loadMoreLabel: z.string().optional(),
+		resetLabel: z.string().optional(),
+		emptyText: z.string().optional(),
+		// 每按一次「載入更多」多顯示幾篇
+		pageSize: z.preprocess(
+			(val) => (val === null || val === undefined || val === "" ? undefined : val),
+			z.coerce.number().int().min(1).catch(8).optional(),
+		),
+		showReadingTime: z.preprocess(
+			(val) => (val === null || val === undefined || val === "" ? undefined : val),
+			z.coerce.boolean().catch(true).optional(),
+		),
 	}),
 	// 內文（第一個 ## 之前的段落）＝ 大標題下方的引導小字
 });
@@ -319,6 +378,7 @@ export const collections = {
 	homeProducts,
 	homeNewsletter,
 	homeGallery,
+	homeLatest,
 	pageIntros,
 	tagMap,
 	aboutPage,

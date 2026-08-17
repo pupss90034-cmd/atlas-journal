@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "首頁-Hero.md",
+                "file": "首頁-顧問服務.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "首頁-Hero"
+              "title": "首頁-顧問服務"
             }
           }
         ]
@@ -185,19 +185,21 @@
   },
   "active": "315b3b06dee38166",
   "lastOpenFiles": [
-    "網站設定.md",
+    "首頁-最新文章.md",
+    "首頁-電子報.md",
+    "首頁-關於我.md",
+    "首頁-販售包.md",
+    "使用說明.md",
     "About頁面（about 頁面的完整內文）.md",
-    "首頁-顧問服務.md",
-    "首頁-攝影集.md",
     "攝影集/07-La Grotte de Glace La Grave La Meije.md",
     "攝影集/02-建築光影.md",
     "攝影集/01-巴黎地標.md",
-    "首頁-關於我.md",
-    "使用說明.md",
-    "首頁-Hero.md",
     "圖片/hero-cove.jpg",
     "圖片/about-portrait.jpg",
-    "圖片/about-portrait.jpg",
+    "首頁-Hero.md",
+    "網站設定.md",
+    "首頁-顧問服務.md",
+    "首頁-攝影集.md",
     "攝影集/06-細節與自然.md",
     "攝影集/05-餐桌時光.md",
     "攝影集/04-南法巷弄.md",

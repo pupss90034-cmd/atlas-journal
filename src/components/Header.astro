@@ -76,7 +76,9 @@ const popularSearches =
 			type="button"
 			aria-label="開啟選單"
 			aria-expanded="false"
-			class="header-link label w-12 text-right"
+			{/* 2026-08-17：w-12 太窄，「MENU」加上 .label 的 0.28em 字距之後
+			    放不下，在手機上被折成「MEN / U」。改成內容多寬就多寬、不換行。 */}
+			class="header-link label shrink-0 whitespace-nowrap text-right"
 		>
 			Menu
 		</button>

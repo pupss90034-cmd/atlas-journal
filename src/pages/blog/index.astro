@@ -2,353 +2,435 @@
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import BlogCard from '../../components/BlogCard.astro';
+import Icon from '../../components/Icon.astro';
 import { getCollection } from 'astro:content';
 import { getSortedPosts, getCategory, getCategories } from '../../utils/posts';
 import { parseEditableBlock } from '../../utils/editableBody';
+
+// ══════════════════════════════════════════════════════════════════
+// Archive（/blog）── 2026-08-17 依 quietpages 的 archive 頁重寫
+//
+// 這一頁現在是「一個可以查東西的檔案室」，不再是「一份從頭捲到尾的目錄」。
+// 三件工具由上而下排成一條線：
+//
+//   ① 搜尋框    打字即時過濾（篇名、摘要、分類、標籤都會找）
+//   ② 兩個下拉  分類／標籤。每一個選項右邊顯示「選了它會看到幾篇」，
+//                而且那個數字是**跟著另一個篩選一起算的**——例如已經選了
+//                分類「旅行隨記」，標籤選單裡的數字就只算那個分類裡的篇數。
+//                會變成 0 的選項不會消失，只會變淡（選單長度不變，
+//                滑鼠不會因為選項忽然變少而點錯）。
+//   ③ Load more 每次多載 pageSize 篇，並顯示「第 X / Y 頁」。
+//
+// 三樣工具的狀態都寫進網址（?q=&cat=&tag=&page=），所以：
+//   · 篩完的結果可以直接複製網址分享
+//   · 按瀏覽器的「上一頁」會回到上一個篩選狀態，不會整個跳回首頁
+//   · 從文章內頁點標籤進來（/blog?tag=法國）會自動套用那個標籤
+//
+// 沒有 JavaScript 時：搜尋框與 Load more 不動作，但選單裡每一列都是
+// 真的連結（/blog?cat=…），所有文章也全部原樣列出——一頁仍然可用。
+//
+// 語彙上刻意**不照抄** quietpages 的圓角藥丸與磚紅強調色，維持這個網站
+// 的單色系統：方角、1px 灰線、選取狀態只靠墨色深淺與一條底線。
+// 版面結構、互動邏輯、資訊順序則完全照抄。
+//
+// 頁面上的文字（大標、引導小字、按鈕字樣、每頁篇數）都在 Obsidian 的
+// 「編輯/頁面-文章總覽.md」裡改。
+// ══════════════════════════════════════════════════════════════════
 
 const [siteSettings] = await getCollection('siteSettings');
 const SITE_TITLE = siteSettings?.data.title ?? '';
 const SITE_DESCRIPTION = siteSettings?.data.description ?? '';
 
-// 2026-08-10：這一頁的大標與底下的引導小字改成從 Obsidian 編輯
-//（編輯/頁面-文章總覽.md）。以前標題寫死成 Journal，小字直接拿
-// 網站簡介充數——等於這一頁從來沒有被寫過字。
 const introEntry = (await getCollection('pageIntros')).find((e) =>
 	(e.filePath ?? e.id).includes('文章總覽'),
 );
-const pageHeading = introEntry?.data.heading ?? 'Journal';
+const pageHeading = introEntry?.data.heading ?? 'Archive';
 const pageIntro = parseEditableBlock(introEntry?.body).intro || SITE_DESCRIPTION;
+
+const searchPlaceholder = introEntry?.data.searchPlaceholder ?? '搜尋文章⋯';
+const categoryLabel = introEntry?.data.categoryLabel ?? '分類';
+const tagLabel = introEntry?.data.tagLabel ?? '標籤';
+const allCategoriesLabel = introEntry?.data.allCategoriesLabel ?? '全部';
+const anyTagLabel = introEntry?.data.anyTagLabel ?? '不限';
+const loadMoreLabel = introEntry?.data.loadMoreLabel ?? '載入更多';
+const resetLabel = introEntry?.data.resetLabel ?? '清除篩選';
+const emptyText = introEntry?.data.emptyText ?? '沒有符合的文章，換個關鍵字或清除篩選試試。';
+const pageSize = introEntry?.data.pageSize ?? 8;
+const showReadingTime = introEntry?.data.showReadingTime ?? true;
 
 const posts = await getSortedPosts();
 
-// 分類＝文章所在的資料夾，但**脫掉排序前綴**：Obsidian 裡叫「A - 旅行隨記」，
-// 網站上顯示「旅行隨記」。那個 A 是你用來排側邊欄順序的，讀者不需要看到。
-// 邏輯在 src/utils/posts.ts 的 getCategory()。
-const categories = getCategories(posts);
-
-// 標籤＝每篇文章 frontmatter 裡的 tags 清單，動態算出來的。
-// 之後在 Obsidian 裡新增、改名、刪除標籤，這裡的清單跟篩選都會自動更新。
+// 分類＝文章所在的資料夾（脫掉「A - 」這種排序前綴，見 src/utils/posts.ts）。
+// 標籤＝每篇 frontmatter 的 tags，動態算出來，在 Obsidian 新增標籤這裡就會多一項。
 //
-// 2026-08-10 傍晚：標籤退回純文字列。稍早改成的世界地圖搬去首頁了
-//（src/components/home/TravelMap.astro）。原因是這兩件事目的不同：
-// 這一頁的標籤是**篩選工具**，讀者要的是一眼掃完、馬上點到；
-// 地圖是**自我介紹**，屬於首頁。工具就該長得像工具。
-const tags = [...new Set(posts.flatMap((post) => post.data.tags ?? []))].sort((a, b) =>
-	a.localeCompare(b, 'zh-Hant'),
-);
+// 兩份選項都先在建置時算好篇數：**沒有任何文章的選項直接不列出來**，
+// 這樣任何一個選項點下去都不會是死路。有 JavaScript 時這些數字會被
+// 前端依當下的其他篩選重算（見下方 renderFacets）。
+const categoryOptions = getCategories(posts)
+	.map((name) => ({ name, count: posts.filter((post) => getCategory(post) === name).length }))
+	.filter((option) => option.count > 0);
 
-// 版面：書名頁（中軸）＋兩欄圖版。
-// 原本是三欄卡片格線，三欄會把圖壓得太小、讀起來像列表頁；
-// 改成兩欄大圖，並把分類／標籤篩選改成純文字列，去掉所有藥丸按鈕。
-//
-// 2026-08-07：圖版整體縮小（max-w-6xl → 5xl，卡片同步改橫幅），
-// 並加入每頁 8 篇的分頁。分頁做在前端而不是拆成 /blog/2/，
-// 因為分類與標籤篩選也是前端跑的——如果分頁在後端，
-// 篩選就只會作用在當前這 8 篇上，等於壞掉。
-const PAGE_SIZE = 8;
+const tagOptions = [...new Set(posts.flatMap((post) => post.data.tags ?? []))]
+	.sort((a, b) => a.localeCompare(b, 'zh-Hant'))
+	.map((name) => ({ name, count: posts.filter((post) => (post.data.tags ?? []).includes(name)).length }))
+	.filter((option) => option.count > 0);
 ---
 
 <!doctype html>
 <html lang="zh-Hant">
 	<head>
-		<BaseHead title={`Journal — ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<BaseHead title={`${pageHeading} — ${SITE_TITLE}`} description={pageIntro} />
 	</head>
 	<body class="flex min-h-screen flex-col bg-app-body text-app-text">
 		<Header />
 		<main class="flex-1">
-			<!-- 書名頁：中軸 -->
-			<section class="page-wide pb-14 pt-40 md:pb-20 md:pt-52">
-				<div class="axis">
-					<!-- 眉標放「共幾篇」而不是重複標題本身，避免同一個字出現兩次 -->
-					<p class="label">{String(posts.length).padStart(2, '0')} Entries</p>
+			<div class="page-wide pb-28 pt-32 md:pb-36 md:pt-40">
+				<div
+					class="mx-auto max-w-4xl"
+					data-archive
+					data-page-size={String(pageSize)}
+					data-label-all={allCategoriesLabel}
+					data-label-any={anyTagLabel}
+					data-label-more={loadMoreLabel}
+				>
+					<Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: pageHeading }]} />
+
 					<h1 class="title-h1 mt-7 text-app-ink">{pageHeading}</h1>
-					<p class="body-small mx-auto mt-6 max-w-[34ch]">
-						{pageIntro}
-					</p>
-					<p id="search-status" class="label mx-auto mt-8 hidden text-app-ink"></p>
-				</div>
-			</section>
+					<p class="body-small mt-5 max-w-[42ch]">{pageIntro}</p>
 
-			<!-- 篩選：純文字，兩列，用細線與上方標題頁分開 -->
-			<section class="page-wide">
-				{/* 2026-08-11：寬度由 6xl 收到 4xl，與下方單欄目錄的左右邊界對齊。
-				    篩選列與它篩選的東西不對齊，會讓兩者看起來不是同一組。 */}
-				<div class="mx-auto max-w-4xl">
-					{
-						categories.length > 0 && (
-							<div class="flex flex-wrap justify-center gap-x-8 gap-y-3 border-t border-app-gray-200 py-5" id="category-filter">
-								<button type="button" data-category="" class="filter-btn label" data-active="true">
-									All
-								</button>
-								{categories.map((category) => (
-									<button type="button" data-category={category} class="filter-btn label">
-										{category}
-									</button>
-								))}
-							</div>
-						)
-					}
-
-					{
-						tags.length > 0 && (
-							<div class="flex flex-wrap items-baseline justify-center gap-x-7 gap-y-3 border-y border-app-gray-200 py-5" id="tag-filter">
-								{tags.map((tag) => (
-									<button type="button" data-tag={tag} class="tag-btn label">
-										{tag}
-									</button>
-								))}
-							</div>
-						)
-					}
-				</div>
-			</section>
-
-			{/* 目錄：單欄縱列，一列一篇，列與列之間用 1px 細線隔開。
-			    2026-08-09：拿掉原本偶數欄往下推的錯落（.stagger）。
-			    錯落適合作品集那種「隨意瀏覽」的版面；文章列表是一份
-			    要被掃讀的目錄。規則：文章相關的版面一律不做錯落。
-
-			    2026-08-11：兩欄圖版 → 單欄橫列（卡片內部改成圖左文右，
-			    在 BlogCard.astro）。兩欄的問題是同一屏要比較四個區塊，
-			    視線得在四個角落之間跳；單欄之後只剩一條由上往下的直線，
-			    「分類・日期 → 篇名 → 摘要」每一列都在同一個 X 位置起跑，
-			    掃讀成本最低。寬度同步由 5xl 收到 4xl——單欄再寬，
-			    摘要一行就會超過舒適的閱讀長度。 */}
-			<section class="band-tint page-wide pb-28 pt-20 md:pb-36 md:pt-28">
-				<div class="mx-auto max-w-4xl">
-					{
-						posts.length > 0 ? (
-							<div class="border-t border-app-gray-200" id="post-grid">
-								{posts.map((post) => (
-									<div
-										class="post-item border-b border-app-gray-200 py-9 md:py-11"
-										data-category={getCategory(post)}
-										data-tags={(post.data.tags ?? []).join('|').toLowerCase()}
-										data-title={post.data.title.toLowerCase()}
-										data-description={post.data.description.toLowerCase()}
-									>
-										<BlogCard post={post} />
-									</div>
-								))}
-							</div>
-						) : (
-							<p class="body-small text-center">還沒有發佈的文章。</p>
-						)
-					}
-					<p id="empty-state" class="body-small hidden py-20 text-center">
-						沒有符合的文章，換個關鍵字試試。
-					</p>
-
-					<!-- 分頁：每頁 8 篇。沿用全站單色語彙——不用藥丸按鈕、
-					     不用色塊，選取狀態只靠一條底線與墨色深淺。 -->
-					<nav
-						id="pagination"
-						class="mt-20 hidden border-t border-app-gray-200 pt-10 md:mt-28"
-						aria-label="文章分頁"
+					{/* ── ① 搜尋 ────────────────────────────────────
+					    一條底線，沒有外框、沒有底色——它是一行字，不是一個元件。 */}
+					<form
+						data-archive-search
+						class="mt-12 flex items-center gap-x-3 border-b border-app-gray-300 pb-1"
+						role="search"
 					>
-						<div class="flex items-center justify-center gap-x-7">
-							<button type="button" id="page-prev" class="page-arrow label" aria-label="上一頁">←</button>
-							<div id="page-numbers" class="flex items-center gap-x-5"></div>
-							<button type="button" id="page-next" class="page-arrow label" aria-label="下一頁">→</button>
-						</div>
-						<p id="page-status" class="label mt-7 text-center"></p>
-					</nav>
+						<Icon name="search" class="h-4 w-4 shrink-0 text-app-gray-400" />
+						<input
+							data-archive-query
+							name="q"
+							type="search"
+							autocomplete="off"
+							aria-label="搜尋文章"
+							placeholder={searchPlaceholder}
+							class="w-full border-0 bg-transparent py-3 text-app-ink outline-none placeholder:text-app-gray-400"
+						/>
+						<button data-archive-clear type="button" class="label shrink-0 transition-colors hover:text-app-ink" hidden>
+							清除
+						</button>
+					</form>
+
+					{/* ── ② 分類／標籤下拉 ──────────────────────────
+					    沒有 JavaScript 時每一列都是普通連結（/blog?cat=…）；
+					    有 JavaScript 時改成就地篩選，網址一樣會更新。 */}
+					<div class="relative z-20 mt-7 flex flex-wrap items-center gap-3" data-archive-filters>
+						<details class="group relative" data-filter-menu>
+							<summary class="filter-pill">
+								<span class="filter-pill-label">{categoryLabel}</span>
+								<span class="filter-pill-value" data-filter-label="cat">{allCategoriesLabel}</span>
+								<Icon name="chevron-down" class="h-3 w-3 transition-transform group-open:rotate-180" />
+							</summary>
+							<nav class="filter-popover" aria-label="依分類篩選">
+								<a href="/blog" class="facet" data-filter="cat" data-value="" aria-current="true">
+									<span class="facet-label">{allCategoriesLabel}</span>
+									<span class="facet-count" data-facet-count>{posts.length}</span>
+								</a>
+								{categoryOptions.map((option) => (
+									<a
+										href={`/blog?cat=${encodeURIComponent(option.name)}`}
+										class="facet"
+										data-filter="cat"
+										data-value={option.name}
+									>
+										<span class="facet-label">{option.name}</span>
+										<span class="facet-count" data-facet-count>
+											{option.count}
+										</span>
+									</a>
+								))}
+							</nav>
+						</details>
+
+						<details class="group relative" data-filter-menu>
+							<summary class="filter-pill">
+								<span class="filter-pill-label">{tagLabel}</span>
+								<span class="filter-pill-value" data-filter-label="tag">{anyTagLabel}</span>
+								<Icon name="chevron-down" class="h-3 w-3 transition-transform group-open:rotate-180" />
+							</summary>
+							<nav class="filter-popover" aria-label="依標籤篩選">
+								<a href="/blog" class="facet" data-filter="tag" data-value="" aria-current="true">
+									<span class="facet-label">{anyTagLabel}</span>
+									<span class="facet-count" data-facet-count>{posts.length}</span>
+								</a>
+								{tagOptions.map((option) => (
+									<a
+										href={`/blog?tag=${encodeURIComponent(option.name)}`}
+										class="facet"
+										data-filter="tag"
+										data-value={option.name}
+									>
+										<span class="facet-label">{option.name}</span>
+										<span class="facet-count" data-facet-count>
+											{option.count}
+										</span>
+									</a>
+								))}
+							</nav>
+						</details>
+
+						<button type="button" class="filter-reset label" data-filter-reset hidden>
+							{resetLabel}
+						</button>
+					</div>
+
+					<p data-archive-count class="label mt-9"></p>
+
+					<p data-archive-empty class="body-small border border-dashed border-app-gray-200 py-20 text-center" hidden>
+						{emptyText}
+					</p>
+
+					{/* ── ③ 文章列表：文字在左、方形縮圖在右 ───────── */}
+					<div data-archive-list class="mt-6 border-t border-app-gray-200">
+						{
+							posts.map((post) => (
+								<BlogCard post={post} variant="list" showReadingTime={showReadingTime} />
+							))
+						}
+					</div>
+
+					<div data-archive-more-wrap class="mt-14 text-center md:mt-16" hidden>
+						<button
+							type="button"
+							data-archive-more
+							class="label border border-app-gray-300 px-7 py-4 text-app-ink transition-colors hover:border-app-ink"></button>
+						<p data-archive-page class="label mt-5"></p>
+					</div>
 				</div>
-			</section>
+			</div>
 		</main>
 		<Footer />
 	</body>
 </html>
 
-<style>
-	/* 選取狀態：不換顏色，只加一條底線並轉深 —— 單色系統的層級做法 */
-	.filter-btn,
-	.tag-btn {
-		border-bottom: 1px solid transparent;
-		padding-bottom: 0.3em;
-		transition: color 0.4s ease, border-color 0.4s ease;
-	}
-	.filter-btn:hover,
-	.tag-btn:hover {
-		color: var(--color-app-ink);
-	}
-	.filter-btn[data-active='true'],
-	.tag-btn[data-active='true'] {
-		color: var(--color-app-ink);
-		border-bottom-color: var(--color-app-ink);
-	}
-
-	/* 分頁：與篩選同一套語彙 */
-	.page-num,
-	.page-arrow {
-		border-bottom: 1px solid transparent;
-		padding-bottom: 0.3em;
-		transition: color 0.4s ease, border-color 0.4s ease, opacity 0.4s ease;
-	}
-	.page-num:hover,
-	.page-arrow:hover:not(:disabled) {
-		color: var(--color-app-ink);
-	}
-	.page-num[data-active='true'] {
-		color: var(--color-app-ink);
-		border-bottom-color: var(--color-app-ink);
-	}
-	.page-arrow:disabled {
-		opacity: 0.25;
-		cursor: default;
-	}
-	/* 省略號：不可點，只是視覺上的連續 */
-	.page-gap {
-		color: var(--color-app-gray-300);
-	}
-</style>
-
 <script>
-	const categoryButtons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-	const tagButtons = document.querySelectorAll<HTMLButtonElement>('.tag-btn');
-	const items = document.querySelectorAll<HTMLDivElement>('.post-item');
-	const emptyState = document.getElementById('empty-state');
-	const searchStatus = document.getElementById('search-status');
+	// ── Archive 的前端邏輯 ────────────────────────────────────────
+	// 照抄 quietpages 的作法，只換掉字面上的文字。
+	//
+	// 核心概念只有一個：**畫面 ＝ f(state)**。
+	// state 只有四個值（q / cat / tag / page），永遠從網址讀出來，
+	// 任何一個動作（打字、選分類、載入更多、按上一頁）都只做兩件事：
+	// 改 state → 重畫。所以不會出現「網址說 A、畫面顯示 B」的狀況。
+	const archive = document.querySelector<HTMLElement>('[data-archive]');
 
-	// ── 分頁 ─────────────────────────────────────────────
-	// 每頁 8 篇。注意順序：先算出「通過篩選的文章」，再對那份清單分頁。
-	// 反過來（先分頁再篩選）會變成只在當前 8 篇裡找，那是壞掉的行為。
-	const PAGE_SIZE = 8;
-	const pagination = document.getElementById('pagination');
-	const pageNumbers = document.getElementById('page-numbers');
-	const pagePrev = document.getElementById('page-prev') as HTMLButtonElement | null;
-	const pageNext = document.getElementById('page-next') as HTMLButtonElement | null;
-	const pageStatus = document.getElementById('page-status');
-	const grid = document.getElementById('post-grid');
-	let currentPage = 1;
+	if (archive) {
+		const pageSize = Math.max(1, Number.parseInt(archive.dataset.pageSize || '8', 10) || 8);
+		const emptyLabels: Record<string, string> = {
+			cat: archive.dataset.labelAll || '全部',
+			tag: archive.dataset.labelAny || '不限',
+		};
+		const moreLabel = archive.dataset.labelMore || '載入更多';
 
-	const params = new URLSearchParams(window.location.search);
-	let activeCategory = '';
-	let activeTag = params.get('tag')?.trim().toLowerCase() ?? '';
-	let activeQuery = params.get('q')?.trim().toLowerCase() ?? '';
+		const input = archive.querySelector<HTMLInputElement>('[data-archive-query]')!;
+		const clear = archive.querySelector<HTMLButtonElement>('[data-archive-clear]')!;
+		const form = archive.querySelector<HTMLFormElement>('[data-archive-search]')!;
+		const count = archive.querySelector<HTMLElement>('[data-archive-count]')!;
+		const empty = archive.querySelector<HTMLElement>('[data-archive-empty]')!;
+		const cards = [...archive.querySelectorAll<HTMLElement>('[data-post-card]')];
+		const moreWrap = archive.querySelector<HTMLElement>('[data-archive-more-wrap]')!;
+		const more = archive.querySelector<HTMLButtonElement>('[data-archive-more]')!;
+		const pageText = archive.querySelector<HTMLElement>('[data-archive-page]')!;
+		const filterBar = archive.querySelector<HTMLElement>('[data-archive-filters]');
+		const menus = [...archive.querySelectorAll<HTMLDetailsElement>('[data-filter-menu]')];
+		const facets = [...archive.querySelectorAll<HTMLAnchorElement>('[data-filter]')];
+		const reset = archive.querySelector<HTMLButtonElement>('[data-filter-reset]');
 
-	/** 通過目前分類／標籤／關鍵字篩選的文章（尚未分頁）。 */
-	function matchedItems() {
-		return Array.from(items).filter((item) => {
-			const itemTags = item.dataset.tags?.split('|') ?? [];
-			const matchesCategory = !activeCategory || item.dataset.category === activeCategory;
-			const matchesTag = !activeTag || itemTags.includes(activeTag);
-			const matchesQuery =
-				!activeQuery ||
-				item.dataset.title?.includes(activeQuery) ||
-				item.dataset.description?.includes(activeQuery) ||
-				itemTags.some((tag) => tag.includes(activeQuery));
-			return matchesCategory && matchesTag && matchesQuery;
-		});
-	}
-
-	/** 畫出頁碼列。頁數多的時候只顯示首尾與當前頁附近，中間用 … 帶過。 */
-	function renderPageNumbers(totalPages: number) {
-		if (!pageNumbers) return;
-		pageNumbers.innerHTML = '';
-
-		const shown = new Set<number>([1, totalPages, currentPage]);
-		if (currentPage - 1 > 1) shown.add(currentPage - 1);
-		if (currentPage + 1 < totalPages) shown.add(currentPage + 1);
-		const pages = [...shown].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
-
-		let previous = 0;
-		for (const page of pages) {
-			if (previous && page - previous > 1) {
-				const gap = document.createElement('span');
-				gap.className = 'label page-gap';
-				gap.textContent = '…';
-				pageNumbers.append(gap);
-			}
-			const button = document.createElement('button');
-			button.type = 'button';
-			button.className = 'page-num label';
-			button.textContent = String(page).padStart(2, '0');
-			button.dataset.active = page === currentPage ? 'true' : 'false';
-			if (page === currentPage) button.setAttribute('aria-current', 'page');
-			button.addEventListener('click', () => goToPage(page));
-			pageNumbers.append(button);
-			previous = page;
-		}
-	}
-
-	function goToPage(page: number) {
-		currentPage = page;
-		applyFilters({ resetPage: false });
-		// 換頁後回到圖版頂端，不然會停在上一頁的底部、看不出換了內容
-		grid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-	}
-
-	function applyFilters({ resetPage = true } = {}) {
-		if (resetPage) currentPage = 1;
-
-		const matched = matchedItems();
-		const totalPages = Math.max(1, Math.ceil(matched.length / PAGE_SIZE));
-		if (currentPage > totalPages) currentPage = totalPages;
-
-		const start = (currentPage - 1) * PAGE_SIZE;
-		const visible = new Set(matched.slice(start, start + PAGE_SIZE));
-
-		items.forEach((item) => item.classList.toggle('hidden', !visible.has(item)));
-		emptyState?.classList.toggle('hidden', matched.length > 0);
-
-		// 一頁就放得下時整組分頁收起來，不留一個只有「01」的殘留元件
-		const needsPagination = matched.length > PAGE_SIZE;
-		pagination?.classList.toggle('hidden', !needsPagination);
-		if (needsPagination) {
-			renderPageNumbers(totalPages);
-			if (pagePrev) pagePrev.disabled = currentPage === 1;
-			if (pageNext) pageNext.disabled = currentPage === totalPages;
-			if (pageStatus) {
-				pageStatus.textContent = `第 ${currentPage} / ${totalPages} 頁 · 共 ${matched.length} 篇`;
-			}
+		interface State {
+			q: string;
+			cat: string;
+			tag: string;
+			page: number;
 		}
 
-		if (activeQuery && searchStatus) {
-			searchStatus.textContent = `搜尋「${activeQuery}」`;
-			searchStatus.classList.remove('hidden');
-		} else if (activeTag && searchStatus) {
-			searchStatus.textContent = `標籤「${activeTag}」`;
-			searchStatus.classList.remove('hidden');
-		} else if (searchStatus) {
-			searchStatus.classList.add('hidden');
-		}
-	}
+		/* 網址裡如果是一個不存在的分類／標籤（例如改過名字的舊連結），
+		   就當成沒有篩選，而不是顯示一頁空的結果。 */
+		const knownValue = (key: string, value: string) =>
+			!value || archive.querySelector(`[data-filter="${key}"][data-value="${CSS.escape(value)}"]`);
 
-	pagePrev?.addEventListener('click', () => {
-		if (currentPage > 1) goToPage(currentPage - 1);
-	});
-	pageNext?.addEventListener('click', () => goToPage(currentPage + 1));
+		const stateFromUrl = (): State => {
+			const params = new URLSearchParams(window.location.search);
+			const cat = params.get('cat') || '';
+			const tag = params.get('tag') || '';
+			return {
+				q: params.get('q') || '',
+				cat: knownValue('cat', cat) ? cat : '',
+				tag: knownValue('tag', tag) ? tag : '',
+				page: Math.max(1, Number.parseInt(params.get('page') || '1', 10) || 1),
+			};
+		};
 
-	categoryButtons.forEach((button) => {
-		button.addEventListener('click', () => {
-			activeCategory = button.dataset.category ?? '';
-			categoryButtons.forEach((b) => {
-				b.dataset.active = b === button ? 'true' : 'false';
+		const closeMenus = (except: Element | null = null) => {
+			menus.forEach((menu) => {
+				if (menu !== except) menu.removeAttribute('open');
 			});
-			applyFilters();
-		});
-	});
+		};
 
-	tagButtons.forEach((button) => {
-		button.addEventListener('click', () => {
-			const tag = (button.dataset.tag ?? '').toLowerCase();
-			const turningOff = activeTag === tag;
-			activeTag = turningOff ? '' : tag;
-			tagButtons.forEach((b) => {
-				b.dataset.active = !turningOff && b === button ? 'true' : 'false';
+		/** 這張卡片通過（可能只是假設的）這組篩選嗎？ */
+		const matchesState = (card: HTMLElement, test: State) => {
+			if (test.cat && card.dataset.category !== test.cat) return false;
+			if (test.tag && !(card.dataset.tags || '').split('|').includes(test.tag.toLowerCase()))
+				return false;
+			if (test.q && !(card.dataset.search || '').includes(test.q)) return false;
+			return true;
+		};
+
+		const writeUrl = (state: State) => {
+			const params = new URLSearchParams();
+			if (state.q) params.set('q', state.q);
+			if (state.cat) params.set('cat', state.cat);
+			if (state.tag) params.set('tag', state.tag);
+			if (state.page > 1) params.set('page', String(state.page));
+			const query = params.toString();
+			history.pushState(state, '', query ? `/blog?${query}` : '/blog');
+		};
+
+		/* 每個選項的篇數是「跟其他篩選一起算」的，所以那個數字的意思是
+		   『選下去會看到幾篇』。會變成 0 的選項變淡但仍可點——選單長度
+		   不隨滑鼠移動而改變，才不會點到別的東西。 */
+		const renderFacets = (test: State) => {
+			facets.forEach((facet) => {
+				const key = facet.dataset.filter!;
+				const value = facet.dataset.value || '';
+				const selected = (test as any)[key] === value;
+				if (selected) facet.setAttribute('aria-current', 'true');
+				else facet.removeAttribute('aria-current');
+
+				const n = cards.filter((card) =>
+					matchesState(card, { ...test, [key]: value } as State),
+				).length;
+				const countNode = facet.querySelector('[data-facet-count]');
+				if (countNode) countNode.textContent = String(n);
+				facet.toggleAttribute('data-empty', n === 0 && !selected);
 			});
-			applyFilters();
-		});
-	});
 
-	// 如果是從文章頁的標籤連結進來（/blog?tag=xxx），先把對應的標籤標成選取狀態。
-	if (activeTag) {
-		tagButtons.forEach((b) => {
-			b.dataset.active = (b.dataset.tag ?? '').toLowerCase() === activeTag ? 'true' : 'false';
+			archive.querySelectorAll<HTMLElement>('[data-filter-label]').forEach((node) => {
+				const key = node.dataset.filterLabel!;
+				const active = (test as any)[key] as string;
+				const menu = node.closest('[data-filter-menu]');
+				if (menu) menu.toggleAttribute('data-active', Boolean(active));
+				const label = archive
+					.querySelector(`[data-filter="${key}"][data-value="${CSS.escape(active)}"] .facet-label`)
+					?.textContent?.trim();
+				node.textContent = active && label ? label : emptyLabels[key]!;
+			});
+
+			if (reset) reset.hidden = !(test.cat || test.tag);
+		};
+
+		const render = (state: State, updateInput = true) => {
+			if (updateInput) input.value = state.q;
+			clear.hidden = !state.q;
+
+			const test = { ...state, q: state.q.toLowerCase() };
+			const matches = cards.filter((card) => matchesState(card, test));
+
+			const visibleCount = Math.min(matches.length, state.page * pageSize);
+			cards.forEach((card) => (card.hidden = true));
+			matches.slice(0, visibleCount).forEach((card) => (card.hidden = false));
+
+			count.textContent = state.q
+				? `${matches.length} 篇符合「${state.q}」`
+				: `共 ${matches.length} 篇`;
+			empty.hidden = matches.length > 0;
+
+			const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+			moreWrap.hidden = visibleCount >= matches.length;
+			more.textContent = `${moreLabel}（還有 ${matches.length - visibleCount} 篇）`;
+			pageText.textContent = `第 ${state.page} / ${totalPages} 頁`;
+
+			renderFacets(test);
+		};
+
+		let state = stateFromUrl();
+		render(state);
+
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			state = { ...state, q: input.value.trim(), page: 1 };
+			writeUrl(state);
+			render(state, false);
+		});
+
+		/* 邊打邊篩。停手 180ms 才動作，避免打一個中文字（組字過程會觸發
+		   好幾次 input）就重畫好幾遍。 */
+		let typingTimer: number | undefined;
+		input.addEventListener('input', () => {
+			window.clearTimeout(typingTimer);
+			typingTimer = window.setTimeout(() => {
+				state = { ...state, q: input.value.trim(), page: 1 };
+				writeUrl(state);
+				render(state, false);
+			}, 180);
+		});
+
+		clear.addEventListener('click', () => {
+			state = { ...state, q: '', page: 1 };
+			writeUrl(state);
+			render(state);
+			input.focus();
+		});
+
+		facets.forEach((facet) => {
+			facet.addEventListener('click', (event) => {
+				/* 這幾列在沒有 JavaScript 時是真的連結，有 JavaScript 才接管。 */
+				event.preventDefault();
+				const key = facet.dataset.filter!;
+				const value = facet.dataset.value || '';
+				/* 再點一次已選中的項目 ＝ 取消那個篩選。 */
+				state = { ...state, [key]: (state as any)[key] === value ? '' : value, page: 1 };
+				writeUrl(state);
+				render(state);
+				closeMenus();
+			});
+		});
+
+		reset?.addEventListener('click', () => {
+			state = { ...state, cat: '', tag: '', page: 1 };
+			writeUrl(state);
+			render(state);
+			closeMenus();
+		});
+
+		/* 一次只開一個選單；點外面或按 Esc 關掉。 */
+		menus.forEach((menu) => {
+			menu.addEventListener('toggle', () => {
+				if (menu.open) closeMenus(menu);
+			});
+		});
+
+		document.addEventListener('click', (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			if (!target?.closest('[data-filter-menu]')) closeMenus();
+		});
+
+		filterBar?.addEventListener('keydown', (event) => {
+			if ((event as KeyboardEvent).key !== 'Escape') return;
+			const open = menus.find((menu) => menu.open);
+			if (!open) return;
+			open.removeAttribute('open');
+			open.querySelector('summary')?.focus();
+		});
+
+		more.addEventListener('click', () => {
+			state = { ...state, page: state.page + 1 };
+			writeUrl(state);
+			render(state, false);
+		});
+
+		window.addEventListener('popstate', () => {
+			state = stateFromUrl();
+			render(state);
 		});
 	}
-
-	applyFilters();
 </script>

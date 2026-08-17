@@ -1,0 +1,40 @@
+---
+// 全站唯一的圖示來源（2026-08-17 新增）。
+//
+// 只有五個圖示，而且全部是 1px 線稿、沒有填色——這是為了配合單色系統：
+// 圖示不該比它旁邊的字更顯眼，所以線寬跟字的筆劃粗細接近（1.25），
+// 顏色一律 currentColor，跟著它所在的那段文字走。
+//
+// 為什麼不用圖示套件：整個網站只需要這五個形狀，裝一個套件會多幾百 KB，
+// 而且套件的預設線寬（2）在襯線字旁邊會顯得太粗、像按鈕圖示。
+
+interface Props {
+	name: 'search' | 'chevron-down' | 'chevron-right' | 'arrow-right' | 'close';
+	class?: string;
+}
+
+const { name, class: className = '' } = Astro.props;
+
+const paths: Record<Props['name'], string> = {
+	search: '<circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path>',
+	'chevron-down': '<path d="m6 9 6 6 6-6"></path>',
+	'chevron-right': '<path d="m9 18 6-6-6-6"></path>',
+	'arrow-right': '<path d="M4 12h15"></path><path d="m12 5 7 7-7 7"></path>',
+	close: '<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>',
+};
+---
+
+<svg
+	class={className}
+	xmlns="http://www.w3.org/2000/svg"
+	width="24"
+	height="24"
+	viewBox="0 0 24 24"
+	fill="none"
+	stroke="currentColor"
+	stroke-width="1.25"
+	stroke-linecap="round"
+	stroke-linejoin="round"
+	aria-hidden="true"
+	set:html={paths[name] ?? ''}
+/>

@@ -45,8 +45,10 @@ const siteTitle = siteSettings.data.title;
 		</p>
 	</div>
 
+	{/* 2026-08-17：首頁區塊重排後，大圖底下的第一區變成文章，
+	    這顆「Scroll」跟著指到 #latest（原本指向已經往後移的 #about）。 */}
 	<a
-		href="#about"
+		href="#latest"
 		aria-label="向下捲動"
 		class="label scroll-hint absolute bottom-14 z-10 hidden text-white/60 transition-colors hover:text-white md:block"
 	>
