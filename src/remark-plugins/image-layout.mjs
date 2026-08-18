@@ -362,7 +362,29 @@ export default function remarkImageLayout() {
 					children: caption ? [...images, figcaptionNode(caption)] : [...images],
 				};
 
-				// 一段可以配對的文字都沒有（後面接的是另一張照片、標題或分隔線）：
+				// 後面沒有文字可以配對時，往前找一段（2026-08-18 新增）。
+				//
+				// 寫作時很自然會先寫完一句話、再把照片拖到它後面：
+				//
+				//     Ps. 教堂一共四面，目前還剩一面未完成。
+				//     ![[P1060594.jpg|右圖]]
+				//
+				// 照嚴格的規則這裡會找不到「後面那段文字」而降級成破欄圖，
+				// 於是寫了指令卻看不出效果。所以改成：後面沒有就往前拿一段。
+				// 只拿普通段落——前面是標題或另一張照片時不動它。
+				let borrowedBefore = null;
+				if (bodyBlocks === 0) {
+					const previous = out[out.length - 1];
+					const isPlainParagraph =
+						previous && previous.type === "paragraph" && !previous.data?.hName;
+					if (isPlainParagraph) {
+						borrowedBefore = out.pop();
+						paired.push(borrowedBefore);
+						bodyBlocks = 1;
+					}
+				}
+
+				// 前後都沒有可以配對的文字（前面是標題／照片，後面是分隔線之類）：
 				// 降級成一般的破欄圖，不留一個只有半邊有東西的兩欄版面。
 				if (bodyBlocks === 0) {
 					figure.data.hProperties.className = [
