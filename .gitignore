@@ -200,3 +200,6 @@ dist
 
 ### Astro ###
 .astro/
+
+### Cowork：暫存待刪資料夾（不進版控）
+_to_delete/
