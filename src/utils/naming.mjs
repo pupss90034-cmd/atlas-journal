@@ -40,6 +40,21 @@ const SORTING_PREFIX = /^\s*(?=[0-9０-９A-Za-zＡ-Ｚａ-ｚ])[A-Za-zＡ-Ｚ�
 // 那排底線是寫作時留的佔位記號，不是標題的一部分，網址裡不該出現。
 const PLACEHOLDER_UNDERSCORES = /^[_＿\s]+/u;
 
+// 檔名開頭的「待辦記號」（2026-08-18 新增）。
+//
+// 你會在還沒寫完、想優先處理的檔名前面加一個「-」，讓它排到側邊欄最上面：
+//
+//   -Ｎ01. 人生選擇.md
+//
+// 那跟「A - 」「Ｎ13.」一樣是**寫作時用的排序工具**，讀者不該在網址看到它。
+// 而且如果不在這裡脫掉，它還會讓下面的 SORTING_PREFIX 整條失效
+//（那條規則要求開頭第一個字是英數字），連「Ｎ01.」都脫不掉，
+// 網址會變成 /blog/路上觀察/-ｎ01-人生選擇 這種樣子。
+//
+// 只吃**開頭**連續的記號，名字中間的連字號不受影響
+//（「工作以外的同事人格-夏季工作的同事們」原封不動）。
+const MARKER_PREFIX = /^[-－‐‑‒–—―~～+＋*＊#＃!！]+\s*/u;
+
 /**
  * 脫掉單一段名稱（一個資料夾名或一個檔名）開頭的排序前綴與佔位符號。
  *
@@ -56,7 +71,11 @@ export function stripSortingPrefix(name) {
 	let current = name.trim();
 
 	for (let i = 0; i < 5; i++) {
-		const next = current.replace(SORTING_PREFIX, "").replace(PLACEHOLDER_UNDERSCORES, "").trim();
+		const next = current
+			.replace(MARKER_PREFIX, "")
+			.replace(SORTING_PREFIX, "")
+			.replace(PLACEHOLDER_UNDERSCORES, "")
+			.trim();
 		if (next === current) break;
 		if (next === "") return current;
 		current = next;
