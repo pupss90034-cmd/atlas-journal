@@ -23,6 +23,12 @@
 //      → 用檔名在 src/content/blog 底下全域搜尋，找到唯一一張就自動改寫路徑。
 //        （所以「把圖片整理到別的資料夾」不再需要回頭改文章。）
 //
+//   3.5 圖片語法打錯（2026-08-18 新增）
+//      ![右圖]P1060594.jpg  ← 少了 [[ ]] 或 ( )，Markdown 不認得，
+//                             以前會把這一串原封不動印在文章裡
+//      → 自動當成 ![[P1060594.jpg|右圖]] 處理，並在建置訊息裡提醒正確寫法。
+//      單獨一行只寫檔名（P1060594.jpg）也一樣會被當成圖片。
+//
 //   4. 整個 blog 資料夾都找不到這張圖
 //      → 把該張圖從文章裡移除，建置照常完成，並印出提醒：
 //        [圖片] 哪一篇、哪一個檔名、找不到。
@@ -83,6 +89,63 @@ function fileNameOf(rawUrl) {
 	// Obsidian 顯示寬度設定：![[圖.jpg|300]]
 	url = url.split("|")[0];
 	return path.basename(url.split(/[/\\]/).join("/")).trim();
+}
+
+/* ── 打錯的圖片語法：能認出來就自動修 ─────────────────────────
+   正確寫法只有兩種：![[檔名.jpg|指令]] 或 ![指令](檔名.jpg)。
+   實際在 Obsidian 裡手打時最常漏掉括號，變成：
+
+       ![右圖]P1060594.jpg      ← 少了 [[ ]]
+       [右圖]P1060594.jpg       ← 連 ! 都少了
+       P1060594.jpg             ← 整行只有檔名
+
+   這三種 Markdown 都不認得，會原封不動印在文章上（讀者看到一串檔名）。
+   與其要求每次都打對，不如認出來自動修——這跟這支外掛其他地方的
+   哲學一致：寬容地修，並在建置訊息裡說清楚正確寫法。 */
+
+const EXT = "jpe?g|png|webp|avif|gif|svg";
+/** ![指令]檔名.jpg 或 [指令]檔名.jpg */
+const BRACKET_MISS_RE = new RegExp(`!?\\[([^\\]\\n]{0,20})\\]\\s*([^\\s()\\[\\]|]+\\.(?:${EXT}))`, "gi");
+/** 整行只有一個檔名（後面可以再接 |指令） */
+const BARE_LINE_RE = new RegExp(`^[ \\t]*([^\\s()\\[\\]|]+\\.(?:${EXT}))(?:\\|([^\\n]*))?[ \\t]*$`, "i");
+
+/**
+ * 把一段純文字裡「看起來是圖片但語法打錯」的部分換成真正的圖片節點。
+ * 回傳一串節點（文字與圖片交錯）；沒有任何修正時回傳 null。
+ */
+function repairMalformedImages(value, warn) {
+	const out = [];
+	let changed = false;
+
+	const lines = value.split("\n");
+	lines.forEach((line, lineIndex) => {
+		if (lineIndex > 0) out.push({ type: "text", value: "\n" });
+
+		// (a) 整行只有一個檔名
+		const bare = line.match(BARE_LINE_RE);
+		if (bare) {
+			out.push({ type: "image", url: bare[1], alt: (bare[2] ?? "").trim(), title: null });
+			warn(line.trim(), `![[${bare[1]}${bare[2] ? `|${bare[2].trim()}` : ""}]]`);
+			changed = true;
+			return;
+		}
+
+		// (b) 行內的 ![指令]檔名.jpg
+		let last = 0;
+		BRACKET_MISS_RE.lastIndex = 0;
+		let match;
+		while ((match = BRACKET_MISS_RE.exec(line)) !== null) {
+			const [whole, directive, file] = match;
+			if (match.index > last) out.push({ type: "text", value: line.slice(last, match.index) });
+			out.push({ type: "image", url: file, alt: directive.trim(), title: null });
+			warn(whole, `![[${file}${directive.trim() ? `|${directive.trim()}` : ""}]]`);
+			changed = true;
+			last = match.index + whole.length;
+		}
+		if (last < line.length) out.push({ type: "text", value: line.slice(last) });
+	});
+
+	return changed ? out.filter((n) => !(n.type === "text" && n.value === "")) : null;
 }
 
 /** 這個網址要不要交給我們處理？外部圖與 public 圖一律放行。 */
@@ -146,6 +209,34 @@ export default function remarkRobustImages() {
 					if (/^\d+(x\d+)?$/i.test(alt)) alt = "";
 					children.push({ type: "image", url: target, alt, title: null });
 					changed = true;
+				}
+			}
+
+			if (changed) paragraph.children = children;
+		});
+
+		// ── 1.5 打錯的圖片語法（2026-08-18 新增）────────────────────
+		// 這一步一定要排在步驟 1 之後：步驟 1 已經把所有正確的 ![[...]]
+		// 換成圖片節點，剩下的文字裡不會再有 [[ ]]，比對才不會誤傷。
+		visit(tree, "paragraph", (paragraph) => {
+			const children = [];
+			let changed = false;
+
+			for (const child of paragraph.children) {
+				if (child.type !== "text") {
+					children.push(child);
+					continue;
+				}
+				const repaired = repairMalformedImages(child.value, (wrong, right) => {
+					console.info(
+						`[圖片] ${noteLabel}：「${wrong}」不是有效的圖片語法，已自動當成 ${right} 處理。正確寫法見 編輯/使用說明.md 第九節。`,
+					);
+				});
+				if (repaired) {
+					children.push(...repaired);
+					changed = true;
+				} else {
+					children.push(child);
 				}
 			}
 

@@ -7,6 +7,7 @@ import Icon from '../Icon.astro';
 import defaultCover from '../../assets/site/default-cover.jpg';
 import { resolveHeroImage } from '../../utils/heroImage';
 import { getSortedPosts, getCategory, getCategories, getReadingMinutes } from '../../utils/posts';
+import { titleFitEm } from '../../utils/titleFit';
 
 // ══════════════════════════════════════════════════════════════════
 // 首頁文章區（2026-08-17 依 quietpages 的編排邏輯重寫）
@@ -59,6 +60,8 @@ const featuredCover = featured
 	: defaultCover;
 const featuredCategory = featured ? getCategory(featured) : '';
 const featuredMinutes = featured ? getReadingMinutes(featured) : 0;
+// 頭條篇名也只顯示一行（見 global.css 的 .title-fit）
+const featuredFit = featured ? titleFitEm(featured.data.title) : 12;
 ---
 
 {
@@ -94,7 +97,7 @@ const featuredMinutes = featured ? getReadingMinutes(featured) : 0;
 							</div>
 						</a>
 
-						<div class="flex flex-col justify-center">
+						<div class="fit-box flex flex-col justify-center">
 							<p class="label">
 								{featuredCategory && (
 									<>
@@ -109,7 +112,10 @@ const featuredMinutes = featured ? getReadingMinutes(featured) : 0;
 							    所以篇名就是這一段層級最高的字，不會出現「item 比 section 還大」
 							    的問題——那條規則在下面的 Latest 區仍然成立（H2 區塊標 → H4 篇名）。 */}
 							<a href={`/blog/${featured.id}/`} class="mt-5 block">
-								<h2 class="title-h2 max-w-[20ch] text-app-ink transition-opacity duration-500 hover:opacity-60">
+								<h2
+									class="title-h2 title-fit title-fit-h2 text-app-ink transition-opacity duration-500 hover:opacity-60"
+									style={`--fit:${featuredFit}`}
+								>
 									{featured.data.title}
 								</h2>
 							</a>

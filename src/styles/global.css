@@ -64,7 +64,9 @@
 	--font-inter: "EB Garamond", "Noto Serif TC", "Source Han Serif TC", serif;
 
 	/* ── 版面留邊 ────────────────────────────── */
-	--page-margin-wide: clamp(1.5rem, 8vw, 8rem); /* 寬邊：文字區 */
+	/* 2026-08-18：外緣留白 8rem → 5.5rem。內文欄放寬之後，
+	   外緣再留 128px 會讓整頁重新變回「中間一條」。 */
+	--page-margin-wide: clamp(1.5rem, 6vw, 5.5rem); /* 寬邊：文字區 */
 	--page-margin-narrow: clamp(1rem, 3vw, 2.5rem); /* 窄邊：影像區 */
 	--band-space: clamp(5rem, 11vw, 9.5rem); /* 區塊之間的呼吸 */
 
@@ -73,13 +75,20 @@
 	   所以中文落在 30–50 字／行。桌機上 65ch ≈ 680px，
 	   這裡取 42.5rem = 680px，作為全站內文行長的單一來源。
 	   （原本是 34rem/544px，中文一行只有約 25 字，偏短。） */
-	--measure: 42.5rem; /* 680px ≈ 65ch */
+	/* 2026-08-18：680px → 736px。
+	   680px 在 1440px 的螢幕上兩側各留 380px 空白，整篇文章看起來像
+	   一條窄帶子，照片也跟著被鎖在 680px、失去張力。736px 在 17px 的
+	   中文下約 43 字／行，仍在 30–50 字的易讀範圍內，但版面明顯站得住。 */
+	--measure: 46rem; /* 736px ≈ 43 字／行 */
 	/* 中軸（書名頁）刻意比內文窄，置中的短段落太寬會讀不成一個「塊」 */
 	--measure-axis: 34rem;
 	/* 破欄寬：照片專用，比內文欄寬約一半，但兩側仍留白。
 	   照片跟文字不共用行長規則——行長是為了眼球掃視一行不要太累，
 	   照片不需要掃視，鎖在 680px 只會讓它變成郵票。 */
-	--measure-wide: 60rem; /* 960px */
+	/* 2026-08-18：960px → 1152px。破欄照片是這個網站的主角，
+	   它跟內文的寬度差距就是「呼吸」的幅度。960 跟 736 只差 30%，
+	   讀者感覺不到破欄；1152 是內文的 1.57 倍，一眼就看得出來。 */
+	--measure-wide: 72rem; /* 1152px */
 
 	/* ── 字級：單一階梯 ──────────────────────────
 	   2026-08-09 重整。原本標題級距散在 title-display / title-spaced /
@@ -326,6 +335,65 @@
 	letter-spacing: 0.34em;
 	text-transform: uppercase;
 	text-indent: 0.34em;
+}
+
+/* ─────────────────────────────────────────────
+   標題只顯示一行（2026-08-18 新增）
+
+   中文標題的換行位置是瀏覽器決定的，它只避開標點、不管語意，
+   所以「史特拉斯堡｜聖誕市集飲食記」很容易被斷成
+   「史特拉斯堡｜聖 / 誕市集飲食記」——把一個詞從中間切開。
+
+   標題是一塊招牌，不是一段內文，它應該一眼讀完。所以規則改成：
+   **所有篇名一律一行**，字級自動縮到剛好放得下。
+
+   運作方式：
+     1. 外層加 .fit-box（container-type: inline-size），
+        讓裡面的字可以用 100cqi 讀到「我可以用的寬度」。
+     2. 標題本身加 .title-fit ＋ 級距 class，並由 Astro 傳進
+        style="--fit: 13.8"（這個標題需要幾 em 寬，算法見
+        src/utils/titleFit.ts）。
+     3. 字級 ＝ 容器寬度 ÷ --fit，再用 clamp() 夾在
+        「原本的字級」與「一個下限」之間。
+
+   短標題維持原本大小，長標題自動縮小，縮到下限還放不下的
+   極端狀況才用「…」收尾——那是最後一道防線，不是常態。
+   ───────────────────────────────────────────── */
+.fit-box {
+	container-type: inline-size;
+}
+.title-fit {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	/* clamp 的三個值：下限、算出來的值、上限（＝原本的字級） */
+	font-size: clamp(var(--fit-min, 0.9375rem), calc(100cqi / var(--fit, 12)), var(--fit-max, 1rem));
+}
+/* 級距：上限用字級階梯上原本的那一階，下限是「還讀得下去」的底線 */
+.title-fit-h1 {
+	--fit-max: var(--text-h1);
+	--fit-min: 1.375rem;
+}
+.title-fit-h2 {
+	--fit-max: var(--text-h2);
+	--fit-min: 1.125rem;
+}
+.title-fit-h3 {
+	--fit-max: var(--text-h3);
+	--fit-min: 1rem;
+}
+.title-fit-h4 {
+	--fit-max: var(--text-h4);
+	--fit-min: 0.9375rem;
+}
+/* 沒有容器查詢支援的舊瀏覽器：退回原本的字級並允許換行，
+   寧可換行也不要因為 100cqi 算不出來而變成最小級數。 */
+@supports not (container-type: inline-size) {
+	.title-fit {
+		white-space: normal;
+		font-size: var(--fit-max, 1rem);
+	}
 }
 
 /* 框標：細線方框包住的小標，用來當「一句話宣言」。

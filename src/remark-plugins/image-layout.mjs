@@ -16,8 +16,9 @@
 //
 //   兩種寫法效果完全一樣。指令與圖說都可以省略：
 //
-//   ![](照片.jpg)              一般寬度（跟內文同寬，維持原本行為）
-//   ![寬](照片.jpg)            破欄：比內文欄寬，左右超出文字
+//   ![](照片.jpg)              預設 ＝ 破欄（比內文寬，左右超出文字欄）
+//   ![一般](照片.jpg)          跟內文同寬，當插圖用
+//   ![寬](照片.jpg)            破欄（＝預設，寫不寫都一樣）
 //   ![滿版](照片.jpg)          滿版：貼齊螢幕左右兩邊
 //   ![|清晨六點的營地](照片.jpg)      一般寬度 ＋ 圖說
 //   ![寬|清晨六點的營地](照片.jpg)    破欄 ＋ 圖說
@@ -38,6 +39,23 @@
 //   所以想結束並排、回到正常的滿寬段落，只要在中間放一個標題、
 //   一張照片，或一條 `---`。
 //
+// ── 不需要在圖片前後空一行（2026-08-18）───────────────────────
+//
+//   在 Obsidian 裡邊寫邊拖照片，最自然的結果是這樣（中間沒有空行）：
+//
+//       聖家堂就是其中之一。
+//       ![[P1060560.jpg]]
+//       有別於桂爾公園的流線設計⋯
+//
+//   Markdown 會把這三行讀成「同一個段落」，圖片變成夾在句子中間的
+//   行內圖，所有版型指令都不會生效——這是這支外掛以前最大的坑，
+//   因為它要求「圖片必須自成一個段落」。
+//
+//   現在改成：**只要圖片自己佔一行，就當成獨立的圖片區塊**，
+//   跟 Obsidian 預覽看到的一樣。所以上面那段會被拆成
+//   〔文字段落〕〔圖片〕〔文字段落〕，指令照常生效。
+//   真正夾在句子中間的行內圖（前後同一行還有字）維持行內，不受影響。
+//
 // ── 兩張照片並排 ────────────────────────────────────────────
 //
 //   不需要指令。規則是「空行」：
@@ -52,10 +70,17 @@
 //   這正好是在 Obsidian 裡連續拖兩張照片進來的自然結果。
 //   整組的寬度看第一張圖的指令：![寬](A.jpg) 就是整組一起破欄。
 //
-// ── 相容性 ──────────────────────────────────────────────────
+// ── 預設寬度 ────────────────────────────────────────────────
 //
-// 沒有寫指令的圖片，行為跟改版前完全一樣（單欄、置中、鎖在內文寬）。
-// 所以既有文章不需要回頭改任何一行。
+// 2026-08-18 起，**沒有寫指令的照片預設是「破欄」**（1152px），
+// 不再是跟內文同寬的 736px。
+//
+// 為什麼改：這是一個以照片為主的網站，但預設把照片鎖在文字欄寬裡，
+// 等於每張照片都被排成插圖——版面單薄、照片沒有張力，而且要每張都
+// 手動寫 `寬` 才會好看，那個成本會讓人乾脆不寫。預設值應該對準
+// 最常見的需求，例外才寫指令。
+//
+// 想要照片跟文字同寬（真正的插圖）就寫 `一般`。
 //
 // 這支外掛只改「段落的包裝」，不碰 image 節點本身的 url，
 // 因此 Astro 的圖片最佳化（自動轉 webp、產生多種解析度）照常運作。
@@ -147,6 +172,110 @@ function imagesOfParagraph(node) {
 	return images.length > 0 ? images : null;
 }
 
+/** 只有空白的節點？（拆行時要忽略掉） */
+function isBlankNode(node) {
+	return node.type === "text" && node.value.trim() === "";
+}
+
+/**
+ * 把一個段落依「換行」拆成一行一行。
+ * Markdown 的軟換行在 AST 裡有兩種形式：text 節點裡的 \n，
+ * 以及行尾兩個空格產生的 break 節點，兩種都要處理。
+ */
+function linesOfParagraph(paragraph) {
+	const lines = [[]];
+	const push = (node) => lines[lines.length - 1].push(node);
+
+	for (const child of paragraph.children) {
+		if (child.type === "break") {
+			lines.push([]);
+			continue;
+		}
+		if (child.type === "text" && child.value.includes("\n")) {
+			const parts = child.value.split("\n");
+			parts.forEach((part, index) => {
+				if (index > 0) lines.push([]);
+				if (part !== "") push({ ...child, value: part });
+			});
+			continue;
+		}
+		push(child);
+	}
+
+	return lines;
+}
+
+/** 這一行是不是「只有圖片」？是的話回傳那些圖片。 */
+function imagesOfLine(nodes) {
+	const images = [];
+	for (const node of nodes) {
+		if (node.type === "image") {
+			images.push(node);
+			continue;
+		}
+		if (isBlankNode(node)) continue;
+		return null; // 這一行還有別的東西，是行內圖，不動它
+	}
+	return images.length > 0 ? images : null;
+}
+
+/**
+ * 前置處理：把「段落裡自成一行的圖片」提升成獨立的圖片段落。
+ *
+ * 這一步讓後面所有的版型判斷都能運作，不必要求作者在圖片前後空一行。
+ * 連續的圖片行會合併成同一個段落，維持原本「中間沒有空行 ＝ 並排一組」
+ * 的規則（見檔案開頭）。
+ */
+function liftImageLines(root) {
+	const out = [];
+
+	for (const node of root.children) {
+		const hasImage =
+			node.type === "paragraph" && node.children.some((child) => child.type === "image");
+		if (!hasImage) {
+			out.push(node);
+			continue;
+		}
+
+		const lines = linesOfParagraph(node);
+		let textLines = [];
+		let imageRun = [];
+
+		const flushText = () => {
+			if (textLines.length === 0) return;
+			const children = [];
+			textLines.forEach((line, index) => {
+				if (index > 0) children.push({ type: "text", value: "\n" });
+				children.push(...line);
+			});
+			if (children.length > 0) out.push({ ...node, children });
+			textLines = [];
+		};
+		const flushImages = () => {
+			if (imageRun.length === 0) return;
+			out.push({ type: "paragraph", children: imageRun });
+			imageRun = [];
+		};
+
+		for (const line of lines) {
+			if (line.length === 0 || line.every(isBlankNode)) continue;
+			const images = imagesOfLine(line);
+			if (images) {
+				flushText();
+				imageRun.push(...images);
+			} else {
+				flushImages();
+				textLines.push(line);
+			}
+		}
+
+		flushImages();
+		flushText();
+	}
+
+	root.children = out;
+}
+
 function figcaptionNode(text) {
 	return {
 		type: "paragraph",
@@ -159,6 +288,10 @@ export default function remarkImageLayout() {
 	return (tree) => {
 		const root = tree;
 		if (!root || !Array.isArray(root.children)) return;
+
+		// 先把「夾在段落裡、但自己佔一行」的圖片提升成獨立段落，
+		// 後面的版型判斷才有東西可以判斷。（2026-08-18）
+		liftImageLines(root);
 
 		const out = [];
 
@@ -174,7 +307,8 @@ export default function remarkImageLayout() {
 			// 版型與圖說一律看「第一張圖」，整段共用。
 			// 一組並排的照片是一個視覺單位，不該一張寬一張窄。
 			const first = parseAlt(images[0].alt);
-			const layout = first.layout ?? "text";
+			// 預設破欄（見檔案開頭「預設寬度」）。要跟內文同寬請寫 `一般`。
+			const layout = first.layout ?? "wide";
 			const size = first.size ?? "md";
 			const caption = first.caption;
 

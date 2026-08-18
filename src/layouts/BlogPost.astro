@@ -8,11 +8,14 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import defaultCover from '../assets/site/default-cover.jpg';
 import { resolveHeroImage } from '../utils/heroImage';
+import { titleFitEm } from '../utils/titleFit';
 
 type Props = CollectionEntry<'blog'>['data'] & { slug: string };
 
 const { title, description, pubDate, updatedDate, heroImage, tags, slug } = Astro.props;
 const displayHero = resolveHeroImage(heroImage) ?? defaultCover;
+// 標題只顯示一行，字級自動縮到放得下（見 global.css 的 .title-fit）
+const titleFit = titleFitEm(title);
 
 // ── 上一篇／下一篇：只在「同系列」內走 ─────────────────────
 // 2026-08-07 改：原本是全站按日期串成一條線，於是「露營車指南」的下一篇
@@ -65,9 +68,16 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 							<span> · Updated <FormattedDate date={updatedDate} /></span>
 						)}
 					</p>
-					<h1 class="title-h1 mx-auto mt-7 max-w-[20ch] text-app-ink">
-						{title}
-					</h1>
+					{/* 2026-08-18：標題改成「一律一行」。
+					    以前是 max-w-[20ch] 讓它換行，於是「史特拉斯堡｜聖誕市集
+					    飲食記」會在「｜」後面斷開，把詞切成兩半。現在改成不換行、
+					    字級自動縮到放得下——所以這裡的容器要比 .axis（34rem）寬，
+					    不然長標題會被縮得太小。 */}
+					<div class="fit-box mx-auto mt-7 max-w-[46rem]">
+						<h1 class="title-h1 title-fit title-fit-h1 text-app-ink" style={`--fit:${titleFit}`}>
+							{title}
+						</h1>
+					</div>
 					{description && (
 						<p class="body-small mx-auto mt-6 max-w-[34ch]">{description}</p>
 					)}
