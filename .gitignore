@@ -203,3 +203,9 @@ dist
 
 ### Cowork：暫存待刪資料夾（不進版控）
 _to_delete/
+
+### Obsidian：每次開關就會變動的介面狀態檔（不進版控）
+**/.obsidian/workspace.json
+**/.obsidian/workspace-mobile.json
+**/.obsidian/graph.json
+**/.obsidian/hotkeys.json
