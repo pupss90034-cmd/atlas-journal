@@ -1,4 +1,7 @@
 {
   "cssTheme": "AnuPpuccin",
-  "accentColor": "#5c82f5"
+  "accentColor": "#5c82f5",
+  "enabledCssSnippets": [
+    "atlas-journal"
+  ]
 }
