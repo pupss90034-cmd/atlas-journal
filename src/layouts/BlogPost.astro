@@ -84,11 +84,10 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 				</div>
 			</header>
 
-			{/* 內文：外層不再包 .measure，也不再上 page-wide 內距。
-			    行長（680px）與左右留白改由 .prose 自己的三軌格線負責，
-			    這樣照片才有辦法「破欄」跑到文字欄以外——被 max-width 包住的話，
-			    照片永遠只能跟文字一樣寬。格線定義見 global.css 的 .prose。
-			    2026-08-11 改。 */}
+			{/* 內文：2026-08-19 起版面只有一種欄寬（800px），文字與照片的
+			    左右邊界完全對齊。.prose 自己是一個置中的單欄（見 global.css），
+			    外層只負責左右留白。唯一會跳出這個欄寬的是寫了 `滿版` 的照片，
+			    它用 margin-inline: calc(50% - 50vw) 推到螢幕兩邊。 */}
 			<article class="pb-24 md:pb-32">
 				<div class="page-wide">
 					<div class="measure">
@@ -99,8 +98,10 @@ const newerPost = currentIndex > 0 ? seriesPosts[currentIndex - 1] : null;
 				{/* .no-copy：關閉內文的選取與複製（規則見 global.css 與 BaseHead）。
 				    只套在內文上——標題、日期、標籤仍可選取，
 				    讀者要引用篇名分享時才不會整頁都動不了。 */}
-				<div class="prose no-copy">
-					<slot />
+				<div class="page-wide">
+					<div class="prose no-copy">
+						<slot />
+					</div>
 				</div>
 
 				<!-- 標籤與前後篇仍然齊著內文欄，跟著文字走而不是跟著照片走 -->

@@ -1,0 +1,193 @@
+/* ══════════════════════════════════════════════════════════════
+   AtLAS TeRRA — Obsidian 預覽對齊網站的樣式片段
+   ══════════════════════════════════════════════════════════════
+
+   目的：讓你在 Obsidian 裡看到的圖文排版，就是網站上的樣子。
+   不用 push、不用等部署。
+
+   ── 怎麼安裝（做一次就好）────────────────────────────────
+   1. Obsidian → 設定（左下齒輪）→ 外觀
+   2. 拉到最下面「CSS 程式片段」，按右邊的資料夾圖示
+   3. 把這個檔案（atlas-journal.css）丟進打開的資料夾
+   4. 回到 Obsidian，按旁邊的重新整理圖示，然後把
+      「atlas-journal」的開關打開
+
+   ── 支援的指令（跟網站完全一樣）──────────────────────────
+     ![[照片.jpg]]            跟文字同寬
+     ![[照片.jpg|滿版]]        撐到最寬
+     ![[照片.jpg|左圖]]        照片靠左，文字環繞在右邊
+     ![[照片.jpg|右圖]]        照片靠右，文字環繞在左邊
+     ![[照片.jpg|左圖大]]      照片佔 56%
+     ![[照片.jpg|右圖小]]      照片佔 34%
+     ![[照片.jpg||這是圖說]]   同寬 ＋ 圖說（指令留空，兩個 |）
+
+   在「即時預覽」與「閱讀檢視」兩種模式都有效。
+
+   ── 為什麼是這個做法 ──────────────────────────────────────
+   Obsidian 沒有格線可以用，但它吃 float；網站那邊也改成用 float，
+   所以兩邊是同一套概念。這也是為什麼文字比照片長的時候，
+   兩邊都會自然「環圖」繞到照片下方。
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 內文欄寬：跟網站同樣 800px、置中 ───────────────────────── */
+.markdown-source-view.mod-cm6 .cm-content,
+.markdown-preview-view .markdown-preview-sizer {
+	max-width: 800px;
+	margin-inline: auto;
+}
+
+/* ── 一般照片：靠左貼齊，直式橫式都一樣 ─────────────────────
+   橫幅撐滿 800px；直幅被高度夾窄，但左邊仍然跟文字對齊。
+   整篇只有一條左基準線，跟網站完全一致。 */
+.internal-embed.image-embed {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	margin: 2rem 0; /* 靠左 */
+	text-align: left;
+}
+.internal-embed.image-embed img,
+.markdown-preview-view .image-embed img {
+	display: block;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 72vh; /* 直幅照片不會高到要捲兩次 */
+	border-radius: 0;
+	margin: 0;
+}
+
+/* 置中：唯一會離開左基準線的一般照片 */
+.internal-embed.image-embed[alt$="置中"],
+.internal-embed.image-embed[alt$="center"] {
+	margin-inline: auto;
+	text-align: center;
+}
+
+/* ── 滿版 ─────────────────────────────────────────────────── */
+.internal-embed.image-embed[alt$="滿版"],
+.internal-embed.image-embed[alt$="满版"],
+.internal-embed.image-embed[alt$="full"] {
+	width: 100%;
+	max-width: none;
+}
+.internal-embed.image-embed[alt$="滿版"] img,
+.internal-embed.image-embed[alt$="满版"] img,
+.internal-embed.image-embed[alt$="full"] img {
+	width: 100%;
+	max-height: none;
+}
+
+/* ── 圖文並排：照片靠左／靠右，文字環繞 ─────────────────────
+   Obsidian 的 alt 屬性存的就是 | 後面那一段，所以直接比對 alt。
+   用 $= （結尾比對）是為了讓「![[圖.jpg|右圖|圖說]]」這種
+   帶圖說的寫法也對得上——那時 alt 會是「右圖|圖說」，
+   所以再補一組 *= 的比對。 */
+
+/* 靠左 */
+.internal-embed.image-embed[alt$="左圖"],
+.internal-embed.image-embed[alt$="左图"],
+.internal-embed.image-embed[alt$="left"],
+.internal-embed.image-embed[alt*="左圖|"],
+.internal-embed.image-embed[alt*="left|"] {
+	float: left;
+	max-width: 44%;
+	width: fit-content;
+	text-align: left;
+	margin: 0.4rem 2rem 1.2rem 0;
+	shape-margin: 1rem;
+}
+
+/* 靠右 */
+.internal-embed.image-embed[alt$="右圖"],
+.internal-embed.image-embed[alt$="右图"],
+.internal-embed.image-embed[alt$="right"],
+.internal-embed.image-embed[alt*="右圖|"],
+.internal-embed.image-embed[alt*="right|"] {
+	float: right;
+	max-width: 44%;
+	width: fit-content;
+	text-align: right;
+	margin: 0.4rem 0 1.2rem 2rem;
+	shape-margin: 1rem;
+}
+
+/* 照片佔比較寬（大） */
+.internal-embed.image-embed[alt$="左圖大"],
+.internal-embed.image-embed[alt$="左大圖"],
+.internal-embed.image-embed[alt$="left-lg"] {
+	float: left;
+	max-width: 56%;
+	width: fit-content;
+	text-align: left;
+	margin: 0.4rem 2rem 1.2rem 0;
+}
+.internal-embed.image-embed[alt$="右圖大"],
+.internal-embed.image-embed[alt$="右大圖"],
+.internal-embed.image-embed[alt$="right-lg"] {
+	float: right;
+	max-width: 56%;
+	width: fit-content;
+	text-align: right;
+	margin: 0.4rem 0 1.2rem 2rem;
+}
+
+/* 照片讓位給文字（小） */
+.internal-embed.image-embed[alt$="左圖小"],
+.internal-embed.image-embed[alt$="左小圖"],
+.internal-embed.image-embed[alt$="left-sm"] {
+	float: left;
+	max-width: 34%;
+	width: fit-content;
+	text-align: left;
+	margin: 0.4rem 2rem 1.2rem 0;
+}
+.internal-embed.image-embed[alt$="右圖小"],
+.internal-embed.image-embed[alt$="右小圖"],
+.internal-embed.image-embed[alt$="right-sm"] {
+	float: right;
+	max-width: 34%;
+	width: fit-content;
+	text-align: right;
+	margin: 0.4rem 0 1.2rem 2rem;
+}
+
+/* 並排時的照片高度上限：旁邊還有文字要讀，照片不能高過一個螢幕。
+   直幅照片會被這條夾窄，但因為外框是 fit-content，它仍然貼齊該側。 */
+.internal-embed.image-embed[alt*="左圖"] img,
+.internal-embed.image-embed[alt*="右圖"] img,
+.internal-embed.image-embed[alt*="左图"] img,
+.internal-embed.image-embed[alt*="右图"] img,
+.internal-embed.image-embed[alt*="left"] img,
+.internal-embed.image-embed[alt*="right"] img {
+	max-height: 30rem;
+}
+
+/* 標題與分隔線一定要另起一段，不能被環繞的文字擠在照片旁邊。
+   這也對應網站的規則：遇到標題或 --- 就結束並排。 */
+.markdown-preview-view :is(h1, h2, h3, h4, h5, h6),
+.markdown-preview-view hr,
+.markdown-source-view.mod-cm6 .HyperMD-header,
+.markdown-source-view.mod-cm6 .cm-hr {
+	clear: both;
+}
+
+/* ── 圖說：![[照片.jpg||這是圖說]] ─────────────────────────
+   Obsidian 不會把它顯示成圖說，但至少讓你在編輯時看得到自己寫了什麼；
+   網站上會排在照片正下方、13px 灰字。這裡用 ::after 模擬。 */
+.internal-embed.image-embed[alt*="|"]::after {
+	content: attr(alt);
+	display: block;
+	margin-top: 0.7rem;
+	font-size: 0.8125rem;
+	line-height: 1.6;
+	letter-spacing: 0.02em;
+	color: var(--text-faint);
+	text-align: center;
+}
+
+/* ── 內文字級：接近網站的 17px／行高 1.75 ────────────────── */
+.markdown-preview-view p,
+.markdown-source-view.mod-cm6 .cm-line {
+	line-height: 1.75;
+}

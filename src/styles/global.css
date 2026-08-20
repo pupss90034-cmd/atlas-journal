@@ -75,20 +75,22 @@
 	   所以中文落在 30–50 字／行。桌機上 65ch ≈ 680px，
 	   這裡取 42.5rem = 680px，作為全站內文行長的單一來源。
 	   （原本是 34rem/544px，中文一行只有約 25 字，偏短。） */
-	/* 2026-08-18：680px → 736px。
-	   680px 在 1440px 的螢幕上兩側各留 380px 空白，整篇文章看起來像
-	   一條窄帶子，照片也跟著被鎖在 680px、失去張力。736px 在 17px 的
-	   中文下約 43 字／行，仍在 30–50 字的易讀範圍內，但版面明顯站得住。 */
-	--measure: 46rem; /* 736px ≈ 43 字／行 */
-	/* 中軸（書名頁）刻意比內文窄，置中的短段落太寬會讀不成一個「塊」 */
+	/* 2026-08-19：回到「單一欄寬」。
+	   之前為了讓照片有張力，做了 736 / 1152 / 滿版三種寬度，結果是
+	   文字與照片的左右邊界對不齊，整篇文章看起來忽寬忽窄。
+	   參考版型（blog-starter.thebcms.com）的作法正好相反：**文字與照片
+	   永遠同寬、邊界對齊，整篇只有一種欄寬**，唯一的例外是刻意的滿版。
+	   對齊本身就是秩序感的來源，比「照片大一點」重要得多。
+	   800px 在 17px 的中文下約 47 字／行，是易讀範圍的上緣，
+	   同時讓照片比舊的 680px 大一圈。 */
+	--measure: 50rem; /* 800px：文字與照片共用的唯一欄寬 */
 	--measure-axis: 34rem;
 	/* 破欄寬：照片專用，比內文欄寬約一半，但兩側仍留白。
 	   照片跟文字不共用行長規則——行長是為了眼球掃視一行不要太累，
 	   照片不需要掃視，鎖在 680px 只會讓它變成郵票。 */
-	/* 2026-08-18：960px → 1152px。破欄照片是這個網站的主角，
-	   它跟內文的寬度差距就是「呼吸」的幅度。960 跟 736 只差 30%，
-	   讀者感覺不到破欄；1152 是內文的 1.57 倍，一眼就看得出來。 */
-	--measure-wide: 72rem; /* 1152px */
+	/* 圖文並排時，照片那一欄佔的比例（見 .figrow）。
+	   不再是一條獨立的版面軌道——2026-08-19 起版面只有一種欄寬。 */
+	--figrow-image: 44%;
 
 	/* ── 字級：單一階梯 ──────────────────────────
 	   2026-08-09 重整。原本標題級距散在 title-display / title-spaced /
@@ -662,44 +664,30 @@
    文章內文（Markdown / MDX）
    同字體、同段落樣式：不使用粗體與彩色強調
    ───────────────────────────────────────────── */
-/* ── 內文版面：三軌破欄格線（2026-08-11）────────────────────
-   改版前，內文被一個 max-width:680px 的 .measure 包住，所以照片最大
-   只能 680px——文字有多寬，照片就只能有多寬。攝影集內頁不是這樣運作的：
-   文字要窄（行長好讀），照片要寬（看得見細節），兩者的寬度是分開決定的。
+/* ── 內文版面：單一欄寬（2026-08-19 重寫）────────────────────
+   改版前這裡是一張「三軌格線」：文字走 736px、照片可以跳到 1152px
+   或滿版。立意是「窄文字 → 寬照片 → 窄文字」的呼吸感，
+   實際結果是**文字與照片的左右邊界對不齊**，一路往下讀會覺得版面
+   忽寬忽窄、沒有一條穩定的基準線。
 
-   做法：.prose 自己變成一張三軌格線，一次定義三種寬度，
-   段落預設走最窄的 text 軌，照片可以指定走 wide 或 full。
+   參考版型（blog-starter.thebcms.com）的作法正好相反：
+   **整篇文章只有一種欄寬，文字與照片的左右邊界永遠對齊。**
+   節奏是靠「照片與文字的上下留白」做出來的，不是靠改寬度。
 
-     full ├────────────────────────────────────────────┤ 貼齊螢幕左右
-     wide      ├──────────────────────────────┤          960px
-     text            ├──────────────┤                    680px
-
-   所以 .prose 現在必須是「整個文章容器的寬度」，
-   外層不能再包 .measure，也不能有 page-wide 的左右內距
-   （左右留白改由格線自己的外軌負責）。見 src/layouts/BlogPost.astro。 */
+   所以現在 .prose 就是一個置中的單欄，寬度 var(--measure)。
+   唯一會跳出這個欄寬的是明確寫了 `滿版` 的照片。 */
 .prose {
 	color: var(--color-app-text);
 	/* 內文 16–18px：桌機 17px，手機縮到 16px 仍在範圍內 */
 	font-size: clamp(1rem, 0.5vw + 0.9rem, 1.0625rem);
-	/* 正文 1.6–1.8。原本 1.85 超出範圍，段落會鬆到失去段落感 */
 	line-height: var(--leading-body);
 	/* 中文與英數、標點之間自動補空隙，密度更接近排版品質 */
 	text-spacing-trim: trim-start;
 
-	display: grid;
-	grid-template-columns:
-		[full-start] minmax(var(--page-margin-narrow), 1fr)
-		[wide-start] minmax(0, calc((var(--measure-wide) - var(--measure)) / 2))
-		[text-start] min(var(--measure), 100% - var(--page-margin-wide) * 2)
-		[text-end] minmax(0, calc((var(--measure-wide) - var(--measure)) / 2))
-		[wide-end] minmax(var(--page-margin-narrow), 1fr) [full-end];
+	margin-inline: auto;
+	max-width: var(--measure);
 }
 
-/* 預設：所有內文元素都走文字軌。
-   只有被 image-layout 外掛標記過的圖片區塊才會跳出去。 */
-.prose > * {
-	grid-column: text;
-}
 .prose h1,
 .prose h2,
 .prose h3,
@@ -836,56 +824,78 @@
    所以直幅照片會自動變窄——這是攝影集的做法，不是把每張照片
    硬塞進同一個方框裡。
    ───────────────────────────────────────────── */
+/* ── 直式照片也要對齊（2026-08-19）──────────────────────────
+   問題：直幅照片撐滿 800px 欄寬會高到一個半螢幕，所以一定要有高度
+   上限；但一旦被高度夾住，照片就會比文字欄窄——如果這時候還置中，
+   它的左右邊就跟文字對不齊，整篇的基準線就斷了。
+
+   解法：**照片的外框永遠縮到照片本身的大小（fit-content），
+   並且靠左貼齊。** 於是：
+     · 橫幅照片 → 撐滿 800px，左右都跟文字齊
+     · 直幅照片 → 被高度夾窄，但**左邊仍然跟文字齊**
+   一條左基準線從頭到尾不會斷。
+
+   圖文並排時同樣的道理，只是貼的那一側換成 float 的那一側
+   （左圖貼左、右圖貼右），見下面的 .figrow。 */
+.prose > .fig {
+	width: fit-content;
+	max-width: 100%;
+	margin-inline: 0; /* 靠左：跟文字的左邊界對齊 */
+}
 .prose img {
 	border-radius: 0;
 	display: block;
-	margin-inline: auto;
+	margin-inline: 0;
 	width: auto;
 	max-width: 100%;
 	/* 高度上限：直幅照片不能高到讀者要捲兩次才看得完 */
 	max-height: 72vh;
 }
 
-/* figure 的瀏覽器預設左右各有 40px 外距，會讓破欄圖對不齊，先歸零 */
+/* figure 的瀏覽器預設左右各有 40px 外距，會讓照片對不齊，先歸零。
+   圖說也一律靠左——整篇只有一條左基準線，圖說不該是例外。 */
 .prose figure {
 	margin-inline: 0;
+	text-align: left;
+}
+
+/* 想讓某一張照片置中（例如一張刻意留白的直幅），寫 `置中` */
+.prose > .fig--center {
+	margin-inline: auto;
 	text-align: center;
 }
 
-/* ── 三種寬度 ──────────────────────────────
-   text（預設）＝ 跟內文同寬，維持改版前的樣子
-   wide        ＝ 破欄，960px
-   full        ＝ 滿版，貼齊螢幕左右 */
-.prose > .fig--wide {
-	grid-column: wide;
-}
+/* ── 只有兩種寬度（2026-08-19）──────────────────────────────
+   預設 ＝ 跟文字同寬，左右邊界完全對齊。
+   滿版 ＝ 唯一的例外，貼齊螢幕左右兩邊。
+   `寬`／`破欄` 保留為預設的別名，讓既有文章不用回頭改，
+   但它不再讓照片跳出欄寬——版面只有一條基準線。 */
 .prose > .fig--full {
-	grid-column: full;
-}
-.prose > .fig--wide img {
-	max-height: 78vh;
+	/* 單欄容器裡要做滿版，用「左右各推出去半個視窗寬」的標準做法 */
+	width: 100vw;
+	max-width: 100vw;
+	margin-inline: calc(50% - 50vw);
 }
 .prose > .fig--full img {
 	width: 100%;
 	max-height: 88vh;
 }
 
-/* 破欄與滿版的上下留白比一般圖再大一點：
-   照片一旦超出文字欄，它就從「插圖」變成「一個段落」，
-   前後需要更多空白才不會擠到文字。 */
+/* 照片與前後文字的距離：比段落之間大得多。
+   單欄版面的節奏不是靠寬度變化做出來的，是靠這裡的留白。 */
 .prose > .fig,
-.prose > .fig + * {
-	margin-block-start: 2.6em;
+.prose > .fig + *,
+.prose > .figrow,
+.prose > .figrow + * {
+	margin-block-start: clamp(2.5rem, 4.5vw, 4rem);
 }
-.prose > :is(.fig--wide, .fig--full, .figrow),
-.prose > :is(.fig--wide, .fig--full, .figrow) + * {
-	margin-block-start: clamp(2.75rem, 5vw, 4.5rem);
+.prose > .fig--full,
+.prose > .fig--full + * {
+	margin-block-start: clamp(3.5rem, 6vw, 5.5rem);
 }
 
 /* ── 兩張以上並排 ────────────────────────────
-   等高、不等寬、不裁切：每張照片的高度相同，寬度各自按原比例長，
-   這是攝影集裡「一組照片」的標準排法。放不下時自動換行堆疊，
-   所以手機上不需要另外寫斷點。 */
+   各佔一半欄寬、底緣對齊、不裁切。手機上改回上下排。 */
 .fig--cols-2 {
 	display: flex;
 	flex-wrap: wrap;
@@ -893,12 +903,6 @@
 	align-items: flex-end;
 	gap: clamp(0.75rem, 1.6vw, 1.5rem);
 }
-/* 2026-08-17 修正：原本是「固定高度、寬度自己長」，高度用 30vw 算。
-   問題是照片欄最寬只有 960px，但 30vw 在 1440px 螢幕上是 432px 高——
-   兩張橫幅照片加起來 1296px，放不下就自動換行，於是「並排」在桌機上
-   其實一直是上下排。
-   改成「各佔一半欄寬、高度按原比例長」：兩張永遠並排、永遠不裁切，
-   底緣對齊。手機（<48rem）改回上下排，因為各半在手機上等於兩張郵票。 */
 .fig--cols-2 > img {
 	flex: 1 1 0;
 	min-width: 0;
@@ -917,62 +921,64 @@
 	}
 }
 
-/* ── 圖文並排 ────────────────────────────────
-   左圖／右圖：照片與緊接著的那一段文字排成兩欄。
-   窄螢幕自動回到上下排——兩欄各半在手機上會讓行長只剩十幾個字。 */
+/* ── 圖文並排（2026-08-19 改用 float）────────────────────────
+   為什麼是 float 而不是兩欄格線：
+
+   1. **跟 Obsidian 看到的一樣。** Obsidian 的預覽沒有格線可用，
+      但它吃 float。用 float 的話，同一份 CSS 概念可以同時套在
+      網站與 Obsidian 的 CSS 片段上（見 blog vault 的
+      .obsidian/snippets/atlas-journal.css），你在 Obsidian 裡
+      看到的就是網站上的樣子，不用 push 才知道。
+   2. 文字比照片長的時候會自然「環圖」繞到照片下方，
+      不會像兩欄格線那樣在照片下面留一塊空白。
+
+   整組仍然被鎖在同一個欄寬裡（.figrow 沒有跳出 .prose 的寬度），
+   所以左右邊界跟其他段落對齊。 */
 .prose > .figrow {
-	grid-column: wide;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: clamp(1.5rem, 4vw, 3.5rem);
-	align-items: center;
+	display: flow-root; /* 把 float 關在這一塊裡，不會影響後面的段落 */
 }
+/* 照片框縮到照片本身的大小（fit-content），最寬不超過 --figrow-image。
+   這樣直式與橫式都成立：
+     · 橫幅 → 被 max-width 夾住，剛好 44%，貼齊該側
+     · 直幅 → 被 max-height 夾住而變窄，**仍然貼齊該側**
+   框永遠緊貼照片，所以照片與文字之間不會出現一塊空隙。 */
 .figrow .fig {
 	margin: 0;
+	width: fit-content;
+	max-width: var(--figrow-image);
 }
-/* 直幅照片在窄欄裡不硬撐滿寬（撐滿會高到把旁邊的文字擠成一長條），
-   一律「寬度用滿、高度撞到上限就自己按比例縮」，不裁切。 */
+.figrow--left .fig {
+	float: left;
+	margin-inline-end: clamp(1.25rem, 3vw, 2.25rem);
+	text-align: left;
+}
+.figrow--right .fig {
+	float: right;
+	margin-inline-start: clamp(1.25rem, 3vw, 2.25rem);
+	text-align: right; /* 圖說跟著照片靠右 */
+}
 .figrow .fig img {
-	max-height: 62vh;
+	width: auto;
+	max-width: 100%;
+	/* 並排時的高度上限比整欄照片小：旁邊還有文字要讀，
+	   照片高過一個螢幕的話那段文字會被推到看不見的地方。 */
+	max-height: 30rem;
 }
 .figrow__text {
 	margin: 0;
 	min-width: 0;
 }
-/* 圖在右：DOM 順序仍是「圖、文」（讓沒有 CSS 時閱讀順序正確），
-   靠 order 把文字調到左邊。 */
-.figrow--right .figrow__text {
-	order: -1;
+
+/* 照片佔的比例：大 ＝ 照片是主角，小 ＝ 文字是主角 */
+.figrow--size-lg .fig {
+	max-width: 56%;
+}
+.figrow--size-sm .fig {
+	max-width: 34%;
 }
 
-/* ── 圖文欄寬比例（2026-08-17 新增）──────────────────────────
-   一半一半不是永遠對的：照片是主角、文字只是一句註解時，
-   照片應該佔多一點；反過來文字是主角、照片只是佐證時，
-   照片應該讓位。所以指令多了「大」與「小」兩種比例。
-
-     左圖／右圖      1 : 1     （預設，勢均力敵）
-     左圖大／右圖大  1.4 : 1   （照片是主角）
-     左圖小／右圖小  1 : 1.4   （文字是主角）
-
-   注意 DOM 順序永遠是「圖、文」，圖在右時是用 order 把文字
-   調到第一軌，所以下面「圖在右」的比例要左右對調著寫。 */
-.prose > .figrow--left.figrow--size-lg {
-	grid-template-columns: 1.4fr 1fr;
-}
-.prose > .figrow--left.figrow--size-sm {
-	grid-template-columns: 1fr 1.4fr;
-}
-.prose > .figrow--right.figrow--size-lg {
-	grid-template-columns: 1fr 1.4fr;
-}
-.prose > .figrow--right.figrow--size-sm {
-	grid-template-columns: 1.4fr 1fr;
-}
-
-/* ── 圖旁邊那一欄可以放不只一段（2026-08-17）────────────────
-   以前只吃緊接著的一個段落，所以「圖 ＋ 小標題 ＋ 兩段字」做不到。
-   現在那一欄是一個真正的區塊，裡面可以有小標題、段落、清單。
-   .prose 的間距規則只作用在它的直接子層，所以這一欄要自己定義。 */
+/* ── 圖旁邊那一欄可以放不只一段 ────────────────────────────
+   .prose 的間距規則只作用在它的直接子層，所以這一塊要自己定義。 */
 .figrow__text > * {
 	margin-block: 0;
 }
@@ -997,29 +1003,21 @@
 	font-size: 1em;
 	letter-spacing: 0.06em;
 }
-/* 小標題跟它底下的第一段要靠近，否則看起來像屬於上一段 */
 .figrow__text > :is(h1, h2, h3, h4, h5, h6) + * {
 	margin-block-start: 0.7em;
 }
-/* 文字比照片長很多時，置中對齊會讓照片浮在中間、上緣對不到任何東西。
-   超過兩段就改成上緣對齊，照片與第一行文字切齊。 */
-.figrow:has(.figrow__text > * + * + *) {
-	align-items: start;
-}
 
+/* 手機：照片與文字各佔一半的話行長只剩十幾個字，改回上下排 */
 @media (max-width: 48rem) {
-	.prose > .figrow,
-	.prose > .figrow--left.figrow--size-lg,
-	.prose > .figrow--left.figrow--size-sm,
-	.prose > .figrow--right.figrow--size-lg,
-	.prose > .figrow--right.figrow--size-sm {
-		grid-template-columns: 1fr;
-	}
-	.figrow--right .figrow__text {
-		order: 0;
-	}
-	.figrow .fig img {
-		max-height: 72vh;
+	.figrow .fig,
+	.figrow--size-lg .fig,
+	.figrow--size-sm .fig {
+		float: none;
+		width: fit-content;
+		max-width: 100%;
+		margin-inline: 0;
+		margin-block-end: 1.5rem;
+		text-align: left;
 	}
 }
 
@@ -1031,10 +1029,9 @@
 	letter-spacing: 0.04em;
 	color: var(--color-app-gray-400);
 }
-/* 圖說跟著照片走：照片多寬，圖說就最多多寬，但不超過一個易讀行長 */
+/* 圖說跟著照片走：框已經等於照片寬度，圖說自然就對齊照片的邊 */
 .prose .fig__caption {
-	max-width: var(--measure);
-	margin-inline: auto;
+	max-width: 100%;
 }
 .prose code {
 	padding: 2px 6px;
