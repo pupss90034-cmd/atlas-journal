@@ -104,8 +104,11 @@ function fileNameOf(rawUrl) {
    哲學一致：寬容地修，並在建置訊息裡說清楚正確寫法。 */
 
 const EXT = "jpe?g|png|webp|avif|gif|svg";
-/** ![指令]檔名.jpg 或 [指令]檔名.jpg */
+/** ![指令]檔名.jpg 或 [指令]檔名.jpg（檔名沒有被括號包住） */
 const BRACKET_MISS_RE = new RegExp(`!?\\[([^\\]\\n]{0,20})\\]\\s*([^\\s()\\[\\]|]+\\.(?:${EXT}))`, "gi");
+/** ![指令][檔名.jpg]：兩組方括號，少了小括號。Markdown 會當成
+    「參考式連結」，但沒有對應的定義，所以整串原樣印出來。 */
+const DOUBLE_BRACKET_RE = new RegExp(`!?\\[([^\\]\\n]{0,20})\\]\\s*\\[([^\\]\\n]+\\.(?:${EXT}))\\]`, "gi");
 /** 整行只有一個檔名（後面可以再接 |指令） */
 const BARE_LINE_RE = new RegExp(`^[ \\t]*([^\\s()\\[\\]|]+\\.(?:${EXT}))(?:\\|([^\\n]*))?[ \\t]*$`, "i");
 
@@ -130,7 +133,27 @@ function repairMalformedImages(value, warn) {
 			return;
 		}
 
-		// (b) 行內的 ![指令]檔名.jpg
+		// (b) 行內的 ![指令][檔名.jpg]（兩組方括號）——要排在 (c) 前面，
+		//     否則 (c) 會先把 `![指令]` 後面的 `[` 當成一般字元咬掉一半。
+		let working = line;
+		DOUBLE_BRACKET_RE.lastIndex = 0;
+		if (DOUBLE_BRACKET_RE.test(working)) {
+			DOUBLE_BRACKET_RE.lastIndex = 0;
+			let last2 = 0;
+			let m2;
+			while ((m2 = DOUBLE_BRACKET_RE.exec(working)) !== null) {
+				const [whole, directive, file] = m2;
+				if (m2.index > last2) out.push({ type: "text", value: working.slice(last2, m2.index) });
+				out.push({ type: "image", url: file, alt: directive.trim(), title: null });
+				warn(whole, `![[${file}${directive.trim() ? `|${directive.trim()}` : ""}]]`);
+				changed = true;
+				last2 = m2.index + whole.length;
+			}
+			if (last2 < working.length) out.push({ type: "text", value: working.slice(last2) });
+			return;
+		}
+
+		// (c) 行內的 ![指令]檔名.jpg
 		let last = 0;
 		BRACKET_MISS_RE.lastIndex = 0;
 		let match;
